@@ -1,49 +1,14 @@
 <!DOCTYPE html>
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  CN Terrassa - Sistema d'Estadístiques de Waterpolo         ║
-  ║  Copyright © 2025 Josep Rico. Tots els drets reservats.     ║
-  ║                                                              ║
-  ║  Desenvolupat per: Josep Rico Escofet                ║
-  ║  Equips: CN Terrassa Cadet i Juvenil                        ║
-  ║  Temporada: 2025-2026                                       ║
-  ║                                                              ║
-  ║  Aquest codi és propietat privada. No es permet la còpia,   ║
-  ║  modificació o distribució sense permís explícit.           ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- PWA Manifest (primer de tot) -->
-    <link rel="manifest" href="/CNT/manifest.json">
-    
-    <!-- Apple iOS PWA (ABANS de les icones normals) -->
-    <link rel="apple-touch-icon" href="/CNT/apple-touch-icon.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CNT WP">
-    
-    <!-- Theme colors -->
-    <meta name="theme-color" content="#dc2626">
-    
-    <!-- Icones PWA -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/CNT/cnt-ios-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/CNT/cnt-ios-512.png">
-    
-    <!-- Favicon navegador (al final) -->
     <link rel="icon" href="https://clubnatacioterrassa.cat/wp-content/uploads/CNT_Escut_Blau.png.webp" type="image/webp">
-    
-    <title>Visualitzador de Estadístiques - CN Terrassa</title>
-    
-    <!-- Scripts -->
+	<title>Visualizador de Estadísticas - CN Terrassa</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+	<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -53,214 +18,7 @@ body {
     padding: 20px;
     transition: background 0.5s ease;
 }
-/* Botó d'instal·lació PWA */
-.install-button {
-    display: block;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 15px 25px;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
-    z-index: 9999;
-    transition: all 0.3s;
-    animation: pulse-install 2s infinite;
-}
-Perfecte! Aleshores deixa només les columnes Nº i Jugador fixes.
-El CSS que necessites és aquest (substitueix la part de singleMatchStatsTable):
-css/* Fix específic per singleMatchStatsTable - NOMÉS Nº i Jugador fixes */
-#singleMatchStatsTable thead tr:first-child th:nth-child(1),
-#singleMatchStatsTable thead tr:first-child th:nth-child(2),
-#singleMatchStatsTable tbody td:nth-child(1),
-#singleMatchStatsTable tbody td:nth-child(2) {
-    position: sticky;
-    background: rgba(30, 58, 138, 0.95);
-    z-index: 10;
-}
 
-#singleMatchStatsTable thead tr:first-child th:nth-child(1),
-#singleMatchStatsTable tbody td:nth-child(1) {
-    left: 0;
-    min-width: 50px;
-}
-
-#singleMatchStatsTable thead tr:first-child th:nth-child(2),
-#singleMatchStatsTable tbody td:nth-child(2) {
-    left: 50px;
-    min-width: 120px;
-}
-
-/* Headers de la primera fila amb z-index més alt */
-#singleMatchStatsTable thead tr:first-child th:nth-child(1),
-#singleMatchStatsTable thead tr:first-child th:nth-child(2) {
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 12;
-}
-
-/* Sombra només per tbody */
-#singleMatchStatsTable tbody td:nth-child(2)::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -10px;
-    bottom: 0;
-    width: 10px;
-    background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
-    pointer-events: none;
-}
-
-/* Tema CADET per singleMatchStatsTable */
-body.theme-cadet #singleMatchStatsTable thead tr:first-child th:nth-child(1),
-body.theme-cadet #singleMatchStatsTable thead tr:first-child th:nth-child(2),
-body.theme-cadet #singleMatchStatsTable tbody td:nth-child(1),
-body.theme-cadet #singleMatchStatsTable tbody td:nth-child(2) {
-    background: rgba(30, 41, 59, 0.95);
-}
-
-body.theme-cadet #singleMatchStatsTable thead tr:first-child th:nth-child(1),
-body.theme-cadet #singleMatchStatsTable thead tr:first-child th:nth-child(2) {
-    background: rgba(0, 0, 0, 0.5);
-}
-
-/* Tema JUVENIL per singleMatchStatsTable */
-body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(1),
-body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(2),
-body.theme-juvenil #singleMatchStatsTable tbody td:nth-child(1),
-body.theme-juvenil #singleMatchStatsTable tbody td:nth-child(2) {
-    background: rgba(30, 58, 90, 0.95);
-}
-
-body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(1),
-body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(2) {
-    background: rgba(0, 0, 0, 0.5);
-}
-.install-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.6);
-}
-
-@keyframes pulse-install {
-    0%, 100% { box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
-    50% { box-shadow: 0 4px 25px rgba(6, 182, 212, 0.8); }
-}
-
-@media (max-width: 768px) {
-    .install-button {
-        bottom: 10px;
-        right: 10px;
-        padding: 12px 20px;
-        font-size: 13px;
-    }
-}
-
-/* Missatge d'app ja instal·lada */
-.already-installed {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-}
-
-.installed-card {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 50px;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-    font-weight: bold;
-    font-size: 14px;
-    animation: fadeInOut 3s ease-in-out;
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(20px); }
-    10%, 90% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-20px); }
-}
-
-@media (max-width: 768px) {
-    .already-installed {
-        bottom: 10px;
-        right: 10px;
-    }
-    .installed-card {
-        padding: 10px 16px;
-        font-size: 13px;
-    }
-}
-
-/* Instruccions iOS */
-.ios-instructions {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    max-width: 90%;
-    width: 350px;
-}
-
-.ios-card {
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
-    color: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5);
-    animation: slideUp 0.3s ease-out;
-    position: relative;
-}
-
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    transition: background 0.2s;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-@keyframes slideUp {
-    from {
-        transform: translate(-50%, 100px);
-        opacity: 0;
-    }
-    to {
-        transform: translate(-50%, 0);
-        opacity: 1;
-    }
-}
-
-.ios-card ol {
-    line-height: 1.6;
-}
-
-.ios-card li {
-    margin: 8px 0;
-}
-
-@media (max-width: 768px) {
-    .ios-instructions {
-        bottom: 10px;
-        width: 90%;
-    }
-}
 /* Tema CADET (Gris suau) */
 body.theme-cadet { 
     background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
@@ -378,59 +136,17 @@ body.theme-juvenil {
         .period-label { font-size: 14px; color: #bae6fd; margin-bottom: 8px; }
         .period-score { font-size: 32px; font-weight: bold; color: #fde047; }
         .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
-}
-
-@media (max-width: 768px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    /* Player stat - més espai i millor layout */
-    .player-stat {
-        padding: 15px;
-        min-height: auto;
-        gap: 12px;
-    }
-    
-    /* Info del jugador - més espai */
-    .player-info {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    
-    .player-name {
-        font-size: 14px;
-        font-weight: bold;
-    }
-    
-    /* Stats del jugador - grid adaptat */
-    .player-stats {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-        gap: 8px;
-        width: 100%;
-    }
-    
-    .stat-item {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 8px;
-        border-radius: 6px;
-    }
-    
-    .stat-label {
-        font-size: 9px;
-        margin-bottom: 4px;
-    }
-    
-    .stat-value {
-        font-size: 16px;
-        font-weight: bold;
-    }
-}
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
         .player-stat {
             background: rgba(0,0,0,0.2);
             padding: 12px;
@@ -1310,198 +1026,6 @@ body.theme-juvenil {
 .match-team-name {
     flex: 1;
 }
-/* Estil per les instruccions iOS */
-.ios-instructions {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    max-width: 90%;
-    width: 350px;
-}
-
-.ios-card {
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
-    color: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5);
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.ios-card ol {
-    line-height: 1.6;
-}
-
-.ios-card li {
-    margin: 8px 0;
-}
-/* ========================================
-   COLUMNES FIXES PER TAULES DE JUGADORS
-   NOMÉS PER .comparison-table
-   ======================================== */
-
-/* Primera columna (Nº) sticky */
-.comparison-table thead tr:first-child th:nth-child(1),
-.comparison-table tbody tr td:nth-child(1),
-.comparison-table tfoot tr td:nth-child(1) {
-    position: sticky !important;
-    left: 0 !important;
-    z-index: 100 !important;
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-}
-
-/* Segona columna (Jugador/Nom) sticky - MÉS CURTA */
-.comparison-table thead tr:first-child th:nth-child(2),
-.comparison-table tbody tr td:nth-child(2),
-.comparison-table tfoot tr td:nth-child(2) {
-    position: sticky !important;
-    left: 50px !important;
-    z-index: 100 !important;
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
-    min-width: 120px !important;
-    max-width: 140px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-/* Tercera columna (Partidos) sticky */
-.comparison-table thead tr:first-child th:nth-child(3),
-.comparison-table tbody tr td:nth-child(3),
-.comparison-table tfoot tr td:nth-child(3) {
-    position: sticky !important;
-    left: 170px !important;
-    z-index: 100 !important;
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
-    min-width: 30px !important;
-    max-width: 30px !important;
-}
-
-/* Headers de les 3 primeres columnes amb fons més fosc */
-.comparison-table thead tr:first-child th:nth-child(1),
-.comparison-table thead tr:first-child th:nth-child(2),
-.comparison-table thead tr:first-child th:nth-child(3) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    z-index: 101 !important;
-}
-
-/* Segona fila de headers - z-index BAIX */
-.comparison-table thead tr:nth-child(2) th {
-    position: relative !important;
-    z-index: 5 !important;
-}
-
-/* Footer també sticky per les 3 columnes */
-.comparison-table tfoot tr td:nth-child(1),
-.comparison-table tfoot tr td:nth-child(2),
-.comparison-table tfoot tr td:nth-child(3) {
-    background: rgba(34, 211, 238, 0.3) !important;
-    z-index: 100 !important;
-}
-
-/* Ombra a la dreta de la TERCERA columna */
-.comparison-table thead tr th:nth-child(3)::after,
-.comparison-table tbody tr td:nth-child(3)::after,
-.comparison-table tfoot tr td:nth-child(3)::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -4px;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
-    z-index: 100;
-}
-
-@media (max-width: 768px) {
-    .comparison-table thead tr:first-child th:nth-child(1),
-    .comparison-table tbody tr td:nth-child(1),
-    .comparison-table tfoot tr td:nth-child(1) {
-        min-width: 45px !important;
-        max-width: 45px !important;
-    }
-    
-    .comparison-table thead tr:first-child th:nth-child(2),
-    .comparison-table tbody tr td:nth-child(2),
-    .comparison-table tfoot tr td:nth-child(2) {
-        left: 45px !important;
-        min-width: 100px !important;
-        max-width: 110px !important;
-    }
-    
-    .comparison-table thead tr:first-child th:nth-child(3),
-    .comparison-table tbody tr td:nth-child(3),
-    .comparison-table tfoot tr td:nth-child(3) {
-        left: 145px !important;
-        min-width: 60px !important;
-        max-width: 65px !important;
-    }
-}
-@media (max-width: 768px) {
-    /* Reduir font de la taula al mòbil */
-    #singleMatchStatsTable {
-        font-size: 10px;
-    }
-    
-    #singleMatchStatsTable th,
-    #singleMatchStatsTable td {
-        padding: 6px 4px;
-    }
-}
-.notification-toggle {
-  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
-}
-
-.notification-toggle:hover {
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.5);
-}
-
-.notification-toggle.subscribed {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-}
-
-.notification-toggle.subscribed #notificationIcon::after {
-  content: '✓';
-  position: absolute;
-  font-size: 10px;
-  background: white;
-  color: #22c55e;
-  border-radius: 50%;
-  width: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 12px;
-  margin-top: -8px;
-}
     </style>
  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H8JDTNNK0Z"></script>
 <script>
@@ -1511,71 +1035,8 @@ body.theme-juvenil {
 
   gtag('config', 'G-H8JDTNNK0Z');
 </script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "96af4d1a-fcab-412e-aadb-ed44fadd1b4b",
-      safari_web_id: "web.onesignal.auto.468a09a1-a4c0-43e5-8472-22975b523798",
-      webPush: {
-        notificationIcon: "https://joseprico.github.io/CNT/cnt-stats-192.png"
-      },
-      notifyButton: {
-        enable: true,
-        size: 'medium',
-        theme: 'default',
-        position: 'bottom-right',
-        text: {
-          'tip.state.unsubscribed': 'Activar notificacions',
-          'tip.state.subscribed': 'Notificacions activades',
-          'tip.state.blocked': 'Notificacions bloquejades',
-          'message.prenotify': 'Fes clic per activar notificacions',
-          'message.action.subscribed': "T'has subscrit a les notificacions! 🎉",
-          'message.action.resubscribed': "Subscripció reactivada!",
-          'message.action.unsubscribed': "Has desactivat les notificacions.",
-          'dialog.main.title': 'Gestiona les notificacions',
-          'dialog.main.button.subscribe': 'Activar',
-          'dialog.main.button.unsubscribe': 'Desactivar',
-          'dialog.blocked.title': 'Notificacions bloquejades',
-          'dialog.blocked.message': 'Habilita les notificacions des de la configuració del navegador.'
-        }
-      }
-    });
-  });
-</script>
-
-
 </head>
 <body>
-
-<!-- HTML del botó -->
-<button id="installButton" class="install-button" style="display: none;">
-    📱 Instal·lar App
-</button>
-
-<!-- Missatge d'app ja instal·lada -->
-<div id="alreadyInstalled" class="already-installed" style="display: none;">
-    <div class="installed-card">
-        ✅ App ja instal·lada
-    </div>
-</div>
-
-<!-- Instruccions per iOS (amagat per defecte) -->
-<div id="iosInstructions" class="ios-instructions" style="display: none;">
-    <div class="ios-card">
-        <button class="close-btn" onclick="document.getElementById('iosInstructions').style.display='none'">✕</button>
-        <p style="margin: 0 0 10px 0; font-size: 16px;">
-            <strong>📱 Per instal·lar en iPhone:</strong>
-        </p>
-        <ol style="text-align: left; margin: 0; padding-left: 20px; font-size: 14px;">
-            <li>Clica la icona de <strong>Compartir</strong> ↗️</li>
-            <li>Selecciona <strong>"Afegir a pantalla d'inici"</strong></li>
-            <li>Clica <strong>"Afegir"</strong></li>
-        </ol>
-    </div>
-</div>
 <div id="teamSelectionModal" style="
     position: fixed;
     top: 0;
@@ -1695,21 +1156,6 @@ body.theme-juvenil {
             </div>
 
             <div id="matchesView" class="hidden">
-			          <!-- 📅 ÚLTIMA ACTUALITZACIÓ ACTAWP -->
-    <div style="margin-bottom: 15px; padding: 12px 16px; background: rgba(34, 211, 238, 0.08); border-radius: 8px; border-left: 3px solid #22d3ee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">📡</span>
-            <div>
-                <div style="color: #bae6fd; font-size: 11px; font-weight: 600; opacity: 0.8;">DADES FCN ACTAWP</div>
-                <div style="color: #93c5fd; font-size: 13px; margin-top: 2px;">
-                    Última actualització: <span id="lastUpdateTimeHome" style="font-weight: bold; color: #22d3ee;">Carregant...</span>
-                </div>
-            </div>
-        </div>
-        <span id="recentUpdateBadgeHome" style="display: none; background: #10b981; color: white; padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold;">
-            🟢 Actualitzat
-        </span>
-    </div>
                 <!-- ⭐ PASTILLES: Pròxim Partit + Classificació -->
     <div id="pastilles-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
         
@@ -1744,17 +1190,9 @@ body.theme-juvenil {
 <div id="last-results-mini" style="margin-bottom: 20px; padding: 12px; background: rgba(148, 163, 184, 0.05); border-radius: 8px; border-left: 3px solid #22d3ee;">
     <div style="color: #64748b; text-align: center; font-size: 12px;">Carregant últims resultats...</div>
 </div>
-
-<!-- ⭐ ESPERIT D'EQUIP -->
-<div id="team-spirit" style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 8px; color: white; text-align: center;">
-    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">💪 ESPERIT D'EQUIP</div>
-    <div id="team-spirit-content" style="font-size: 14px;">
-        <div style="color: rgba(255,255,255,0.8); font-size: 12px;">Carregant...</div>
-    </div>
-</div>
-
-<div class="card">
-    <div class="filter-bar">
+		
+				<div class="card">
+                    <div class="filter-bar">
                         <div class="filter-item">
                             <label class="filter-label">Buscar rival</label>
                             <input type="text" class="filter-input" id="filterRival" placeholder="Nombre del rival..." onkeyup="filterMatches()">
@@ -1859,7 +1297,7 @@ body.theme-juvenil {
     <!-- 2. Heatmap de Tiempo por Cuarto -->
     <div class="card">
         <h2 class="section-title">🔥 Heatmap: Tiempo por Cuarto</h2>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table class="comparison-table" id="timeHeatmapTable"></table>
         </div>
     </div>
@@ -1890,7 +1328,7 @@ body.theme-juvenil {
     <!-- 7. Análisis por Cuarto -->
     <div class="card">
         <h2 class="section-title">📊 Análisis de Rotación por Cuarto</h2>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table class="comparison-table" id="quarterAnalysisTable"></table>
         </div>
     </div>
@@ -1910,7 +1348,7 @@ body.theme-juvenil {
         <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
             Comparación de rendimiento: Primer cuarto vs Último cuarto
         </p>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table class="comparison-table" id="fatigueAnalysisTable"></table>
         </div>
     </div> -->
@@ -1994,9 +1432,9 @@ body.theme-juvenil {
         <!-- 8. Històric Detallat de Partits -->
         <div class="card">
             <h2 class="section-title">📋 Històric de Tots els Partits</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-    <table class="comparison-table" id="playerMatchHistoryTable" style="min-width: 800px;"></table>
-</div>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table" id="playerMatchHistoryTable"></table>
+            </div>
         </div>
 
     </div>
@@ -2035,7 +1473,7 @@ body.theme-juvenil {
     <!-- 5. Parades per Rival -->
     <div class="card">
         <h2 class="section-title">🏆 Rendiment per Rival</h2>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table class="comparison-table" id="goalkeeperByRivalTable"></table>
         </div>
     </div>
@@ -2129,7 +1567,7 @@ body.theme-juvenil {
             
             <!-- PRÒXIMS PARTITS -->
             <div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-			   <h3 class="section-title">📅 Pròxims Partits</h3>
+                <h3 class="section-title">📅 Pròxims Partits</h3>
                 <div id="actawp-upcoming-matches">
                     <p style="color: #bae6fd;">No hi ha pròxims partits programats</p>
                 </div>
@@ -2285,21 +1723,21 @@ body.theme-juvenil {
     </div>
 	
                     
- <div style="margin: 0 -20px 20px -20px;">
-    <h2 class="section-title" style="padding: 0 20px; margin-bottom: 10px;">📊 Estadísticas Completas del Partido</h2>
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 20px;">
+    <div class="card">
+    <h2 class="section-title">📊 Estadísticas Completas del Partido</h2>
+    <div style="overflow-x: auto;">
         <table class="comparison-table" id="singleMatchStatsTable"></table>
     </div>
-    <div style="margin: 20px 20px 0 20px; padding: 15px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 4px solid #22d3ee;">
-        <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 14px;">⭐ Criteris de Valoració MVP</h3>
-        <div style="font-size: 12px; color: #bae6fd; line-height: 1.8;">
-            <strong style="color: #22c55e;">Accions Positives:</strong><br>
-            • Gol normal/contraatac/H+/boya: +2 | Gol penalty: +1<br>
-            • Assistència: +1 | Robatori: +1 | Blocatge: +1 | Parada: +1 | Parada penal: +2 | Falta rebuda: +1<br><br>
-            <strong style="color: #ef4444;">Accions Negatives:</strong><br>
-            • Exclusió (normal o penalty): -1 | Penalty fallat: -2 | Pèrdua: -0.5 | Tir fallat: -0.5 | Infraccions 2m: -0.5 | Contrafalta: -0.75 | Gol rebut (porters): -0.5
-        </div>
+    <div style="margin-top: 20px; padding: 15px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 4px solid #22d3ee;">
+    <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 14px;">⭐ Criteris de Valoració MVP</h3>
+    <div style="font-size: 12px; color: #bae6fd; line-height: 1.8;">
+        <strong style="color: #22c55e;">Accions Positives:</strong><br>
+        • Gol normal/contraatac/H+/boya: +2 | Gol penalty: +1<br>
+        • Assistència: +1 | Robatori: +1 | Blocatge: +1 | Parada: +1 | Parada penal: +2 | Falta rebuda: +1<br><br>
+        <strong style="color: #ef4444;">Accions Negatives:</strong><br>
+        • Exclusió (normal o penalty): -1 | Penalty fallat: -2 | Pèrdua: -0.5 | Tir fallat: -0.5 | Infraccions 2m: -0.5 | Contrafalta: -0.75 | Gol rebut (porters): -0.5
     </div>
+</div>
 </div>
 
                 
@@ -2402,7 +1840,7 @@ body.theme-juvenil {
         <!-- NUEVO: Historial contra Rivales -->
         <div class="card">
             <h2 class="section-title">🎯 Historial contra Rivales</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table class="comparison-table" id="rivalsHistoryTable"></table>
             </div>
         </div>
@@ -2428,7 +1866,7 @@ body.theme-juvenil {
 
         <div class="card">
     <h2 class="section-title">📊 Comparación de Estadísticas</h2>
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <div style="overflow-x: auto;">
         <table class="comparison-table" id="comparisonTable"></table>
     </div>
     <div style="margin-top: 20px; padding: 15px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 4px solid #22d3ee;">
@@ -2438,7 +1876,7 @@ body.theme-juvenil {
         • Gol normal/contraatac/H+/boya: +2 | Gol penalty: +1<br>
         • Assistència: +1 | Robatori: +1 | Blocatge: +1 | Parada: +1 | Parada penal: +2 | Falta rebuda: +1<br><br>
         <strong style="color: #ef4444;">Accions Negatives:</strong><br>
-        • Exclusió (normal o penalty): -1 | Penalty fallat: -2 | Pèrdua: -0.5 | Tir fallat: -0.5 |Infraccions 2m(-0.5)| Contrafalta: -0.75 | Gol rebut (porters): -0.5
+        • Exclusió (normal o penalty): -1 | Penalty fallat: -2 | Pèrdua: -0.5 | Tir fallat: -0.5 |Infraccions 2m(-0.5)| Gol rebut (porters): -0.5
     </div>
 </div>
 </div>
@@ -2466,14 +1904,6 @@ body.theme-juvenil {
             🖨️ Imprimir / Exportar PDF
         </button>
     </div>-->
-	
-    <div class="card">
-        <h2 class="section-title">⏰ Equipo tipo titular</h2>
-        <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
-            ¿Que jugadores han sido más veces titulares?
-        </p>
-        <div id="quarterPatternsGrid" class="stats-grid"></div>
-    </div>
     <div class="card">
         <h2 class="section-title">🔥 Heatmap de Titularidades</h2>
         <canvas id="titularityHeatmapChart" style="max-height: 400px;"></canvas>
@@ -2494,7 +1924,7 @@ body.theme-juvenil {
         <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
             Media de goles y exclusiones cuando son titulares vs suplentes
         </p>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table class="comparison-table" id="performanceTable"></table>
         </div>
     </div>
@@ -2503,7 +1933,14 @@ body.theme-juvenil {
         <div id="titularView"></div>
     </div>
     
-   
+    <!-- Patrones por Cuarto - MOVIDO AL FINAL -->
+    <div class="card">
+        <h2 class="section-title">⏰ Equipo tipo titular</h2>
+        <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
+            ¿Que jugadores han sido más veces titulares?
+        </p>
+        <div id="quarterPatternsGrid" class="stats-grid"></div>
+    </div>
 </div>
 
     <script>
@@ -2512,112 +1949,119 @@ body.theme-juvenil {
         let currentMatch = null;
 		let matchesWithTime = []; 
         window.addEventListener('DOMContentLoaded', async () => {
-        await loadAllMatches(localStorage.getItem('selectedTeam') || 'juvenil');
+            await loadAllMatches();
         });
 
   async function loadAllMatches(team = 'juvenil') {
     try {
-        console.log('🎯 Iniciando carga de partidos para:', team);
+        console.log('Iniciando carga de partidos para:', team);
         
-        // ✅ URL base segons l'equip
-        const baseUrls = {
-            cadet: 'https://joseprico.github.io/cnt_cadet_25-26/',
-            juvenil: 'https://joseprico.github.io/CNT_juvenil_25_26/'
+        // ✅ SELECCIONAR EL REPOSITORI SEGONS L'EQUIP
+        const repos = {
+            cadet: 'joseprico/cnt_cadet_25-26',
+            juvenil: 'joseprico/CNT_juvenil_25_26'
         };
         
-        const baseUrl = baseUrls[team];
-        console.log('🌐 Base URL:', baseUrl);
+        const selectedRepo = repos[team];
+        console.log('Repositorio seleccionado:', selectedRepo);
         
-        // ⭐ CARREGAR DES D'INDEX.JSON (sense token, sense rate limit)
-        console.log('📥 Cargando lista de archivos desde index.json...');
-        const indexResponse = await fetch(`${baseUrl}index.json?t=${Date.now()}`); // Cache buster
+        const response = await fetch(`https://api.github.com/repos/${selectedRepo}/contents/`);
         
-        if (!indexResponse.ok) {
-            throw new Error(`Error cargando index.json: ${indexResponse.status}`);
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
         }
         
-        const indexData = await indexResponse.json();
-        const jsonFiles = indexData.files || [];
+        const files = await response.json();
+        console.log('Archivos encontrados:', files.length);
         
-        console.log('✅ Archivos encontrados en index.json:', jsonFiles.length);
-        console.log('📄 Lista de archivos:', jsonFiles);
-        console.log('📅 Última actualización:', indexData.last_updated);
+        // Filtro estricto - solo archivos con datos de tiempo
+        const jsonFiles = files.filter(f => {
+            if (f.type !== 'file') return false;
+            if (!f.name.startsWith('cnt_stats_')) return false;
+            if (!f.name.endsWith('.json')) return false;
+            
+            // Excluir archivos genéricos o de prueba
+            if (f.name.includes('example')) return false;
+            if (f.name.includes('template')) return false;
+            if (f.name.includes('plantilla')) return false;
+            if (f.name === 'cnt_stats_.json') return false;
+            
+            return true;
+        });
+        
+        console.log('Archivos JSON de partidos:', jsonFiles.length);
+        console.log('Nombres:', jsonFiles.map(f => f.name));
 
         if (jsonFiles.length === 0) {
-            throw new Error('No se encontraron archivos en index.json. Verifica que el GitHub Action se haya ejecutado correctamente.');
+            throw new Error('No se encontraron archivos de partidos (cnt_stats_*.json)');
         }
 
-        // Carregar cada fitxer JSON
-        const promises = jsonFiles.map(async fileName => {
-            console.log('📥 Cargando archivo:', fileName);
-            const fileUrl = `${baseUrl}${fileName}`;
-            
-            try {
-                const res = await fetch(fileUrl);
-                
-                if (!res.ok) {
-                    console.warn(`⚠️ Error cargando ${fileName}: ${res.status}`);
-                    return null;
-                }
-                
-                const matchData = await res.json();
-                normalizeAllPlayers(matchData);
-
-                // Normalitzar estadístiques
-                (matchData.jugadors || []).forEach(p => {
-                    p.estadistiques = p.estadistiques || {};
-                    p.estadistiques.paradeTypes = {
-                        corner: 0, rebuig: 0, atrapa: 0, penal: 0,
-                        ...(p.estadistiques.paradeTypes || {})
-                    };
-                });
-                
-                if (!matchData.data || !matchData.rivalTeam) {
-                    console.warn('⚠️ Archivo con estructura incorrecta:', fileName);
-                }
-                
-                return matchData;
-            } catch (error) {
-                console.error(`❌ Error procesando ${fileName}:`, error);
-                return null;
+        const promises = jsonFiles.map(async file => {
+            console.log('Cargando archivo:', file.name);
+            const res = await fetch(file.download_url);
+            if (!res.ok) {
+                throw new Error(`Error cargando ${file.name}: ${res.status}`);
             }
+            const matchData = await res.json();
+            normalizeAllPlayers(matchData);
+
+            // Normalitza estadístiques de tots els jugadors perquè no peti si falten camps
+            (matchData.data?.players || []).forEach(p => {
+                p.estadistiques = p.estadistiques || {};
+                p.estadistiques.paradeTypes = {
+                    corner: 0, rebuig: 0, atrapa: 0, penal: 0,
+                    ...(p.estadistiques.paradeTypes || {})
+                };
+            });
+            
+            // Verificar que tiene la estructura correcta
+            if (!matchData.data || !matchData.rivalTeam) {
+                console.warn('Archivo con estructura incorrecta:', file.name, matchData);
+            }
+            
+            return matchData;
         });
 
-        const results = await Promise.all(promises);
-        allMatches = results.filter(m => m !== null); // Filtrar nulls
+        allMatches = await Promise.all(promises);
 
-        // Filtrar partits vàlids
+        // Filtrar partidos válidos con nombre de rival completo
         allMatches = allMatches.filter(m => {
+            // Verificar estructura básica
             if (!m || !m.data || m.scoreCNT === undefined || m.scoreRival === undefined) {
-                console.warn('⚠️ Partido sin estructura básica');
+                console.warn('Partido sin estructura básica:', m);
                 return false;
             }
             
+            // Verificar que el nombre del rival no sea genérico
             if (!m.rivalTeam || m.rivalTeam.toLowerCase() === 'rival' || m.rivalTeam.trim() === '') {
-                console.warn('⚠️ Partido sin nombre de rival válido:', m.rivalTeam);
+                console.warn('Partido sin nombre de rival válido:', m.rivalTeam);
                 return false;
             }
             
+            // Verificar que tenga jugadores
             if (!m.jugadors || m.jugadors.length === 0) {
-                console.warn('⚠️ Partido sin jugadores');
+                console.warn('Partido sin jugadores:', m);
                 return false;
             }
             
+            // Verificar que tenga marcadores por periodo
             if (!m.periodScores) {
-                console.warn('⚠️ Partido sin marcadores por periodo');
+                console.warn('Partido sin marcadores por periodo:', m);
                 return false;
             }
             
             return true;
         });
 
-        console.log('✅ Partidos válidos cargados:', allMatches.length);
+        console.log('Partidos válidos después del filtrado:', allMatches.length);
         
-        // Ordenar per data (més recent primer)
+        console.log('Partidos válidos cargados:', allMatches.length);
+        
+        // Ordenar por fecha de forma más robusta
         allMatches.sort((a, b) => {
             const dateA = new Date(a.data).getTime();
             const dateB = new Date(b.data).getTime();
-            return dateB - dateA;
+            return dateB - dateA; // Más reciente primero
         });
         
         filteredMatches = [...allMatches];
@@ -2628,27 +2072,19 @@ body.theme-juvenil {
         displayMatchesList();
         displayComparison();
         displayTitularStats();
-        initializePlayerSelector();
-        document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26 • ${allMatches.length} partits`;
-        
-        // Carregar dades ACTAWP
-        await loadActawpData(team);
-        
-        setTimeout(() => {
+		initializePlayerSelector();
+		document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26 • ${allMatches.length} partits`;
+		setTimeout(() => {
             showTab('list');
         }, 200);
-        
     } catch (error) {
-        console.error('❌ Error detallado:', error);
+        console.error('Error detallado:', error);
         document.getElementById('loadingMatches').innerHTML = `
             <div class="no-data">
                 <p style="color: #ef4444; font-weight: bold;">❌ Error al cargar los partidos</p>
                 <p style="font-size: 14px; margin-top: 10px; color: #fbbf24;">${error.message}</p>
                 <p style="font-size: 12px; margin-top: 10px; color: #bae6fd;">
-                    Posibles causas:<br>
-                    • El archivo index.json no existe en el repositorio<br>
-                    • El GitHub Action no se ha ejecutado todavía<br>
-                    • GitHub Pages tarda unos segundos en actualizar
+                    Verifica la consola del navegador (F12) para más detalles
                 </p>
                 <button class="btn" onclick="loadAllMatches('${team}')" style="margin-top: 15px;">
                     🔄 Reintentar
@@ -2780,10 +2216,7 @@ function getQuarterEndTime(match, quarter, quarterStartTime, quarterDuration) {
 }
 
 function showTab(tabName) {
-    if (tabName !== 'list') {
-        stopCountdownTimer();
-    }
-	// Eliminar active de tots els tabs
+    // Eliminar active de tots els tabs
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     if (event && event.target) {
         event.target.classList.add('active');
@@ -3764,16 +3197,15 @@ function sortSingleMatchTable(column) {
    };
     table.innerHTML = `
      <thead>
-<tr>
-    <th rowspan="2" onclick="sortSingleMatchTable('num')" style="cursor: pointer; vertical-align: middle;">Nº${getSortIndicator('num')}</th>
-    <th rowspan="2" onclick="sortSingleMatchTable('nom')" style="cursor: pointer; vertical-align: middle;">Jugador${getSortIndicator('nom')}</th>
-    <th rowspan="2" onclick="sortSingleMatchTable('gols')" style="cursor: pointer; vertical-align: middle;">Gols${getSortIndicator('gols')}</th>
-    
+    <tr>
+        <th rowspan="2" onclick="sortSingleMatchTable('num')" style="cursor: pointer; vertical-align: middle;">Nº${getSortIndicator('num')}</th>
+        <th rowspan="2" onclick="sortSingleMatchTable('nom')" style="cursor: pointer; vertical-align: middle;">Jugador${getSortIndicator('nom')}</th>
+        <th rowspan="2" onclick="sortSingleMatchTable('gols')" style="cursor: pointer; vertical-align: middle;">Gols${getSortIndicator('gols')}</th>
         <th colspan="5" style="background: rgba(34, 211, 238, 0.2); text-align: center;" title="Tipus de Gols">🎯 TIPUS GOLS</th>
         <th colspan="6" style="background: rgba(34, 197, 94, 0.2); text-align: center;" title="Accions Positives">✅ POSITIVES</th>
-        <th colspan="5" style="background: rgba(239, 68, 68, 0.2); text-align: center;" title="Accions Negatives">❌ NEGATIVES</th>
-		<th rowspan="2" onclick="sortSingleMatchTable('eficiencia')" style="cursor: pointer; vertical-align: middle;">Efic%${getSortIndicator('eficiencia')}</th>
-             <th rowspan="2" onclick="sortSingleMatchTable('valor')" style="cursor: pointer; vertical-align: middle;">⭐ Valor${getSortIndicator('valor')}</th>
+        <th colspan="6" style="background: rgba(239, 68, 68, 0.2); text-align: center;" title="Accions Negatives">❌ NEGATIVES</th>
+        <th rowspan="2" onclick="sortSingleMatchTable('eficiencia')" style="cursor: pointer; vertical-align: middle;">Efic%${getSortIndicator('eficiencia')}</th>
+        <th rowspan="2" onclick="sortSingleMatchTable('valor')" style="cursor: pointer; vertical-align: middle;">⭐ Valor${getSortIndicator('valor')}</th>
     </tr>
     <tr style="font-size: 11px;">
         <!-- Tipus de Gols (5 columnes) -->
@@ -5436,9 +4868,6 @@ function renderQuarterPatterns() {
     
     const totalQuarters = allMatches.length * 4;
     
-    // Calcular percentatges
-    const goalkeeperPercent = ((goalkeeper.starts / totalQuarters) * 100).toFixed(0);
-    
     container.innerHTML = `
         <div class="pool-container">
             <div class="pool-goal">
@@ -5451,34 +4880,45 @@ function renderQuarterPatterns() {
                     <div class="pool-player">
                         <div class="pool-player-num" style="background: #8b5cf6;">${goalkeeper.num}</div>
                         <div class="pool-player-name">${goalkeeper.name.split(' ')[0]}</div>
-                        <div class="pool-player-stat">${goalkeeper.starts} titularitats (${goalkeeperPercent}%)</div>
+                        <div class="pool-player-stat">
+                            ${goalkeeper.starts} titularitats
+                        </div>
+                        <div class="pool-player-stat" style="color: #fde047; font-weight: bold;">
+                            ${((goalkeeper.starts / totalQuarters) * 100).toFixed(0)}%
+                        </div>
                     </div>
                 </div>
                 
-                <div class="pool-midfield">⚡ LÍNEA MITJA ⚡</div>
-                
-                <!-- Jugadors de camp (3+3) -->
+                <!-- Jugadors de camp -->
                 <div class="pool-field-players">
-                    ${fieldPlayers.map(p => {
-                        const percent = ((p.starts / totalQuarters) * 100).toFixed(0);
+                    ${fieldPlayers.map((p, index) => {
+                        const percentage = ((p.starts / totalQuarters) * 100).toFixed(0);
+                        const opacity = 0.5 + (percentage / 100) * 0.5; // Més opac = més titular
                         return `
-                            <div class="pool-player">
+                            <div class="pool-player" style="opacity: ${opacity};">
                                 <div class="pool-player-num">${p.num}</div>
                                 <div class="pool-player-name">${p.name.split(' ')[0]}</div>
-                                <div class="pool-player-stat">${p.starts} (${percent}%)</div>
+                                <div class="pool-player-stat">
+                                    ${p.starts} titular${p.starts !== 1 ? 's' : ''}
+                                </div>
+                                <div class="pool-player-stat" style="color: #fde047; font-weight: bold;">
+                                    ${percentage}%
+                                </div>
                             </div>
                         `;
                     }).join('')}
                 </div>
             </div>
             
-            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed rgba(255, 255, 255, 0.3);">
-                <div style="font-size: 11px; color: #bae6fd;">
-                    💡 Basado en ${allMatches.length} partido${allMatches.length !== 1 ? 's' : ''} 
-                    (${totalQuarters} cuartos totales)
-                </div>
+            <div class="pool-midfield">
+                ━━━━━━━━━ MIG CAMP ━━━━━━━━━
             </div>
         </div>
+        
+        <p style="font-size: 12px; color: #bae6fd; margin-top: 15px; text-align: center;">
+            🏊‍♂️ Els 7 jugadors que més vegades han estat titulars<br>
+            Total de quarts analitzats: ${totalQuarters}
+        </p>
     `;
 }
 
@@ -6119,7 +5559,7 @@ function renderSwimRacesStats() {
     return `
         <div class="card">
             <h2 class="section-title">🏊 Estadístiques de Curses Inicials</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table class="comparison-table">
                     <thead>
                         <tr>
@@ -8071,7 +7511,7 @@ function showPlayerPlusMinusDetail() {
             <div style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">
                 ${player.intervals} intervals • Mitjana: ${player.avgPlusMinus > 0 ? '+' : ''}${player.avgPlusMinus} per interval
             </div>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
                     <thead>
                         <tr style="background: rgba(255,255,255,0.1);">
@@ -8989,9 +8429,9 @@ function renderComparisonTable(players, clickable = false, tableId = 'comparison
 <tr>
         <th rowspan="2" onclick="sortTable('num', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Nº${getSortIndicator('num')}</th>
         <th rowspan="2" onclick="sortTable('name', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Jugador${getSortIndicator('name')}</th>
-        <th rowspan="2" onclick="sortTable('partidos', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Part${getSortIndicator('partidos')}</th>
+        <th rowspan="2" onclick="sortTable('partidos', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Partidos${getSortIndicator('partidos')}</th>
         <th rowspan="2" onclick="sortTable('gols', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Goles${getSortIndicator('gols')}</th>
-        <th colspan="5" style="background: rgba(34, 211, 238, 0.2); text-align: center;" title="Tipus de Gols">🎯 TIPUS GOLSs</th>
+        <th colspan="5" style="background: rgba(34, 211, 238, 0.2); text-align: center;" title="Tipus de Gols">🎯 TIPUS GOLS</th>
         <th colspan="5" style="background: rgba(34, 197, 94, 0.2); text-align: center;" title="Accions Positives">✅ POSITIVES</th>
         <th colspan="6" style="background: rgba(239, 68, 68, 0.2); text-align: center;" title="Accions Negatives">❌ NEGATIVES</th>
         <th rowspan="2" onclick="sortTable('eficienciaTir', '${tableId}')" style="cursor: pointer; vertical-align: middle;">🎯 Efic.${getSortIndicator('eficienciaTir')}</th>
@@ -9403,7 +8843,7 @@ function renderSwimRacesStats() {
     return `
         <div class="card">
             <h2 class="section-title">🏊 Estadístiques de Curses Inicials</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table class="comparison-table">
                     <thead>
                         <tr>
@@ -9919,7 +9359,7 @@ function initializePlayerSelector() {
             <p style="color: #bae6fd; margin-bottom: 20px; font-size: 14px;">
                 Fes clic sobre un jugador per veure les seves estadístiques detallades
             </p>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table class="comparison-table" id="comparisonTableIndividual"></table>
             </div>
         </div>
@@ -10059,9 +9499,9 @@ function showIndividualPlayerDetails(player) {
         
         <div class="card">
             <h2 class="section-title">📊 Rendiment per Rival</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-    <table class="comparison-table" id="goalkeeperByRivalTable" style="min-width: 800px;"></table>
-</div>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table" id="goalkeeperByRivalTable"></table>
+            </div>
         </div>
         
         <div class="card">
@@ -10130,7 +9570,7 @@ function showIndividualPlayerDetails(player) {
         
         <div class="card">
             <h2 class="section-title">📜 Historial de Partits</h2>
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="overflow-x: auto;">
                 <table class="comparison-table" id="playerMatchHistoryTable"></table>
             </div>
         </div>
@@ -11557,14 +10997,11 @@ async function loadActawpData(team = 'juvenil') {
 // Funció per mostrar l'última actualització i detectar canvis recents
 async function checkLastUpdate() {
     try {
-        // ⭐ ACTUALITZAR AMBDUES UBICACIONS: Tab ACTAWP i Tab Inici
         const timeSpan = document.getElementById('lastUpdateTime');
-        const timeSpanHome = document.getElementById('lastUpdateTimeHome');
         const badge = document.getElementById('recentUpdateBadge');
-        const badgeHome = document.getElementById('recentUpdateBadgeHome');
         
-        if (!timeSpan && !timeSpanHome) {
-            console.log('⚠️ Elements lastUpdateTime no trobats');
+        if (!timeSpan) {
+            console.log('⚠️ Element lastUpdateTime no trobat');
             return;
         }
         
@@ -11575,7 +11012,7 @@ async function checkLastUpdate() {
             const hoursDiff = (now - updateDate) / (1000 * 60 * 60);
             
             console.log('✅ Last update trobat:', actawpData.last_update);
-            console.log(`⏱️ Hores de diferència: ${hoursDiff.toFixed(1)}h`);
+            console.log(`⏱️ Hores de diferència: ${hoursDiff.toFixed(1)}h`);  // ⭐ ARREGLAT: backticks
             
             // Mostrar data formatada EN HORA CATALANA
             const options = { 
@@ -11584,104 +11021,72 @@ async function checkLastUpdate() {
                 year: 'numeric', 
                 hour: '2-digit', 
                 minute: '2-digit',
-                timeZone: 'Europe/Madrid'
+                timeZone: 'Europe/Madrid'  // ⭐ AFEGIT
             };
-            const formattedDate = updateDate.toLocaleString('ca-ES', options);
+            timeSpan.textContent = updateDate.toLocaleString('ca-ES', options);
             
             // Sistema de colors segons l'antiguitat
             let badgeColor, badgeText, badgeIcon, timeColor;
             
             if (hoursDiff < 2) {
-                badgeColor = '#10b981';
+                // Menys de 2 hores - VERD (acabat d'actualitzar)
+                badgeColor = '#10b981'; // green-500
                 badgeText = 'Actualitzat recentment';
                 badgeIcon = '🟢';
-                timeColor = '#22d3ee';
+                timeColor = '#22d3ee'; // cyan-400
             } else if (hoursDiff < 5) {
-                badgeColor = '#f59e0b';
+                // Entre 2-5 hores - GROC (normal)
+                badgeColor = '#f59e0b'; // amber-500
                 badgeText = 'Dades recents';
                 badgeIcon = '🟡';
                 timeColor = '#22d3ee';
             } else if (hoursDiff < 12) {
-                badgeColor = '#f97316';
+                // Entre 5-12 hores - TARONJA (una mica antic)
+                badgeColor = '#f97316'; // orange-500
                 badgeText = 'Pendent actualització';
                 badgeIcon = '🟠';
-                timeColor = '#fbbf24';
+                timeColor = '#fbbf24'; // amber-400
             } else {
-                badgeColor = '#ef4444';
+                // Més de 12 hores - VERMELL (molt antic)
+                badgeColor = '#ef4444'; // red-500
                 badgeText = 'Dades antigues';
                 badgeIcon = '🔴';
                 timeColor = '#ef4444';
             }
             
-            // ⭐ ACTUALITZAR TAB ACTAWP
-            if (timeSpan) {
-                timeSpan.textContent = formattedDate;
-                timeSpan.style.color = timeColor;
-            }
+            timeSpan.style.color = timeColor;
             
-            // ⭐ ACTUALITZAR TAB INICI
-            if (timeSpanHome) {
-                timeSpanHome.textContent = formattedDate;
-                timeSpanHome.style.color = timeColor;
-            }
-            
-            // ⭐ ACTUALITZAR BADGES (ambdues ubicacions)
-            [badge, badgeHome].forEach(b => {
-                if (b) {
-                    b.style.display = 'inline-block';
-                    b.style.background = badgeColor;
-                    b.innerHTML = `${badgeIcon} ${badgeText}`;
-                    
-                    if (hoursDiff < 2) {
-                        setTimeout(() => {
-                            b.style.display = 'none';
-                        }, 10000);
-                    }
+            // Mostrar badge amb el color corresponent
+            if (badge) {
+                badge.style.display = 'inline-block';
+                badge.style.background = badgeColor;
+                badge.innerHTML = `${badgeIcon} ${badgeText}`;
+                
+                // Només amagar el badge si és verd (recent)
+                if (hoursDiff < 2) {
+                    setTimeout(() => {
+                        badge.style.display = 'none';
+                    }, 10000);
                 }
-            });
+            }
         } else {
             console.log('⚠️ actawpData no té last_update');
-            if (timeSpan) {
-                timeSpan.textContent = 'Actualització automàtica cada 30min';
-                timeSpan.style.color = '#93c5fd';
-            }
-            if (timeSpanHome) {
-                timeSpanHome.textContent = 'Actualització automàtica cada 30min';
-                timeSpanHome.style.color = '#93c5fd';
-            }
+            timeSpan.textContent = 'Actualització automàtica cada 4h';
+            timeSpan.style.color = '#93c5fd';
         }
     } catch (error) {
         console.error('❌ Error checking last update:', error);
         const timeSpan = document.getElementById('lastUpdateTime');
-        const timeSpanHome = document.getElementById('lastUpdateTimeHome');
-        
         if (timeSpan) {
             timeSpan.textContent = 'Error carregant data';
             timeSpan.style.color = '#ef4444';
-        }
-        if (timeSpanHome) {
-            timeSpanHome.textContent = 'Error carregant data';
-            timeSpanHome.style.color = '#ef4444';
         }
     }
 }
 
 function displayUpcomingMatches() {
     const matches = actawpData.upcoming_matches || [];
-// ✅ ORDENAR PER DATA (més proper primer)
-const sortedMatches = [...matches].sort((a, b) => {
-    const dateA = parseActawpDate(a.date_time);
-    const dateB = parseActawpDate(b.date_time);
-    return dateA - dateB;
-});   
-   function parseActawpDate(dateTimeStr) {
-    if (!dateTimeStr) return new Date(9999, 0, 1);
-    const match = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-    if (!match) return new Date(9999, 0, 1);
-    const [_, day, month, year, hour, minute] = match;
-    return new Date(year, month - 1, day, hour, minute);
-}
-   const container = document.getElementById('actawp-upcoming-matches');
+    const container = document.getElementById('actawp-upcoming-matches');
     
     if (matches.length === 0) {
         container.innerHTML = '<p style="color: #bae6fd;">No hi ha pròxims partits programats</p>';
@@ -11689,105 +11094,7 @@ const sortedMatches = [...matches].sort((a, b) => {
     }
     
     let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
-	// Botó per descarregar tots els partits
-    html += `
-        <div style="text-align: center; margin-bottom: 15px;">
-            <button onclick="window.downloadAllUpcomingMatches()" style="padding: 10px 20px; background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 2px solid #a855f7; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: inherit; font-weight: bold;">
-                📅 Descarregar tots els partits al teu calendari Google o Apple
-            </button>
-        </div>
-    `;
-    // Funció per generar fitxer ICS
- function generateICS(match, isHome, rival) {
-        let dateStr = match.date || match.date_time || '';
-        const timeStr = match.time || '';
-        const venue = match.venue || '';
-        
-        // Eliminar dia de la setmana: "Dom 09/11/2025" -> "09/11/2025"
-        dateStr = dateStr.replace(/^[A-Za-zàèéíòóúçÀÈÉÍÒÓÚÇ]+\s+/, '');
-        
-        let dtstart = '';
-        let dtend = '';
-        
-        if (dateStr && timeStr && dateStr.includes('/') && timeStr.includes(':')) {
-            const dateParts = dateStr.trim().split('/');
-            const timeParts = timeStr.trim().split(':');
-            
-            if (dateParts.length === 3 && timeParts.length >= 2) {
-                const day = parseInt(dateParts[0], 10);
-                const month = parseInt(dateParts[1], 10) - 1; // 0-indexed
-                const year = parseInt(dateParts[2], 10);
-                const hours = parseInt(timeParts[0], 10);
-                const minutes = parseInt(timeParts[1], 10);
-                
-                // Validar que tots els valors són números vàlids
-                if (!isNaN(day) && !isNaN(month) && !isNaN(year) && !isNaN(hours) && !isNaN(minutes)) {
-                    const startDate = new Date(year, month, day, hours, minutes, 0);
-                    
-                    // Validar que la data és vàlida
-                    if (startDate && startDate.getTime && !isNaN(startDate.getTime())) {
-                        const endDate = new Date(startDate.getTime() + 90 * 60000); // +90 minuts
-                        
-                        try {
-                            dtstart = startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-                            dtend = endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-                        } catch (e) {
-                            console.error('Error converting date to ISO:', e);
-                        }
-                    }
-                }
-            }
-        }
-        
-        const homeTeam = match.home_team || match.team1 || '?';
-        const awayTeam = match.away_team || match.team2 || '?';
-        const summary = `${homeTeam} vs ${awayTeam}`;
-        const location = venue || '';
-        const description = `Partit de waterpolo - ${isHome ? 'Local' : 'Visitant'}`;
-        const uid = `match-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@cnterrassa.com`;
-        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-        
-        const icsLines = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//CN Terrassa//Water Polo Stats//EN',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            'BEGIN:VEVENT',
-            `UID:${uid}`,
-            `DTSTAMP:${dtstamp}`
-        ];
-        
-        if (dtstart) icsLines.push(`DTSTART:${dtstart}`);
-        if (dtend) icsLines.push(`DTEND:${dtend}`);
-        
-        icsLines.push(
-            `SUMMARY:${summary}`,
-            location ? `LOCATION:${location}` : null,
-            `DESCRIPTION:${description}`,
-            'STATUS:CONFIRMED',
-            'END:VEVENT',
-            'END:VCALENDAR'
-        );
-        
-        return icsLines.filter(line => line !== null).join('\r\n');
-    }
     
-    function downloadICS(match, isHome, rival) {
-        const icsContent = generateICS(match, isHome, rival);
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        
-        const date = match.date || match.date_time || 'partit';
-        const fileName = `CNTerrassa-${date.replace(/\//g, '-')}.ics`;
-        link.download = fileName;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
     matches.forEach((match, index) => {
         const date = match.date || match.date_time || 'Data desconeguda';
         const time = match.time || '';
@@ -11819,173 +11126,49 @@ const sortedMatches = [...matches].sort((a, b) => {
         const locationText = isHome ? 'Local' : 'Visitant';
         
         html += `
-                <div style="background: rgba(34, 211, 238, 0.1); border-left: 4px solid #22d3ee; border-radius: 8px; padding: 12px;">
-                    <!-- Data i hora -->
-                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
-                        <strong>Jornada ${match.jornada || '?'}</strong> • 📅 ${date} ${time ? `• ⏰ ${time}` : ''}
-                    </div>
-                    
-                    <!-- Equips en vertical -->
-                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
-                        <!-- Equip Local -->
-                        <div style="font-size: 15px; font-weight: ${isHome ? 'bold' : 'normal'}; color: ${isHome ? '#bae6fd' : '#94a3b8'}; display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center;">
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #22d3ee;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <div style="font-size: 14px; color: #bae6fd; margin-bottom: 5px;">
+                            📅 ${date} ${time ? `• ⏰ ${time}` : ''}
+                        </div>
+                        <div style="font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
                             ${homeLogoHtml}
                             <span>${homeTeam}</span>
-                        </div>
-                        
-                        <!-- VS i icona -->
-                        <div style="display: flex; align-items: center; gap: 12px; margin: 4px 0;">
-                            <span style="color: #67e8f9; font-size: 18px;">vs</span>
-                            <span style="font-size: 32px;">${locationIcon}</span>
-                        </div>
-                        
-                        <!-- Equip Visitant -->
-                        <div style="font-size: 15px; font-weight: ${!isHome ? 'bold' : 'normal'}; color: ${!isHome ? '#bae6fd' : '#94a3b8'}; display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center;">
-                            ${awayLogoHtml}
+                            <span style="color: #67e8f9;">vs</span>
                             <span>${awayTeam}</span>
+                            ${awayLogoHtml}
+                            <span style="font-size: 32px; line-height: 1;">${locationIcon}</span>
                         </div>
+                        <div style="font-size: 13px; color: #94a3b8; margin-top: 5px;">
+                            ${locationIcon} ${locationText}
+                        </div>
+                        ${venue ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 3px;">📍 ${venue}</div>` : ''}
                     </div>
-                    
-                    <!-- Ubicació i estat -->
-                    ${venue ? `<div style="font-size: 11px; color: #94a3b8; margin-top: 8px; text-align: center;">📍 ${venue}</div>` : ''}
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; text-align: center;">
-                        ${locationIcon} ${locationText}
-                    </div>
-                    
-                    <!-- Botó -->
-                    <div style="text-align: center; margin-top: 12px;">
-                        <a href="${url}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #06b6d4; color: white; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 13px;">
-                            Veure més →
-                        </a>
-                    </div>
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" style="background: #06b6d4; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+                        Veure més →
+                    </a>
                 </div>
-            `;
+            </div>
+        `;
+    });
     
-    // Crear funció per aquest partit
-      
-	});
     html += '</div>';
     container.innerHTML = html;
-	// Guardar matches en una variable accessible globalment
-    const matchesToDownload = matches;
-    
-    // Funció global per descarregar tots els partits en UN SOL FITXER
-    window.downloadAllUpcomingMatches = function() {
-        // Començar el fitxer ICS
-        let icsLines = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//CN Terrassa//Water Polo Stats//EN',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH'
-        ];
-        
-        // Afegir cada partit com un VEVENT
-        matchesToDownload.forEach(match => {
-            const homeTeam = match.home_team || match.team1 || '?';
-            const awayTeam = match.away_team || match.team2 || '?';
-            const isHome = homeTeam.toUpperCase().includes('TERRASSA');
-            const rival = isHome ? awayTeam : homeTeam;
-            
-            let dateStr = match.date || match.date_time || '';
-            const timeStr = match.time || '';
-            const venue = match.venue || '';
-            
-            // Eliminar dia de la setmana
-            dateStr = dateStr.replace(/^[A-Za-zàèéíòóúçÀÈÉÍÒÓÚÇ]+\s+/, '');
-            
-            let dtstart = '';
-            let dtend = '';
-            
-            if (dateStr && timeStr && dateStr.includes('/') && timeStr.includes(':')) {
-                const dateParts = dateStr.trim().split('/');
-                const timeParts = timeStr.trim().split(':');
-                
-                if (dateParts.length === 3 && timeParts.length >= 2) {
-                    const day = parseInt(dateParts[0], 10);
-                    const month = parseInt(dateParts[1], 10) - 1;
-                    const year = parseInt(dateParts[2], 10);
-                    const hours = parseInt(timeParts[0], 10);
-                    const minutes = parseInt(timeParts[1], 10);
-                    
-                    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && !isNaN(hours) && !isNaN(minutes)) {
-                        const startDate = new Date(year, month, day, hours, minutes, 0);
-                        
-                        if (startDate && !isNaN(startDate.getTime())) {
-                            const endDate = new Date(startDate.getTime() + 90 * 60000);
-                            
-                            try {
-                                dtstart = startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-                                dtend = endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-                            } catch (e) {
-                                console.error('Error converting date:', e);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Afegir VEVENT per aquest partit
-            const summary = `${homeTeam} vs ${awayTeam}`;
-            const description = `Partit de waterpolo - ${isHome ? 'Local' : 'Visitant'}`;
-            const uid = `match-${dateStr.replace(/\//g, '')}-${timeStr.replace(/:/g, '')}-${Math.random().toString(36).substr(2, 9)}@cnterrassa.com`;
-            const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-            
-            icsLines.push('BEGIN:VEVENT');
-            icsLines.push(`UID:${uid}`);
-            icsLines.push(`DTSTAMP:${dtstamp}`);
-            if (dtstart) icsLines.push(`DTSTART:${dtstart}`);
-            if (dtend) icsLines.push(`DTEND:${dtend}`);
-            icsLines.push(`SUMMARY:${summary}`);
-            if (venue) icsLines.push(`LOCATION:${venue}`);
-            icsLines.push(`DESCRIPTION:${description}`);
-            icsLines.push('STATUS:CONFIRMED');
-            icsLines.push('END:VEVENT');
-        });
-        
-        // Tancar el fitxer ICS
-        icsLines.push('END:VCALENDAR');
-        
-        // Crear i descarregar el fitxer
-        const icsContent = icsLines.join('\r\n');
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'CNTerrassa-ProximsPartits.ics';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    };
 }
 
 function displayLastResults() {
     const results = actawpData.last_results || [];
-	// ✅ ORDENAR PER DATA (més recent primer)
-const sortedResults = [...results].sort((a, b) => {
-    const dateA = parseActawpDate(a.date_time || '');
-    const dateB = parseActawpDate(b.date_time || '');
-    return dateB - dateA; // Ordre invers (més recent primer)
-});
-
-function parseActawpDate(dateTimeStr) {
-    if (!dateTimeStr) return new Date(0);
-    const match = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-    if (!match) return new Date(0);
-    const [_, day, month, year] = match;
-    return new Date(year, month - 1, day);
-}
     const container = document.getElementById('actawp-last-results');
     
-    if (sortedResults.length === 0) {
+    if (results.length === 0) {
         container.innerHTML = '<p style="color: #bae6fd;">No hi ha resultats recents</p>';
         return;
     }
     
     let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
     
-    sortedResults.forEach((result, index) => {
+    results.forEach((result, index) => {
         const homeTeam = result.home_team || result.team1 || '?';
         const awayTeam = result.away_team || result.team2 || '?';
         const homeScore = result.home_score || result.score_team1 || 0;
@@ -12042,36 +11225,28 @@ function parseActawpDate(dateTimeStr) {
         const homeWeight = homeWon ? '600' : '500';
         const awayWeight = awayWon ? '600' : '500';
         
-         html += `
-            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 4px solid ${borderColor};">
-                <!-- Indicador de resultat -->
-                <div style="font-size: 12px; color: #bae6fd; margin-bottom: 12px;">
-                    <strong>Jornada ${result.jornada || '?'}</strong> • ${resultIcon} ${resultText}
-                </div>
-                
-                <!-- Equips i marcador en vertical -->
-                <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
-                    <!-- Equip Local -->
-                    <div style="display: flex; align-items: center; gap: 8px; color: ${homeColor}; font-weight: ${homeWeight}; font-size: 15px; width: 100%; justify-content: center; text-align: center;">
-                        ${homeLogoHtml}
-                        <span>${homeTeam}</span>
+        html += `
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid ${borderColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="font-size: 12px; color: #bae6fd; margin-bottom: 8px;">
+                            ${resultIcon} ${resultText}
+                        </div>
+                        <div style="font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; color: ${homeColor}; font-weight: ${homeWeight};">
+                                ${homeLogoHtml}
+                                <span>${homeTeam}</span>
+                            </div>
+                            <div style="background: rgba(34, 211, 238, 0.2); padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 20px; color: #22d3ee; min-width: 80px; text-align: center;">
+                                ${homeScore} - ${awayScore}
+                            </div>
+                            <div style="display: flex; align-items: center; color: ${awayColor}; font-weight: ${awayWeight};">
+                                <span>${awayTeam}</span>
+                                ${awayLogoHtml}
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Marcador gran -->
-                    <div style="background: rgba(34, 211, 238, 0.2); padding: 10px 24px; border-radius: 8px; font-weight: bold; font-size: 28px; color: #22d3ee; margin: 8px 0;">
-                        ${homeScore} - ${awayScore}
-                    </div>
-                    
-                    <!-- Equip Visitant -->
-                    <div style="display: flex; align-items: center; gap: 8px; color: ${awayColor}; font-weight: ${awayWeight}; font-size: 15px; width: 100%; justify-content: center; text-align: center;">
-                        ${awayLogoHtml}
-                        <span>${awayTeam}</span>
-                    </div>
-                </div>
-                
-                <!-- Botó detalls -->
-                <div style="text-align: center; margin-top: 12px;">
-                    <a href="${url}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #06b6d4; color: white; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 13px;">
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" style="background: #06b6d4; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px;">
                         Detalls →
                     </a>
                 </div>
@@ -12081,7 +11256,6 @@ function parseActawpDate(dateTimeStr) {
     
     html += '</div>';
     container.innerHTML = html;
-	
 }
 function displayActawpData() {
     if (!actawpData) {
@@ -12206,7 +11380,7 @@ function displayPlayerComparison() {
     
     // Taula HTML
     let html = `
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                 <thead>
                     <tr style="background: rgba(255,255,255,0.05);">
@@ -12334,7 +11508,7 @@ function displayPlayerComparison() {
                     <td style="padding: 10px; text-align: center; background: rgba(100,116,139,0.05);">${actawpTA > 0 ? `<span style="color: #fbbf24;">${actawpTA}</span>` : '-'}</td>
                     <td style="padding: 10px; text-align: center; background: rgba(100,116,139,0.05);">${actawpTR > 0 ? `<span style="color: #ef4444;">${actawpTR}</span>` : '-'}</td>
                     <td style="padding: 10px; text-align: center; background: rgba(100,116,139,0.05);">${actawpMVP > 0 ? '<span style="color: #fbbf24; font-size: 16px;">⭐</span>' : '-'}</td>
-                    <td style="padding: 10px; color: #ef4444; text-align: center; font-size: 11px;">❌ No convocat</td>
+                    <td style="padding: 10px; color: #ef4444; text-align: center; font-size: 11px;">❌ No local</td>
                 </tr>
             `;
         }
@@ -12489,7 +11663,14 @@ function nameMatches(name1, name2) {
 
 
 
-
+// Modificar la funció loadAllMatches per carregar també dades ACTAWP
+const originalLoadAllMatches = loadAllMatches;
+loadAllMatches = async function(team = 'juvenil') {
+    await originalLoadAllMatches(team);
+    
+    // Carregar dades ACTAWP
+    await loadActawpData(team);
+};
 // ============================================
 // SECCIÓ DE PARTITS ACTAWP
 // Afegir després de displayPlayerComparison()
@@ -12524,9 +11705,7 @@ function displayActawpMatches() {
                normalized === 'C.N.TERRASSA' ||
                normalized.match(/^C\.?N\.?\s*TERRASSA\s*A?$/);
     }
-    // Funció per generar fitxer ICS
-
-	
+    
     // ==========================================
     // PRÒXIMS PARTITS
     // ==========================================
@@ -12583,7 +11762,7 @@ const rivalLogoHtml = rivalLogo ? `<img src="${rivalLogo}" style="width: 24px; h
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div style="flex: 1; min-width: 200px;">
                             <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">
-                                <strong>Jornada ${match.jornada || '?'}</strong> • 📅 ${date}
+                                📅 ${date} ${time ? '• ' + time : ''}
                             </div>
                             
 							${isHome ? `
@@ -12618,21 +11797,14 @@ const rivalLogoHtml = rivalLogo ? `<img src="${rivalLogo}" style="width: 24px; h
         ${isHome ? 'Local' : 'Visitant'}
     </div>
 </div>
-                       <div style="min-width: 100px; text-align: right; display: flex; flex-direction: column; gap: 8px;">
-    <a href="${match.url || '#'}" target="_blank" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px; text-align: center;">
-        ℹ️ Detalls
-    </a>
-    <button onclick="window.downloadMatchICS_${index}()" style="padding: 8px 16px; background: rgba(168, 85, 247, 0.2); color: #a855f7; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-family: inherit;">
-        📅 Calendari
-    </button>
-</div>
+                        <div style="min-width: 100px; text-align: right;">
+                            <a href="${match.url || '#'}" target="_blank" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px;">
+                                ℹ️ Detalls
+                            </a>
+                        </div>
                     </div>
                 </div>
             `;
-			// Crear funció específica per aquest partit
-            window[`downloadMatchICS_${index}`] = function() {
-                downloadICS(match, isHome, rival);
-            };
         });
         
         html += '</div>';
@@ -12723,56 +11895,50 @@ const ourLogoHtml_res = ourLogo_res ? `<img src="${ourLogo_res}" style="width: 2
 const rivalLogoHtml_res = rivalLogo_res ? `<img src="${rivalLogo_res}" style="width: 24px; height: 24px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; margin-right: 8px; vertical-align: middle;" onerror="this.style.display='none';">` : '';
                 
                 html += `
-                    <div style="background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 8px; padding: 12px;">
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <!-- Data i lloc -->
-                            <div style="font-size: 11px; color: #94a3b8;">
-                                ${date} ${venue ? '• ' + venue : ''}
-                            </div>
-                            
-                            <!-- Equips -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                                <div style="flex: 1; min-width: 0;">
-                                    ${isHome ? `
-                                        <div style="font-size: 14px; font-weight: bold; color: #bae6fd; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                            ${ourLogoHtml_res}
-                                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">CN Terrassa</span>
-                                        </div>
-                                        <div style="font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-                                            <span>vs</span>
-                                            ${rivalLogoHtml_res}
-                                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rival}</span>
-                                        </div>
-                                    ` : `
-                                        <div style="font-size: 14px; font-weight: bold; color: #bae6fd; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                            ${rivalLogoHtml_res}
-                                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rival}</span>
-                                        </div>
-                                        <div style="font-size: 13px; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-                                            <span>vs</span>
-                                            ${ourLogoHtml_res}
-                                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">CN Terrassa</span>
-                                        </div>
-                                    `}
-                                    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
-                                        ${isHome ? '🏠 Local' : '✈️ Visitant'}
-                                    </div>
+                    <div style="background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">
+                                    ${date} ${venue ? '• ' + venue : ''}
                                 </div>
                                 
-                                <!-- Marcador -->
-                                <div style="text-align: center; flex-shrink: 0;">
-                                    <div style="font-size: 24px; font-weight: bold; color: #bae6fd;">
-                                        ${isHome ? `${ourScore} - ${theirScore}` : `${theirScore} - ${ourScore}`}
-                                    </div>
-                                    <div style="font-size: 16px; margin-top: 2px;">
-                                        ${resultIcon}
-                                    </div>
+								${isHome ? `
+    <div style="font-size: 16px; font-weight: bold; color: #bae6fd; display: flex; align-items: center;">
+        ${ourLogoHtml_res}
+        <span>CN Terrassa</span>
+    </div>
+    <div style="font-size: 14px; color: #94a3b8; margin-top: 2px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">vs</span>
+        ${rivalLogoHtml_res}
+        <span>${rival}</span>
+    </div>
+` : `
+    <div style="font-size: 16px; font-weight: bold; color: #bae6fd; display: flex; align-items: center;">
+        ${rivalLogoHtml_res}
+        <span>${rival}</span>
+    </div>
+    <div style="font-size: 14px; color: #94a3b8; margin-top: 2px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">vs</span>
+        ${ourLogoHtml_res}
+        <span>CN Terrassa</span>
+    </div>
+`}
+                                
+								<div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+                                    ${isHome ? '🏠 Local' : '✈️ Visitant'}
                                 </div>
                             </div>
-                            
-                            <!-- Botó acta -->
-                            <div style="text-align: center;">
-                                <a href="${match.url || '#'}" target="_blank" style="display: inline-block; padding: 8px 20px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 12px;">
+                            <div style="text-align: center; min-width: 120px;">
+                                <div style="font-size: 28px; font-weight: bold; color: #bae6fd;">
+    ${isHome ? `${ourScore} - ${theirScore}` : `${theirScore} - ${ourScore}`}
+</div>
+
+                                <div style="font-size: 18px; margin-top: 5px;">
+                                    ${resultIcon}
+                                </div>
+                            </div>
+                            <div style="min-width: 100px; text-align: right;">
+                                <a href="${match.url || '#'}" target="_blank" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px;">
                                     📊 Acta
                                 </a>
                             </div>
@@ -12869,22 +12035,21 @@ function mostrarClassificacio(ranking) {
     const container = document.getElementById('actawp-ranking-container');
     
     let html = `
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px;">
-            <table class="ranking-table" style="min-width: 600px;">
-                <thead>
-                    <tr>
-                        <th style="width: 50px; padding: 10px 6px; font-size: 11px;">Pos</th>
-                        <th style="text-align: left; padding-left: 12px; min-width: 160px; font-size: 11px;">Equip</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">PJ</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">G</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">E</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">P</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">GF</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">GC</th>
-                        <th style="padding: 10px 6px; font-size: 11px;">Pts</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Pos</th>
+                    <th style="text-align: left; padding-left: 15px;">Equip</th>
+                    <th>PJ</th>
+                    <th>G</th>
+                    <th>E</th>
+                    <th>P</th>
+                    <th>GF</th>
+                    <th>GC</th>
+                    <th>Pts</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
     
     ranking.forEach(team => {
@@ -12894,39 +12059,39 @@ function mostrarClassificacio(ranking) {
         // Badge per les primeres 3 posicions
         let posDisplay = team.posicio;
         if (team.posicio === '1') {
-            posDisplay = `<span class="position-badge gold" style="width: 22px; height: 22px; line-height: 22px; font-size: 11px;">${team.posicio}</span>`;
+            posDisplay = `<span class="position-badge gold">${team.posicio}</span>`;
         } else if (team.posicio === '2') {
-            posDisplay = `<span class="position-badge silver" style="width: 22px; height: 22px; line-height: 22px; font-size: 11px;">${team.posicio}</span>`;
+            posDisplay = `<span class="position-badge silver">${team.posicio}</span>`;
         } else if (team.posicio === '3') {
-            posDisplay = `<span class="position-badge bronze" style="width: 22px; height: 22px; line-height: 22px; font-size: 11px;">${team.posicio}</span>`;
+            posDisplay = `<span class="position-badge bronze">${team.posicio}</span>`;
         }
         
-        // Logo més petit per mòbil
+        // Logo
         const logoHtml = team.logo 
-            ? `<img src="${team.logo}" class="team-logo" style="width: 22px; height: 22px; flex-shrink: 0;" alt="${team.equip}" onerror="this.style.display='none'">` 
-            : '<div style="width: 22px; flex-shrink: 0;"></div>';
+            ? `<img src="${team.logo}" class="team-logo" alt="${team.equip}" onerror="this.style.display='none'">` 
+            : '<div style="width: 30px;"></div>';
         
         html += `
             <tr class="${rowClass}">
-                <td style="font-weight: bold; color: #22d3ee; padding: 10px 6px; font-size: 12px;">${posDisplay}</td>
-                <td style="padding: 10px 8px;">
-                    <div class="team-cell" style="gap: 8px; padding-left: 8px !important; min-width: 160px;">
+                <td style="font-weight: bold; color: #22d3ee;">${posDisplay}</td>
+                <td>
+                    <div class="team-cell">
                         ${logoHtml}
-                        <span style="color: #e0f2fe; font-weight: 500; font-size: 12px;">${team.equip}</span>
+                        <span style="color: #e0f2fe; font-weight: 500;">${team.equip}</span>
                     </div>
                 </td>
-                <td style="padding: 10px 6px; font-size: 12px;">${team.partits || 0}</td>
-                <td class="stat-wins" style="padding: 10px 6px; font-size: 12px;">${team.guanyats || 0}</td>
-                <td class="stat-draws" style="padding: 10px 6px; font-size: 12px;">${team.empatats || 0}</td>
-                <td class="stat-losses" style="padding: 10px 6px; font-size: 12px;">${team.perduts || 0}</td>
-                <td style="padding: 10px 6px; font-size: 12px;">${team.gols_favor || 0}</td>
-                <td style="padding: 10px 6px; font-size: 12px;">${team.gols_contra || 0}</td>
-                <td class="stat-points" style="padding: 10px 6px; font-size: 13px; font-weight: bold;">${team.punts || 0}</td>
+                <td>${team.partits || 0}</td>
+                <td class="stat-wins">${team.guanyats || 0}</td>
+                <td class="stat-draws">${team.empatats || 0}</td>
+                <td class="stat-losses">${team.perduts || 0}</td>
+                <td>${team.gols_favor || 0}</td>
+                <td>${team.gols_contra || 0}</td>
+                <td class="stat-points">${team.punts || 0}</td>
             </tr>
         `;
     });
     
-    html += '</tbody></table></div>';
+    html += '</tbody></table>';
     container.innerHTML = html;
     console.log('✅ Classificació mostrada correctament');
 }
@@ -12974,22 +12139,11 @@ function loadNextMatchPill() {
     console.log('📍 Carregant pròxim partit...');
     
     if (!actawpData || !actawpData.upcoming_matches || actawpData.upcoming_matches.length === 0) {
-    container.innerHTML = '<div>No hi ha pròxims partits</div>';
-    return;
-}
-
-// ✅ ORDENAR PER DATA per agafar el més proper
-const sortedMatches = [...actawpData.upcoming_matches].sort((a, b) => {
-    const parseDate = (str) => {
-        if (!str) return new Date(9999, 0, 1);
-        const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-        if (!m) return new Date(9999, 0, 1);
-        return new Date(m[3], m[2] - 1, m[1], m[4], m[5]);
-    };
-    return parseDate(a.date_time) - parseDate(b.date_time);
-});
-
-const match = sortedMatches[0];
+        container.innerHTML = '<div style="color: #bfdbfe; font-size: 11px;">No hi ha pròxims partits</div>';
+        return;
+    }
+    
+    const match = actawpData.upcoming_matches[0];
     const date = match.date || '';
     const time = match.time || '';
     const homeTeam = match.team1 || '?';
@@ -13015,44 +12169,32 @@ const match = sortedMatches[0];
             const diff = matchDate - now;
             
             if (diff > 0) {
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    // Si falten més d'1 dia
-    if (days > 0) {
-        countdownHtml = `
-            <div style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.15); border-radius: 20px; display: inline-block;">
-                <span style="font-size: 12px;">⏱️ Falten <strong>${days}d ${hours}h ${minutes}m</strong></span>
-            </div>
-        `;
-    }
-    // Si falta menys d'1 dia però més d'1 hora
-    else if (hours > 0) {
-        countdownHtml = `
-            <div style="margin-top: 10px; padding: 8px 15px; background: rgba(251, 191, 36, 0.3); border-radius: 20px; display: inline-block;">
-                <span style="font-size: 12px;">⏱️ Falten <strong>${hours}h ${minutes}m ${seconds}s</strong></span>
-            </div>
-        `;
-    }
-    // Si falta menys d'1 hora
-    else if (minutes > 0) {
-        countdownHtml = `
-            <div style="margin-top: 10px; padding: 8px 15px; background: rgba(239, 68, 68, 0.4); border-radius: 20px; display: inline-block; animation: pulse 2s infinite;">
-                <span style="font-size: 12px;">🔥 Comença en <strong>${minutes}m ${seconds}s</strong>!</span>
-            </div>
-        `;
-    }
-    // Si falten menys d'1 minut
-    else {
-        countdownHtml = `
-            <div style="margin-top: 10px; padding: 8px 15px; background: rgba(239, 68, 68, 0.5); border-radius: 20px; display: inline-block; animation: pulse 1s infinite;">
-                <span style="font-size: 13px; font-weight: bold;">🚨 COMENÇA EN ${seconds}s! 🚨</span>
-            </div>
-        `;
-    }
-}
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hoursLeft = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                
+                if (days > 0) {
+                    countdownHtml = `
+                        <div style="margin-top: 10px; padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 20px; display: inline-block;">
+                            <span style="font-size: 11px;">⏱️ Falten <strong>${days} ${days === 1 ? 'dia' : 'dies'}</strong>${hoursLeft > 0 ? `, ${hoursLeft}h` : ''}</span>
+                        </div>
+                    `;
+                } else if (hoursLeft > 0) {
+                    countdownHtml = `
+                        <div style="margin-top: 10px; padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 20px; display: inline-block;">
+                            <span style="font-size: 11px;">⏱️ Falten <strong>${hoursLeft} ${hoursLeft === 1 ? 'hora' : 'hores'}</strong></span>
+                        </div>
+                    `;
+                } else {
+                    const minutesLeft = Math.floor(diff / (1000 * 60));
+                    if (minutesLeft > 0) {
+                        countdownHtml = `
+                            <div style="margin-top: 10px; padding: 6px 12px; background: rgba(239, 68, 68, 0.3); border-radius: 20px; display: inline-block;">
+                                <span style="font-size: 11px;">🔥 Comença en <strong>${minutesLeft} minuts</strong>!</span>
+                            </div>
+                        `;
+                    }
+                }
+            }
         } catch (e) {
             console.log('⚠️ Error calculant compte enrere:', e);
         }
@@ -13068,9 +12210,9 @@ const match = sortedMatches[0];
         : '';
     
     container.innerHTML = `
-    <div style="font-size: 12px; margin-bottom: 12px; color: #bfdbfe;">
-        <strong style="color: #22d3ee;">Jornada ${match.jornada || '?'}</strong> • ${date} ${time ? '• ' + time : ''}
-    </div>
+        <div style="font-size: 12px; margin-bottom: 12px; color: #bfdbfe;">
+            ${date} ${time ? '• ' + time : ''}
+        </div>
         
         <!-- Equips amb logos -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 12px;">
@@ -13184,13 +12326,13 @@ function loadRankingPill() {
         return;
     }
     
-    const top8 = actawpData.ranking.slice(0, 8);
+    const top5 = actawpData.ranking.slice(0, 5);
     
-    console.log('✅ Classificació top 8:', top8);
+    console.log('✅ Classificació top 5:', top5);
     
     let html = '<div style="display: flex; flex-direction: column; gap: 6px;">';
     
-    top8.forEach(team => {
+    top5.forEach(team => {
     const isOurTeam = team.equip.toUpperCase().includes('TERRASSA');
     const bgColor = isOurTeam ? 'rgba(59, 130, 246, 0.1)' : 'transparent';
     const borderLeft = isOurTeam ? '3px solid #3b82f6' : '3px solid transparent';
@@ -13226,619 +12368,34 @@ function loadRankingPill() {
     container.innerHTML = html;
 }
 
-
-function loadTeamSpirit() {
-    const container = document.getElementById('team-spirit-content');
-    
-    if (!container) {
-        console.error('❌ Container team-spirit-content no trobat');
-        return;
-    }
-    
-    console.log('📍 Carregant esperit d\'equip...');
-    
-    if (!allMatches || allMatches.length === 0) {
-        document.getElementById('team-spirit').style.display = 'none';
-        return;
-    }
-    
-    // Calcular estadístiques d'equip
-    let totalGoals = 0;
-    let totalGoalsAgainst = 0;
-    let wins = 0;
-    let draws = 0;
-    let losses = 0;
-    let consecutiveWins = 0;
-    let currentStreak = 0;
-    let homeWins = 0;
-    let homeMatches = 0;
-    let awayWins = 0;
-    let awayMatches = 0;
-    let biggestWin = { margin: 0, rival: '', score: '' };
-    let cleanSheets = 0; // Partits sense encaixar gols
-    let comebacks = 0; // Remuntades (si tenim dades per quarters)
-    
-    // Iterar pels partits (ja estan ordenats per data desc)
-    allMatches.forEach((match, index) => {
-        const scoreCNT = match.scoreCNT || 0;
-        const scoreRival = match.scoreRival || 0;
-        const isHome = match.location === 'home';
-        const rival = match.rivalTeam || 'Rival';
-        
-        totalGoals += scoreCNT;
-        totalGoalsAgainst += scoreRival;
-        
-        const won = scoreCNT > scoreRival;
-        const draw = scoreCNT === scoreRival;
-        
-        if (won) {
-            wins++;
-            const margin = scoreCNT - scoreRival;
-            if (margin > biggestWin.margin) {
-                biggestWin = {
-                    margin: margin,
-                    rival: rival,
-                    score: `${scoreCNT}-${scoreRival}`
-                };
-            }
-        } else if (draw) {
-            draws++;
-        } else {
-            losses++;
-        }
-        
-        // Clean sheets
-        if (scoreRival === 0) cleanSheets++;
-        
-        if (isHome) {
-            homeMatches++;
-            if (won) homeWins++;
-        } else {
-            awayMatches++;
-            if (won) awayWins++;
-        }
-        
-        // Calcular ratxa actual (últims partits consecutius)
-        if (index === 0 && won) {
-            currentStreak = 1;
-            for (let i = 1; i < allMatches.length; i++) {
-                const prevMatch = allMatches[i];
-                if ((prevMatch.scoreCNT || 0) > (prevMatch.scoreRival || 0)) {
-                    currentStreak++;
-                } else {
-                    break;
-                }
-            }
-        }
-    });
-    
-    const totalMatches = allMatches.length;
-    const avgGoals = totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : 0;
-    const avgGoalsAgainst = totalMatches > 0 ? (totalGoalsAgainst / totalMatches).toFixed(1) : 0;
-    const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
-    const homeWinRate = homeMatches > 0 ? Math.round((homeWins / homeMatches) * 100) : 0;
-    const awayWinRate = awayMatches > 0 ? Math.round((awayWins / awayMatches) * 100) : 0;
-    const goalDifference = totalGoals - totalGoalsAgainst;
-    
-    console.log('📊 Estadístiques:', {
-        totalMatches,
-        wins,
-        currentStreak,
-        avgGoals,
-        winRate,
-        goalDifference,
-        biggestWin
-    });
-    
-  
-
-// Frases motivadoras segons les estadístiques
-const motivationalPhrases = [
-    "L'equip és primer, la victòria és de tots! 💙",
-    "Junts som més forts! 🤝",
-    "Un per tots, tots per un! ⚡",
-    "Treballem units, guanyem junts! 🔥",
-    "La força està en l'equip! 💪",
-    "Cada gol és un triomf col·lectiu! ⚽",
-    "Units cap a la victòria! 🏆",
-    "Mai ens rendim, sempre endavant! 🚀",
-    "L'esforç d'avui és l'èxit de demà! 🌟",
-    "Amb coratge i passió, tot és possible! ❤️‍🔥",
-    "Lluitar fins al final és el nostre estil! 🛡️",
-    "L'equip no es construeix en un dia, però cada dia compta! 📆"
-];
-
-// Frases especials segons situació
-let phrase = '';
-const isStartOfSeason = totalMatches <= 3;
-const isMidSeason = totalMatches > 3 && totalMatches <= 10;
-const isEndOfSeason = totalMatches > 10;
-const lastMatch = allMatches[0];
-const isLastHome = lastMatch?.location === 'home';
-const isLastAway = lastMatch?.location === 'away';
-const strongRivals = ['CN Atlètic-Barceloneta', 'CN Sabadell', 'CN Mataró']; // Exemples
-
-if (currentStreak >= 7) {
-    phrase = `🔥 ${currentStreak} victòries seguides! SOM UNA MÀQUINA!`;
-} else if (currentStreak >= 5) {
-    phrase = `🔥 ${currentStreak} victòries seguides! IMPARABLES!`;
-} else if (currentStreak >= 3) {
-    phrase = `💥 ${currentStreak} victòries consecutives! Seguim així!`;
-} else if (losses >= 3 && wins === 0) {
-    phrase = "Moments difícils, però l'equip no es rendeix mai! 💪";
-} else if (draws >= 2 && wins === 0) {
-    phrase = "Empats seguits... ens falta molt poc per tornar a guanyar! 🤏";
-} else if (winRate >= 85) {
-    phrase = "Temporada de somni! Continuem amb aquesta energia! 🌟";
-} else if (winRate >= 70) {
-    phrase = "Gran rendiment! L'equip està en forma! 🏋️‍♂️";
-} else if (winRate >= 60) {
-    phrase = "Bon ritme d'equip! A per més victòries! 💪";
-} else if (goalDifference >= 30) {
-    phrase = "Atac letal! Estem fent història! ⚡";
-} else if (goalDifference >= 15) {
-    phrase = "Gran diferència de gols! Seguim marcant! ⚽";
-} else if (goalDifference < 0 && losses > wins) {
-    phrase = "Toca aixecar el cap i tornar a lluitar! 🔁";
-} else if (avgGoalsAgainst > 12) {
-    phrase = "Ens estan marcant massa... toca reforçar la defensa! 🛡️";
-} else if (wins === 0 && totalMatches >= 3) {
-    phrase = "Encara no hem guanyat, però cada partit és una oportunitat nova! 🔄";
-} else if (isLastHome && winRate >= 60) {
-    phrase = "🏠 A casa som forts! Gràcies afició! 💙";
-} else if (isLastAway && awayWinRate >= 60) {
-    phrase = "✈️ Guanyar fora de casa té molt mèrit! Seguim! 💪";
-} else if (isStartOfSeason) {
-    phrase = "Comencem amb força! Aquesta temporada promet! 🚀";
-} else if (isMidSeason) {
-    phrase = "Estem a la meitat del camí, cada punt compta! 🧭";
-} else if (isEndOfSeason && winRate >= 60) {
-    phrase = "Últims partits! Donem-ho tot fins al final! 🏁";
-} else if (strongRivals.includes(lastMatch?.rivalTeam)) {
-    phrase = `Gran partit contra ${lastMatch.rivalTeam}! 💥 Lluita de gegants!`;
-} else {
-    // Frase aleatòria motivadora
-    phrase = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
-}
-
-
-    
-    // HTML amb estadístiques principals
-    let html = `
-        <div style="font-style: italic; font-size: 13px; margin-bottom: 12px; opacity: 0.95;">
-            "${phrase}"
-        </div>
-        
-        <!-- Estadístiques principals (sempre visibles) -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
-            <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 8px;">
-                <div style="font-size: 18px; font-weight: bold;">${wins}</div>
-                <div style="font-size: 10px; opacity: 0.9;">Victòries</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 8px;">
-                <div style="font-size: 18px; font-weight: bold;">${avgGoals}</div>
-                <div style="font-size: 10px; opacity: 0.9;">Gols/partit</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 8px;">
-                <div style="font-size: 18px; font-weight: bold;">${winRate}%</div>
-                <div style="font-size: 10px; opacity: 0.9;">Èxit</div>
-            </div>
-        </div>
-        
-        <!-- Més estadístiques destacades -->
-        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 11px; margin-top: 12px;">
-    `;
-    
-    // Diferència de gols (si és positiva)
-    if (goalDifference > 0) {
-        html += `
-            <div style="background: rgba(16, 185, 129, 0.3); padding: 5px 10px; border-radius: 12px;">
-                <strong>+${goalDifference}</strong> diferència gols
-            </div>
-        `;
-    }
-    
-    // Ratxa actual
-    if (currentStreak >= 2) {
-        html += `
-            <div style="background: rgba(239, 68, 68, 0.3); padding: 5px 10px; border-radius: 12px;">
-                🔥 <strong>${currentStreak}</strong> seguides
-            </div>
-        `;
-    }
-    
-    // Victòries a casa (si > 50%)
-    if (homeWinRate > 50 && homeMatches > 0) {
-        html += `
-            <div style="background: rgba(59, 130, 246, 0.3); padding: 5px 10px; border-radius: 12px;">
-                🏠 <strong>${homeWinRate}%</strong> a casa
-            </div>
-        `;
-    }
-    
-    // Victòries fora (si > 50%)
-    if (awayWinRate > 50 && awayMatches > 0) {
-        html += `
-            <div style="background: rgba(168, 85, 247, 0.3); padding: 5px 10px; border-radius: 12px;">
-                ✈️ <strong>${awayWinRate}%</strong> fora
-            </div>
-        `;
-    }
-    
-    // Clean sheets
-    if (cleanSheets > 0) {
-        html += `
-            <div style="background: rgba(34, 211, 238, 0.3); padding: 5px 10px; border-radius: 12px;">
-                🛡️ <strong>${cleanSheets}</strong> porteria a zero
-            </div>
-        `;
-    }
-    
-    // Golejada més gran
-    if (biggestWin.margin >= 5) {
-        html += `
-            <div style="background: rgba(251, 191, 36, 0.3); padding: 5px 10px; border-radius: 12px;">
-                ⚡ Millor: <strong>${biggestWin.score}</strong> vs ${biggestWin.rival.length > 12 ? biggestWin.rival.substring(0, 12) + '...' : biggestWin.rival}
-            </div>
-        `;
-    }
-    
-    // Promig gols en contra (si és baix)
-    if (avgGoalsAgainst < 8) {
-        html += `
-            <div style="background: rgba(16, 185, 129, 0.3); padding: 5px 10px; border-radius: 12px;">
-                🛡️ Només <strong>${avgGoalsAgainst}</strong> gols rebuts/partit
-            </div>
-        `;
-    }
-    
-    // Total gols marcats (si és alt)
-    if (totalGoals >= 100) {
-        html += `
-            <div style="background: rgba(239, 68, 68, 0.3); padding: 5px 10px; border-radius: 12px;">
-                🎯 <strong>${totalGoals}</strong> gols totals
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    
-    container.innerHTML = html;
-    console.log('✅ Esperit d\'equip carregat amb estadístiques ampliades');
-}
-// Variable global per guardar l'interval
-let countdownInterval = null;
-
-function startCountdownTimer() {
-    // Netejar interval anterior si existeix
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-    }
-    
-    // Funció per determinar l'interval segons el temps restant
-    function getUpdateInterval() {
-        if (!actawpData || !actawpData.upcoming_matches || actawpData.upcoming_matches.length === 0) {
-            return 60000; // 1 minut per defecte
-        }
-        
-        const match = actawpData.upcoming_matches[0];
-        if (!match.date_time) return 60000;
-        
-        try {
-            const dateStr = match.date_time.replace(/^\w+,?\s+/, '');
-            const [datePart, timePart] = dateStr.split(' ');
-            const [day, month, year] = datePart.split('/');
-            const [hours, minutes] = timePart.split(':');
-            
-            const matchDate = new Date(year, month - 1, day, hours, minutes);
-            const now = new Date();
-            const diff = matchDate - now;
-            
-            // Si falta menys d'1 hora: actualitzar cada 10 segons
-            if (diff > 0 && diff < 3600000) {
-                return 10000;
-            }
-            // Si falta menys d'1 dia: actualitzar cada 30 segons
-            else if (diff > 0 && diff < 86400000) {
-                return 30000;
-            }
-            // Altrament: cada minut
-            else {
-                return 60000;
-            }
-        } catch (e) {
-            return 60000;
-        }
-    }
-    
-    // Actualitzar amb l'interval adequat
-    const interval = getUpdateInterval();
-    countdownInterval = setInterval(() => {
-        console.log('🔄 Actualitzant compte enrere...');
-        loadNextMatchPill();
-        
-        // Reajustar interval si cal
-        const newInterval = getUpdateInterval();
-        if (newInterval !== interval) {
-            startCountdownTimer(); // Reiniciar amb nou interval
-        }
-    }, interval);
-    
-    console.log(`⏱️ Compte enrere dinàmic activat (actualització cada ${interval/1000}s)`);
-}
-
-function stopCountdownTimer() {
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-        console.log('⏹️ Compte enrere dinàmic desactivat');
-    }
-}
+// Carregar les pastilles quan es carrega la pàgina o es canvia a listTab
 async function loadFrontPagePills() {
     console.log('🎨 Carregant pastilles portada...');
     
-    // ⭐ CANVI CLAU: Sempre recarregar actawpData amb l'equip correcte
-    const teamKey = localStorage.getItem('selectedTeam') || 'juvenil';
-    console.log('📋 Equip seleccionat:', teamKey);
+    if (!actawpData) {
+        console.log('📥 Carregant dades ACTAWP...');
+        await loadACTAWPData();
+    }
     
-    // Forçar recàrrega de les dades de l'equip correcte
-    await loadACTAWPDataForTeam(teamKey);
-    
-    console.log('✅ ACTAWP Data carregades per:', teamKey, actawpData);
+    console.log('✅ ACTAWP Data:', actawpData);
     
     loadNextMatchPill();
     loadRankingPill();
-    loadLastResultsMini();
-    loadTeamSpirit();
-    
-    // ⭐ Iniciar compte enrere dinàmic
-    startCountdownTimer();
+    loadLastResultsMini(); // ⭐ AFEGIT
 }
-// Detectar iOS
-function isIOS() {
-    return /iPhone|iPad|iPod/.test(navigator.userAgent) || 
-           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-// Detectar si ja està instal·lada com PWA
-function isInstalledPWA() {
-    // Mètode 1: Display mode standalone
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        return true;
-    }
-    
-    // Mètode 2: iOS standalone
-    if (window.navigator.standalone === true) {
-        return true;
-    }
-    
-    // Mètode 3: Referrer (si ve d'una PWA instal·lada)
-    if (document.referrer.includes('android-app://')) {
-        return true;
-    }
-    
-    return false;
-}
-
-// Elements
-const installButton = document.getElementById('installButton');
-const iosInstructions = document.getElementById('iosInstructions');
-const alreadyInstalled = document.getElementById('alreadyInstalled');
-
-// Variable per guardar el prompt d'instal·lació
-let deferredPrompt;
-async function loadACTAWPDataForTeam(teamKey) {
-    console.log('📥 Carregant dades ACTAWP per:', teamKey);
-    
-    const jsonUrls = {
-        'juvenil': 'https://joseprico.github.io/CNT_juvenil_25_26/actawp_juvenil_data.json',
-        'cadet': 'https://joseprico.github.io/cnt_cadet_25-26/actawp_cadet_data.json'
-    };
-    
-    try {
-        const response = await fetch(jsonUrls[teamKey]);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        actawpData = await response.json();
-        console.log('✅ Dades ACTAWP carregades correctament per', teamKey);
-    } catch (error) {
-        console.error('❌ Error carregant dades ACTAWP:', error);
-        actawpData = null;
-    }
-}
-// ========================================
-// LÒGICA PRINCIPAL
-// ========================================
-
-function initPWA() {
-    console.log('🔍 Iniciant detecció PWA...');
-    console.log('📱 iOS:', isIOS());
-    console.log('✅ Instal·lada:', isInstalledPWA());
-    
-    // Si ja està instal·lada
-    if (isInstalledPWA()) {
-        console.log('✅ PWA ja instal·lada - No mostrar res');
-        
-        // Mostrar missatge durant 3 segons i després amagar
-        alreadyInstalled.style.display = 'block';
-        setTimeout(() => {
-            alreadyInstalled.style.display = 'none';
-        }, 3000);
-        
-        return; // No fer res més
-    }
-    
-    // Si NO està instal·lada
-    if (isIOS()) {
-        console.log('🍎 iOS detectat - Mostrar instruccions');
-        
-        // Comprovar si ja ha vist les instruccions avui
-        const today = new Date().toDateString();
-        const lastSeen = localStorage.getItem('iosInstructionsDate');
-        
-        if (lastSeen !== today) {
-            // Mostrar instruccions si no les ha vist avui
-            setTimeout(() => {
-                iosInstructions.style.display = 'block';
-            }, 2000); // Esperar 2 segons després de carregar
-            
-            localStorage.setItem('iosInstructionsDate', today);
-        }
-        
-    } else {
-        console.log('🤖 Android/Desktop - Esperar event d\'instal·lació');
-        // Android o Desktop - Esperar l'event beforeinstallprompt
-    }
-}
-
-// ========================================
-// ANDROID: Event d'instal·lació automàtica
-// ========================================
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('💡 Event beforeinstallprompt detectat');
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    // Mostrar botó només si NO està instal·lada
-    if (!isInstalledPWA()) {
-        installButton.style.display = 'block';
-    }
-});
-
-// Click al botó d'instal·lació
-installButton.addEventListener('click', async () => {
-    if (!deferredPrompt) {
-        console.log('⚠️ No hi ha prompt disponible');
-        alert('⚠️ La instal·lació no està disponible ara mateix.');
-        return;
-    }
-    
-    console.log('📲 Mostrant prompt d\'instal·lació...');
-    deferredPrompt.prompt();
-    
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`👤 Usuari ${outcome === 'accepted' ? 'ha acceptat' : 'ha rebutjat'} la instal·lació`);
-    
-    if (outcome === 'accepted') {
-        installButton.textContent = '✅ Instal·lant...';
-        installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        
-        setTimeout(() => {
-            installButton.style.display = 'none';
-        }, 1500);
-    }
-    
-    deferredPrompt = null;
-});
-
-// Event quan s'instal·la l'app
-window.addEventListener('appinstalled', () => {
-    console.log('🎉 PWA instal·lada amb èxit!');
-    installButton.style.display = 'none';
-    iosInstructions.style.display = 'none';
-    
-    // Mostrar missatge de confirmació
-    alreadyInstalled.style.display = 'block';
-    setTimeout(() => {
-        alreadyInstalled.style.display = 'none';
-    }, 3000);
-});
-
-// ========================================
-// INICIAR EN CARREGAR LA PÀGINA
-// ========================================
-
-// Executar quan es carrega la pàgina
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPWA);
-} else {
-    initPWA();
-}
-
-console.log('🚀 Sistema PWA carregat');
 </script>
 
   
   </script>
- 
-<script>
-// 🎯 PWA Service Worker Registration
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/CNT/service-worker.js')
-            .then(registration => {
-                console.log('✅ Service Worker registrat:', registration.scope);
-            })
-            .catch(error => {
-                console.log('❌ Error registrant Service Worker:', error);
-            });
-    });
-}
-
-
-
-// 📱 PWA Install Prompt
-let deferredPrompt;
-const installButton = document.getElementById('installButton');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('💡 PWA instal·lable detectada');
-    e.preventDefault();
-    deferredPrompt = e;
-    // NO amaguem el botó - ja és visible amb CSS
-});
-
-installButton.addEventListener('click', async () => {
-    if (!deferredPrompt) {
-        alert('⚠️ La instal·lació no està disponible ara mateix.\n\nPossibles raons:\n• Els fitxers PWA no estan carregats\n• La pàgina no es serveix amb HTTPS\n• L\'app ja està instal·lada\n• El navegador no ho suporta');
-        console.log('❌ No hi ha prompt d\'instal·lació disponible');
-        return;
-    }
-    
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`👤 L'usuari ${outcome === 'accepted' ? 'ha acceptat' : 'ha rebutjat'} la instal·lació`);
-    
-    if (outcome === 'accepted') {
-        installButton.textContent = '✅ Instal·lada!';
-        installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        setTimeout(() => {
-            installButton.style.display = 'none';
-        }, 2000);
-    }
-    
-    deferredPrompt = null;
-});
-
-window.addEventListener('appinstalled', () => {
-    console.log('✅ PWA instal·lada amb èxit');
-    installButton.textContent = '✅ Instal·lada!';
-    installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    setTimeout(() => {
-        installButton.style.display = 'none';
-    }, 2000);
-});
-
-// Si ja s'executa com a PWA, canviar el botó
-if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('✅ App executant-se com a PWA');
-    installButton.textContent = '✅ App Instal·lada';
-    installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    installButton.style.cursor = 'default';
-}
-
-</script>
-  <script>
+   <script>
     // 🔒 Bloqueo de clic derecho y atajos
-/*    document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });*/
+    });
     </script>
 </body>
 </html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA - CN Terrassa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .install-button {
+            display: block !important; /* FORÇAR VISIBILITAT PER TEST */
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            z-index: 9999;
+            transition: all 0.3s;
+            animation: pulse-install 2s infinite;
+        }
+
+        .install-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.6);
+        }
+
+        @keyframes pulse-install {
+            0%, 100% { box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(6, 182, 212, 0.8); }
+        }
+        
+        .info-box {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        h1 { margin-bottom: 20px; }
+        
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 12px;
+            text-align: left;
+        }
+        
+        .status-line {
+            margin: 5px 0;
+        }
+        
+        .ok { color: #10b981; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <!-- Botó d'instal·lació SEMPRE VISIBLE -->
+    <button id="installButton" class="install-button">
+        📱 Instal·lar App
+    </button>
+    
+    <div class="info-box">
+        <h1>🧪 Test PWA</h1>
+        <p>Aquesta pàgina de test mostra el botó d'instal·lació sempre visible</p>
+        
+        <div class="status" id="status">
+            <div class="status-line">🔍 Comprovant configuració PWA...</div>
+        </div>
+    </div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const installButton = document.getElementById('installButton');
+        let deferredPrompt;
+        
+        function updateStatus(message, type = 'ok') {
+            const line = document.createElement('div');
+            line.className = `status-line ${type}`;
+            line.innerHTML = message;
+            statusDiv.appendChild(line);
+        }
+        
+        // Comprovar suport Service Worker
+        if ('serviceWorker' in navigator) {
+            updateStatus('✅ Service Worker: Suportat', 'ok');
+            
+            // Intentar registrar service worker
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        updateStatus('✅ Service Worker registrat correctament', 'ok');
+                    })
+                    .catch(error => {
+                        updateStatus('❌ Error registrant Service Worker: ' + error.message, 'error');
+                    });
+            });
+        } else {
+            updateStatus('❌ Service Worker: NO suportat', 'error');
+        }
+        
+        // Comprovar si ja s'executa com PWA
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            updateStatus('✅ Executant com a PWA (instal·lada)', 'ok');
+            installButton.textContent = '✅ App Instal·lada';
+            installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        } else {
+            updateStatus('ℹ️ Executant com a web normal', 'ok');
+        }
+        
+        // Event d'instal·lació
+        window.addEventListener('beforeinstallprompt', (e) => {
+            updateStatus('✅ PWA instal·lable detectada pel navegador', 'ok');
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
+        // Click al botó
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                updateStatus('⚠️ Prompt d\'instal·lació no disponible. Possibles raons:', 'error');
+                updateStatus('   - Fitxers manifest.json o service-worker.js no trobats', 'error');
+                updateStatus('   - No servit via HTTPS', 'error');
+                updateStatus('   - PWA ja instal·lada', 'error');
+                updateStatus('   - Navegador no compatible', 'error');
+                return;
+            }
+            
+            updateStatus('📱 Mostrant prompt d\'instal·lació...', 'ok');
+            deferredPrompt.prompt();
+            
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                updateStatus('✅ Usuari ha acceptat la instal·lació!', 'ok');
+            } else {
+                updateStatus('❌ Usuari ha rebutjat la instal·lació', 'error');
+            }
+            
+            deferredPrompt = null;
+        });
+        
+        // Event quan s'instal·la
+        window.addEventListener('appinstalled', () => {
+            updateStatus('🎉 PWA instal·lada amb èxit!', 'ok');
+            installButton.textContent = '✅ App Instal·lada';
+            installButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        });
+        
+        // Comprovar manifest
+        fetch('/manifest.json')
+            .then(response => {
+                if (response.ok) {
+                    updateStatus('✅ manifest.json trobat', 'ok');
+                } else {
+                    updateStatus('❌ manifest.json NO trobat (Error ' + response.status + ')', 'error');
+                }
+            })
+            .catch(() => {
+                updateStatus('❌ Error carregant manifest.json', 'error');
+            });
+    </script>
+</body>
+</html>

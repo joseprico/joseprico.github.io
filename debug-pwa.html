@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug PWA - CN Terrassa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-line {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ok { background: rgba(16, 185, 129, 0.3); }
+        .error { background: rgba(239, 68, 68, 0.3); }
+        .warning { background: rgba(251, 191, 36, 0.3); }
+        .info { background: rgba(59, 130, 246, 0.3); }
+        
+        button {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .code {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #22d3ee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnòstic PWA - CN Terrassa</h1>
+        
+        <div class="card">
+            <div class="section-title">📱 Informació del Dispositiu</div>
+            <div id="deviceInfo"></div>
+        </div>
+        
+        <div class="card">
+            <div class="section-title">🌐 Comprovacions Bàsiques</div>
+            <div id="basicChecks"></div>
+        </div>
+        
+        <div class="card">
+            <div class="section-title">📄 Manifest.json</div>
+            <div id="manifestInfo"></div>
+            <button onclick="testManifest()">🔄 Recarregar Manifest</button>
+        </div>
+        
+        <div class="card">
+            <div class="section-title">⚙️ Service Worker</div>
+            <div id="swInfo"></div>
+            <button onclick="unregisterSW()">🗑️ Desregistrar Service Worker</button>
+            <button onclick="registerSW()">✅ Re-registrar Service Worker</button>
+        </div>
+        
+        <div class="card">
+            <div class="section-title">🧪 Tests de Rutes</div>
+            <div id="routeTests"></div>
+            <button onclick="testRoutes()">🔄 Provar Rutes</button>
+        </div>
+    </div>
+
+    <script>
+        // Funció auxiliar per afegir missatges
+        function addStatus(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `status-line ${type}`;
+            div.innerHTML = message;
+            container.appendChild(div);
+        }
+
+        // Informació del dispositiu
+        function showDeviceInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Plataforma': navigator.platform,
+                'Idioma': navigator.language,
+                'Online': navigator.onLine ? 'Sí' : 'No',
+                'URL actual': window.location.href,
+                'Origen': window.location.origin,
+                'Pathname': window.location.pathname,
+                'Display Mode': 'standalone' ? 
+                    window.matchMedia('(display-mode: standalone)').matches ? 'PWA (Standalone)' : 'Navegador' 
+                    : 'Desconegut'
+            };
+            
+            const container = document.getElementById('deviceInfo');
+            for (const [key, value] of Object.entries(info)) {
+                addStatus('deviceInfo', `<strong>${key}:</strong> ${value}`, 'info');
+            }
+        }
+
+        // Comprovacions bàsiques
+        function basicChecks() {
+            addStatus('basicChecks', 
+                'serviceWorker' in navigator ? '✅ Service Worker suportat' : '❌ Service Worker NO suportat',
+                'serviceWorker' in navigator ? 'ok' : 'error'
+            );
+            
+            addStatus('basicChecks',
+                window.location.protocol === 'https:' ? '✅ HTTPS activat' : '❌ NO està en HTTPS',
+                window.location.protocol === 'https:' ? 'ok' : 'error'
+            );
+            
+            addStatus('basicChecks',
+                window.matchMedia('(display-mode: standalone)').matches ? '✅ Executant com PWA' : 'ℹ️ Executant en navegador',
+                window.matchMedia('(display-mode: standalone)').matches ? 'ok' : 'info'
+            );
+        }
+
+        // Test del manifest
+        async function testManifest() {
+            const container = document.getElementById('manifestInfo');
+            container.innerHTML = '';
+            
+            const manifestUrl = '/CNT/manifest.json';
+            
+            try {
+                const response = await fetch(manifestUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const manifest = await response.json();
+                addStatus('manifestInfo', '✅ Manifest.json trobat i vàlid', 'ok');
+                
+                const manifestData = {
+                    'Nom': manifest.name,
+                    'Nom curt': manifest.short_name,
+                    'Start URL': manifest.start_url,
+                    'Scope': manifest.scope,
+                    'Display': manifest.display,
+                    'Icones': manifest.icons ? manifest.icons.length : 0
+                };
+                
+                for (const [key, value] of Object.entries(manifestData)) {
+                    addStatus('manifestInfo', `<strong>${key}:</strong> ${value}`, 'info');
+                }
+                
+                const code = document.createElement('div');
+                code.className = 'code';
+                code.textContent = JSON.stringify(manifest, null, 2);
+                container.appendChild(code);
+                
+            } catch (error) {
+                addStatus('manifestInfo', `❌ Error carregant manifest: ${error.message}`, 'error');
+                addStatus('manifestInfo', `Ruta provada: ${window.location.origin}${manifestUrl}`, 'warning');
+            }
+        }
+
+        // Informació Service Worker
+        async function showSWInfo() {
+            if (!('serviceWorker' in navigator)) {
+                addStatus('swInfo', '❌ Service Worker no suportat', 'error');
+                return;
+            }
+            
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                
+                if (registration) {
+                    addStatus('swInfo', '✅ Service Worker registrat', 'ok');
+                    addStatus('swInfo', `<strong>Scope:</strong> ${registration.scope}`, 'info');
+                    
+                    if (registration.active) {
+                        addStatus('swInfo', '✅ Service Worker actiu', 'ok');
+                        addStatus('swInfo', `<strong>Script URL:</strong> ${registration.active.scriptURL}`, 'info');
+                        addStatus('swInfo', `<strong>Estat:</strong> ${registration.active.state}`, 'info');
+                    }
+                    
+                    if (registration.waiting) {
+                        addStatus('swInfo', '⚠️ Hi ha una nova versió esperant', 'warning');
+                    }
+                    
+                    if (registration.installing) {
+                        addStatus('swInfo', '🔄 Service Worker s\'està instal·lant...', 'info');
+                    }
+                } else {
+                    addStatus('swInfo', '⚠️ Cap Service Worker registrat', 'warning');
+                }
+            } catch (error) {
+                addStatus('swInfo', `❌ Error comprovant SW: ${error.message}`, 'error');
+            }
+        }
+
+        // Desregistrar Service Worker
+        async function unregisterSW() {
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.unregister();
+                    document.getElementById('swInfo').innerHTML = '';
+                    addStatus('swInfo', '✅ Service Worker desregistrat. Recarrega la pàgina.', 'ok');
+                } else {
+                    addStatus('swInfo', '⚠️ No hi ha cap Service Worker per desregistrar', 'warning');
+                }
+            } catch (error) {
+                addStatus('swInfo', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Registrar Service Worker
+        async function registerSW() {
+            document.getElementById('swInfo').innerHTML = '';
+            
+            try {
+                const registration = await navigator.serviceWorker.register('/CNT/service-worker.js');
+                addStatus('swInfo', '✅ Service Worker registrat correctament!', 'ok');
+                addStatus('swInfo', `<strong>Scope:</strong> ${registration.scope}`, 'info');
+                
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } catch (error) {
+                addStatus('swInfo', `❌ Error registrant: ${error.message}`, 'error');
+            }
+        }
+
+        // Test de rutes
+        async function testRoutes() {
+            const container = document.getElementById('routeTests');
+            container.innerHTML = '';
+            
+            const routes = [
+                '/CNT/',
+                '/CNT/index.html',
+                '/CNT/manifest.json',
+                '/CNT/service-worker.js',
+                '/CNT/actawp_juvenil_data.json',
+                '/CNT/actawp_cadet_data.json'
+            ];
+            
+            for (const route of routes) {
+                try {
+                    const response = await fetch(route, { method: 'HEAD' });
+                    addStatus('routeTests',
+                        `${response.ok ? '✅' : '❌'} <strong>${route}</strong> - HTTP ${response.status}`,
+                        response.ok ? 'ok' : 'error'
+                    );
+                } catch (error) {
+                    addStatus('routeTests',
+                        `❌ <strong>${route}</strong> - ${error.message}`,
+                        'error'
+                    );
+                }
+            }
+        }
+
+        // Executar al carregar
+        window.addEventListener('load', () => {
+            showDeviceInfo();
+            basicChecks();
+            testManifest();
+            showSWInfo();
+            testRoutes();
+        });
+    </script>
+</body>
+</html>
