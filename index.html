@@ -18,10 +18,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- PWA Manifest (primer de tot) -->
-    <link rel="manifest" href="/CNT/manifest.json">
+    <link rel="manifest" href="manifest.json">
     
     <!-- Apple iOS PWA (ABANS de les icones normals) -->
-    <link rel="apple-touch-icon" href="/CNT/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CNT WP">
@@ -30,8 +30,8 @@
     <meta name="theme-color" content="#dc2626">
     
     <!-- Icones PWA -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/CNT/cnt-ios-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/CNT/cnt-ios-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="cnt-ios-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="cnt-ios-512.png">
     
     <!-- Favicon navegador (al final) -->
     <link rel="icon" href="https://clubnatacioterrassa.cat/wp-content/uploads/CNT_Escut_Blau.png.webp" type="image/webp">
@@ -1520,7 +1520,7 @@ body.theme-juvenil {
       appId: "96af4d1a-fcab-412e-aadb-ed44fadd1b4b",
       safari_web_id: "web.onesignal.auto.468a09a1-a4c0-43e5-8472-22975b523798",
       webPush: {
-        notificationIcon: "https://joseprico.github.io/CNT/cnt-stats-192.png"
+        notificationIcon: "https://joseprico.github.io/cnt-stats-192.png"
       },
       notifyButton: {
         enable: true,
@@ -13767,7 +13767,7 @@ console.log('🚀 Sistema PWA carregat');
 // 🎯 PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/CNT/service-worker.js')
+        navigator.serviceWorker.register('service-worker.js')
             .then(registration => {
                 console.log('✅ Service Worker registrat:', registration.scope);
             })
@@ -13832,13 +13832,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
   <script>
     // 🔒 Bloqueo de clic derecho y atajos
-/*    document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });*/
+    });
     </script>
 </body>
 </html>
