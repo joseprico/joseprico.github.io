@@ -2,33 +2,112 @@ name: Notificar canvis
 
 on:
   schedule:
-    - cron: '0 */4 * * *'  # Cada 4 hores
+    # Executar cada 4 hores
+    - cron: '15 */4 * * *'
+  
+  # Permetre executar manualment
   workflow_dispatch:
 
 jobs:
   check-and-notify:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       
-      - name: Descarregar JSON antic
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
         run: |
-          wget https://joseprico.github.io/cnt_cadet_25-26/actawp_cadet_data.json -O old_data.json || echo '{}' > old_data.json
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
       
-      - name: Executar parser
-        run: python ultra_robust_parser.py
+      - name: Save current data as old
+        run: |
+          # Copiar dades actuals com a "antigues" per comparar
+          if [ -f actawp_cadet_data.json ]; then
+            cp actawp_cadet_data.json old_actawp_cadet.json
+            echo "✅ Dades Cadet guardades per comparació"
+          else
+            echo "⚠️ No existeix actawp_cadet_data.json"
+          fi
+          
+          if [ -f actawp_juvenil_data.json ]; then
+            cp actawp_juvenil_data.json old_actawp_juvenil.json
+            echo "✅ Dades Juvenil guardades per comparació"
+          else
+            echo "⚠️ No existeix actawp_juvenil_data.json"
+          fi
       
-      - name: Comparar i notificar
+      - name: Download new ACTAWP data
+        run: |
+          python ultra_robust_parser.py
+      
+      - name: Check changes and send notifications
         env:
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
         run: |
           python notify_changes.py
       
-      - name: Pujar canvis
+      - name: Add timestamp to JSON files
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          python3 << EOF
+          import json
+          from datetime import datetime
+          
+          # Actualitzar fitxer Cadet
+          try:
+              with open('actawp_cadet_data.json', 'r', encoding='utf-8') as f:
+                  data = json.load(f)
+              data['last_update'] = datetime.now().isoformat()
+              with open('actawp_cadet_data.json', 'w', encoding='utf-8') as f:
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+              print("✅ Timestamp afegit a actawp_cadet_data.json")
+          except Exception as e:
+              print(f"⚠️ Error amb Cadet: {e}")
+          
+          # Actualitzar fitxer Juvenil
+          try:
+              with open('actawp_juvenil_data.json', 'r', encoding='utf-8') as f:
+                  data = json.load(f)
+              data['last_update'] = datetime.now().isoformat()
+              with open('actawp_juvenil_data.json', 'w', encoding='utf-8') as f:
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+              print("✅ Timestamp afegit a actawp_juvenil_data.json")
+          except Exception as e:
+              print(f"⚠️ Error amb Juvenil: {e}")
+          EOF
+      
+      - name: Check if there are changes
+        id: check_changes
+        run: |
+          git diff --exit-code actawp_*.json || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changed
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add actawp_*.json
-          git commit -m "📊 Actualització dades" || exit 0
+          git commit -m "📊 Actualització amb notificacions - $(date +'%Y-%m-%d %H:%M:%S')"
           git push
+      
+      - name: Create summary
+        if: always()
+        run: |
+          echo "### 🔔 Comprovació de canvis ACTAWP" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Data:** $(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_changes.outputs.changes }}" == "true" ]; then
+            echo "✅ **Estat:** Canvis detectats i notificacions enviades" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **Estat:** No hi ha canvis des de l'última comprovació" >> $GITHUB_STEP_SUMMARY
+          fi
