@@ -1,0 +1,124 @@
+name: Rebre i enviar notificacions
+
+on:
+  repository_dispatch:
+    types: [new_match_cadet, new_match_juvenil]
+
+jobs:
+  send-notification:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+      
+      - name: Send OneSignal notification
+        env:
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import requests
+          import os
+          
+          def send_notification(title, message, url="https://joseprico.github.io/"):
+              """Envia notificació via OneSignal"""
+              app_id = os.environ.get('ONESIGNAL_APP_ID', '')
+              api_key = os.environ.get('ONESIGNAL_API_KEY', '')
+              
+              if not app_id or not api_key:
+                  print("❌ OneSignal credentials no configurades")
+                  return False
+              
+              headers = {
+                  "Authorization": f"Basic {api_key}",
+                  "Content-Type": "application/json"
+              }
+              
+              payload = {
+                  "app_id": app_id,
+                  "included_segments": ["Active Users"],
+                  "headings": {"ca": title, "es": title, "en": title},
+                  "contents": {"ca": message, "es": message, "en": message},
+                  "url": url
+              }
+              
+              try:
+                  response = requests.post(
+                      "https://onesignal.com/api/v1/notifications",
+                      headers=headers,
+                      json=payload,
+                      timeout=10
+                  )
+                  if response.status_code == 200:
+                      print(f"✅ Notificació enviada correctament")
+                      return True
+                  else:
+                      print(f"❌ Error enviant notificació ({response.status_code}): {response.text}")
+                      return False
+              except Exception as e:
+                  print(f"❌ Error de connexió: {e}")
+                  return False
+          
+          # Obtenir dades del payload
+          team = "${{ github.event.client_payload.team }}"
+          rival = "${{ github.event.client_payload.rival }}"
+          date = "${{ github.event.client_payload.date }}"
+          our_score = int("${{ github.event.client_payload.our_score }}")
+          rival_score = int("${{ github.event.client_payload.rival_score }}")
+          
+          print(f"📊 Dades rebudes:")
+          print(f"  Equip: {team}")
+          print(f"  Rival: {rival}")
+          print(f"  Data: {date}")
+          print(f"  Resultat: CN Terrassa {our_score} - {rival_score} {rival}")
+          
+          # Determinar resultat
+          if our_score > rival_score:
+              emoji = "🎉"
+              result = "Victòria!"
+          elif our_score < rival_score:
+              emoji = "💪"
+              result = "Derrota"
+          else:
+              emoji = "🤝"
+              result = "Empat"
+          
+          # Construir missatge
+          title = f"CN Terrassa {team} - {result}"
+          message = f"{emoji} CN Terrassa {our_score} - {rival_score} {rival}"
+          if date:
+              message += f"\n📅 {date}"
+          
+          print(f"\n{'='*60}")
+          print(f"Enviant notificació:")
+          print(f"  Title: {title}")
+          print(f"  Message: {message}")
+          print(f"{'='*60}\n")
+          
+          # Enviar notificació
+          if send_notification(title, message):
+              print("✅ Procés completat amb èxit!")
+          else:
+              print("❌ Error en el procés")
+              exit(1)
+          EOF
+      
+      - name: Create summary
+        if: always()
+        run: |
+          echo "### 🔔 Notificació enviada" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Equip:** ${{ github.event.client_payload.team }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Partit:** CN Terrassa ${{ github.event.client_payload.our_score }} - ${{ github.event.client_payload.rival_score }} ${{ github.event.client_payload.rival }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.client_payload.date }}" ]; then
+            echo "**Data:** ${{ github.event.client_payload.date }}" >> $GITHUB_STEP_SUMMARY
+          fi
