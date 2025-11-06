@@ -28,25 +28,30 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
       
-      - name: Save current data as old
+      - name: Save last committed data as old
         run: |
-          # Copiar dades actuals com a "antigues" per comparar
-          if [ -f actawp_cadet_data.json ]; then
-            cp actawp_cadet_data.json old_actawp_cadet.json
-            echo "✅ Dades Cadet guardades per comparació"
+          echo "📦 Guardant última versió commitejada..."
+          
+          # Obtenir l'última versió commitejada del repositori (HEAD)
+          if git show HEAD:actawp_cadet_data.json > /dev/null 2>&1; then
+            git show HEAD:actawp_cadet_data.json > old_actawp_cadet.json
+            echo "✅ Última versió Cadet obtinguda del repositori"
           else
-            echo "⚠️ No existeix actawp_cadet_data.json"
+            echo "⚠️ No existeix versió anterior de actawp_cadet_data.json"
+            echo '{"upcoming_matches":[],"last_results":[]}' > old_actawp_cadet.json
           fi
           
-          if [ -f actawp_juvenil_data.json ]; then
-            cp actawp_juvenil_data.json old_actawp_juvenil.json
-            echo "✅ Dades Juvenil guardades per comparació"
+          if git show HEAD:actawp_juvenil_data.json > /dev/null 2>&1; then
+            git show HEAD:actawp_juvenil_data.json > old_actawp_juvenil.json
+            echo "✅ Última versió Juvenil obtinguda del repositori"
           else
-            echo "⚠️ No existeix actawp_juvenil_data.json"
+            echo "⚠️ No existeix versió anterior de actawp_juvenil_data.json"
+            echo '{"upcoming_matches":[],"last_results":[]}' > old_actawp_juvenil.json
           fi
       
       - name: Download new ACTAWP data
         run: |
+          echo "🌐 Descarregant dades noves de ACTAWP..."
           python ultra_robust_parser.py
       
       - name: Check changes and send notifications
@@ -54,6 +59,7 @@ jobs:
           ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
           ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
         run: |
+          echo "🔍 Comprovant canvis i enviant notificacions..."
           python notify_changes.py
       
       - name: Add timestamp to JSON files
@@ -110,4 +116,14 @@ jobs:
             echo "✅ **Estat:** Canvis detectats i notificacions enviades" >> $GITHUB_STEP_SUMMARY
           else
             echo "ℹ️ **Estat:** No hi ha canvis des de l'última comprovació" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Mostrar resum de fitxers
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Fitxers processats:**" >> $GITHUB_STEP_SUMMARY
+          if [ -f actawp_cadet_data.json ]; then
+            echo "- ✅ actawp_cadet_data.json" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f actawp_juvenil_data.json ]; then
+            echo "- ✅ actawp_juvenil_data.json" >> $GITHUB_STEP_SUMMARY
           fi
