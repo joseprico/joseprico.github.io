@@ -45,7 +45,9 @@ jobs:
               
               payload = {
                   "app_id": app_id,
-                  "included_segments": ["Active Users"],
+                  "filters": [
+                      {"field": "session_count", "relation": ">", "value": "0"}
+                  ],
                   "headings": {"ca": title, "es": title, "en": title},
                   "contents": {"ca": message, "es": message, "en": message},
                   "url": url
@@ -59,8 +61,15 @@ jobs:
                       timeout=10
                   )
                   if response.status_code == 200:
-                      print(f"✅ Notificació enviada correctament")
-                      return True
+                      response_data = response.json()
+                      notification_id = response_data.get('id', '')
+                      if notification_id:
+                          print(f"✅ Notificació enviada correctament")
+                          print(f"🆔 Notification ID: {notification_id}")
+                          return True
+                      else:
+                          print(f"❌ Error: No s'ha rebut ID de notificació")
+                          return False
                   else:
                       print(f"❌ Error enviant notificació ({response.status_code}): {response.text}")
                       return False
