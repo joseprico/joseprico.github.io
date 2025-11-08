@@ -12967,12 +12967,19 @@ document.addEventListener('DOMContentLoaded', function() {
 console.log('✅ Funcions de visualització amb logos carregades');
 // ☁️ Funció per obtenir el temps
 async function getWeatherForMatch(matchDate, location) {
-    if (!WEATHER_API_KEY) return null;
+    console.log('🌤️ getWeatherForMatch cridat!', {matchDate, location}); // ⬅️ AFEGIR
+    
+    if (!WEATHER_API_KEY) {
+        console.log('❌ No hi ha API key!'); // ⬅️ AFEGIR
+        return null;
+    }
     
     try {
         // Convertir data del partit a format YYYY-MM-DD
         const dateObj = new Date(matchDate);
         const dateStr = dateObj.toISOString().split('T')[0];
+        
+        console.log('📅 Data processada:', dateStr); // ⬅️ AFEGIR
         
         // Determinar ubicació
         let city = 'Terrassa';
@@ -12985,36 +12992,55 @@ async function getWeatherForMatch(matchDate, location) {
         } else if (location && location.toLowerCase().includes('montjuïc')) {
             city = 'Barcelona';
         } else if (location) {
-            // Intentar extreure ciutat del nom
             const parts = location.split('-');
             city = parts[0].trim();
         }
         
-        // Cridar API (màxim 14 dies de previsió)
+        console.log('🏙️ Ciutat detectada:', city); // ⬅️ AFEGIR
+        
+        // Cridar API
         const daysAhead = Math.ceil((dateObj - new Date()) / (1000 * 60 * 60 * 24));
         
-        if (daysAhead < 0 || daysAhead > 14) return null;
+        console.log('📊 Dies fins al partit:', daysAhead); // ⬅️ AFEGIR
+        
+        if (daysAhead < 0 || daysAhead > 14) {
+            console.log('⚠️ Partit fora del rang (0-14 dies)'); // ⬅️ AFEGIR
+            return null;
+        }
         
         const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${city}&days=${Math.min(daysAhead + 1, 14)}&lang=ca`;
         
+        console.log('🌐 Cridant API:', url); // ⬅️ AFEGIR
+        
         const response = await fetch(url);
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.log('❌ Error API:', response.status); // ⬅️ AFEGIR
+            return null;
+        }
         
         const data = await response.json();
+        console.log('✅ Dades rebudes:', data); // ⬅️ AFEGIR
         
         // Buscar previsió del dia del partit
         const forecast = data.forecast.forecastday.find(day => day.date === dateStr);
         
-        if (!forecast) return null;
+        if (!forecast) {
+            console.log('❌ No s\'ha trobat previsió per la data:', dateStr); // ⬅️ AFEGIR
+            return null;
+        }
         
-        return {
+        const weatherResult = {
             temp: Math.round(forecast.day.avgtemp_c),
             condition: forecast.day.condition.text,
             icon: forecast.day.condition.icon
         };
         
+        console.log('✅ Temps retornat:', weatherResult); // ⬅️ AFEGIR
+        
+        return weatherResult;
+        
     } catch (error) {
-        console.log('⚠️ No s\'ha pogut obtenir el temps:', error);
+        console.log('❌ Error obtenir temps:', error); // ⬅️ MODIFICAR (ja existeix)
         return null;
     }
 }
@@ -13835,7 +13861,6 @@ console.log('🚀 Sistema PWA carregat');
 </script>
 
   
-  </script>
  
 <script>
 // 🎯 PWA Service Worker Registration
@@ -13906,7 +13931,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
   <script>
     // 🔒 Bloqueo de clic derecho y atajos
-/*    document.addEventListener("contextmenu", event => event.preventDefault());
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
