@@ -495,20 +495,21 @@ class ActawpParserV53:
                     
                     stats_start = equip_idx + 1
                     
-                    team_data = {
+                     team_data = {
                         'posicio': posicio_text,
                         'equip': equip_text,
                         'logo': logo_url,
+                        'punts': 0,
                         'partits': 0,
                         'guanyats': 0,
                         'empatats': 0,
                         'perduts': 0,
                         'gols_favor': 0,
                         'gols_contra': 0,
-                        'punts': 0
+                        'diferencia': 0
                     }
                     
-                    stat_fields = ['partits', 'guanyats', 'empatats', 'perduts', 'gols_favor', 'gols_contra', 'punts']
+                    stat_fields = ['punts', 'partits', 'guanyats', 'empatats', 'perduts', 'gols_favor', 'gols_contra', 'diferencia']
                     
                     for i, field in enumerate(stat_fields):
                         col_idx = stats_start + i
