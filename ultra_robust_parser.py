@@ -495,7 +495,7 @@ class ActawpParserV53:
                     
                     stats_start = equip_idx + 1
                     
-                     team_data = {
+                    team_data = {
                         'posicio': posicio_text,
                         'equip': equip_text,
                         'logo': logo_url,
