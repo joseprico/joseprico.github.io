@@ -13142,14 +13142,34 @@ const match = sortedMatches[0];
     // HTML dels logos
 	// ☁️ Obtenir el temps
     let weather = null;
-    if (match.date_time && match.venue) {
+    if (match.date_time) {
         const dateStr = match.date_time.replace(/^\w+,?\s+/, '');
         const [datePart, timePart] = dateStr.split(' ');
         const [day, month, year] = datePart.split('/');
         const [hours, minutes] = timePart.split(':');
         const matchDate = new Date(year, month - 1, day, hours, minutes);
         
-        weather = await getWeatherForMatch(matchDate, match.venue);
+        // Determinar ubicació: si és casa → Terrassa, sinó extreure del nom rival
+        let location = 'Barcelona';  // Per defecte
+        if (isHome) {
+            location = 'Terrassa';
+        } else {
+            // Extreure ciutat del nom del rival
+            const rivalName = awayTeam.toUpperCase();
+            if (rivalName.includes('MONTJUIC') || rivalName.includes('MONTJUÏC') || rivalName.includes('BARCELONETA')) {
+                location = 'Barcelona';
+            } else if (rivalName.includes('SABADELL')) {
+                location = 'Sabadell';
+            } else if (rivalName.includes('TERRASSA')) {
+                location = 'Terrassa';
+            } else if (rivalName.includes('MANRESA')) {
+                location = 'Manresa';
+            } else if (rivalName.includes('MOLINS')) {
+                location = 'Barcelona';  // Molins de Rei és a prop de Barcelona
+            }
+        }
+        
+        weather = await getWeatherForMatch(matchDate, location);
     }
     const homeLogoHtml = homeLogo 
         ? `<img src="${homeLogo}" style="width: 40px; height: 40px; object-fit: contain; background: white; border-radius: 50%; padding: 4px;" alt="${homeTeam}" onerror="this.style.display='none';">` 
