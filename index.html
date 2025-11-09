@@ -2664,6 +2664,15 @@ const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811';
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
+	// ✅ Funció per mostrar nom + primer cognom (per evitar confusions amb jugadors amb mateix nom)
+function getShortPlayerName(fullName) {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(' ');
+    if (parts.length >= 2) {
+        return `${parts[0]} ${parts[1]}`; // Nom + Primer cognom
+    }
+    return parts[0]; // Si només té un nom
+}
 function getQuarterRealStartTime(match, quarter) {
     // Prioritzar quarterRealStartTimes si existeix (nou sistema amb botó)
     if (match.quarterRealStartTimes && match.quarterRealStartTimes[quarter]) {
@@ -3607,6 +3616,7 @@ document.getElementById('matchInfo').insertAdjacentHTML('afterend', `
     if (pdfButton) {
         pdfButton.style.display = 'inline-block';
     }
+	 renderGoalkeeperSavesChart(currentMatch);
 }  // ← Tancament de displayMatchData()
        
 function sortSingleMatchTable(column) {
@@ -3820,7 +3830,7 @@ function sortSingleMatchTable(column) {
                  return `
                     <tr style="${rankColor}">
                         <td>${p.num}</td>
-                        <td><strong>${p.nom.split(' ')[0]}</strong></td>
+                        <td><strong>${getShortPlayerName(p.nom)}</strong></td>
                         <td>${p.gols}</td>
                         <!-- Tipus Gols (5) -->
                         <td>${p.hPlus}</td>
@@ -4004,7 +4014,7 @@ function sortSingleMatchTable(column) {
                 .filter(j => j.estadistiques.gols > 0 || j.estadistiques.exclusions > 0)
                 .sort((a, b) => b.estadistiques.gols - a.estadistiques.gols);
             
-            const labels = playersWithStats.map(j => `${j.numero}. ${j.nom.split(' ')[0]}`);
+            const labels = playersWithStats.map(j => `${j.numero}. ${getShortPlayerName(j.nom)}`);
             const goalsData = playersWithStats.map(j => j.estadistiques.gols);
             const exclusionsData = playersWithStats.map(j => j.estadistiques.exclusions);
             
@@ -4666,7 +4676,7 @@ function displayComparison() {
 
     // ✅ SWIM RACES I GOALKEEPER SAVES AL FINAL
     document.getElementById('swimRacesStatsContainer').innerHTML = renderSwimRacesStats();
-    renderGoalkeeperSavesChart();
+    renderGoalkeeperSavesChart(currentMatch);
 }
 	
 
@@ -8778,7 +8788,7 @@ function renderRotationStats() {
 // ============================================
 // FIN FUNCIONES PARA ESTADÍSTICAS DE TIEMPO
 // ============================================
-function renderGoalkeeperSavesChart() {
+function renderGoalkeeperSavesChart(singleMatch = null) {
     const ctx = document.getElementById('goalkeeperSavesChart');
     if (!ctx) return;
     
@@ -8788,10 +8798,17 @@ function renderGoalkeeperSavesChart() {
     
     const goalkeeperStats = {};
     
-    allMatches.forEach(match => {
+    // ✅ Si es passa un partit, només mostrar aquell
+    const matchesToShow = singleMatch ? [singleMatch] : allMatches;
+    
+    matchesToShow.forEach(match => {
         match.jugadors.forEach(j => {
             const isGoalkeeper = j.numero === 1 || j.numero === 13;
             if (!isGoalkeeper) return;
+            
+            // ✅ Només comptar si ha fet almenys 1 parada
+            const totalParades = j.estadistiques.parades || 0;
+            if (totalParades === 0) return;
             
             const playerName = j.nom.trim();
             
@@ -8800,17 +8817,17 @@ function renderGoalkeeperSavesChart() {
                     num: j.numero,
                     name: playerName,
                     parades: 0,
-                    paradeTypes: { corner: 0, rebuig: 0, atrapa: 0,penal: 0 }
+                    paradeTypes: { corner: 0, rebuig: 0, atrapa: 0, penal: 0 }
                 };
             }
             
-            goalkeeperStats[playerName].parades += (j.estadistiques.parades || 0);
+            goalkeeperStats[playerName].parades += totalParades;
             
             if (j.estadistiques.paradeTypes) {
                 goalkeeperStats[playerName].paradeTypes.corner += (j.estadistiques.paradeTypes.corner || 0);
                 goalkeeperStats[playerName].paradeTypes.rebuig += (j.estadistiques.paradeTypes.rebuig || 0);
                 goalkeeperStats[playerName].paradeTypes.atrapa += (j.estadistiques.paradeTypes.atrapa || 0);
-				goalkeeperStats[playerName].paradeTypes.penal += (j.estadistiques.paradeTypes.penal || 0);
+                goalkeeperStats[playerName].paradeTypes.penal += (j.estadistiques.paradeTypes.penal || 0);
             }
         });
     });
@@ -8829,27 +8846,27 @@ function renderGoalkeeperSavesChart() {
         data: {
             labels: labels,
             datasets: [
-  {
-    label: 'Corner',
-    data: goalkeepers.map(gk => (gk.paradeTypes?.corner ?? 0)),
-    backgroundColor: '#3b82f6'
-  },
-  {
-    label: 'Rebuig',
-    data: goalkeepers.map(gk => (gk.paradeTypes?.rebuig ?? 0)),
-    backgroundColor: '#f97316'
-  },
-  {
-    label: 'Atrapa',
-    data: goalkeepers.map(gk => (gk.paradeTypes?.atrapa ?? 0)),
-    backgroundColor: '#22c55e'
-  },
-  {
-    label: 'Penal',
-    data: goalkeepers.map(gk => (gk.paradeTypes?.penal ?? 0)),
-    backgroundColor: '#eab308'
-  }
-]
+                {
+                    label: 'Corner',
+                    data: goalkeepers.map(gk => (gk.paradeTypes?.corner ?? 0)),
+                    backgroundColor: '#3b82f6'
+                },
+                {
+                    label: 'Rebuig',
+                    data: goalkeepers.map(gk => (gk.paradeTypes?.rebuig ?? 0)),
+                    backgroundColor: '#f97316'
+                },
+                {
+                    label: 'Atrapa',
+                    data: goalkeepers.map(gk => (gk.paradeTypes?.atrapa ?? 0)),
+                    backgroundColor: '#22c55e'
+                },
+                {
+                    label: 'Penal',
+                    data: goalkeepers.map(gk => (gk.paradeTypes?.penal ?? 0)),
+                    backgroundColor: '#eab308'
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -11054,15 +11071,15 @@ function calculateGoalkeeperStats(player) {
         const golsRebuts = stats.golsRebuts || 0;
         data.totalGoalsAgainst += golsRebuts;
         
-        // Parades per tipus
+         // Parades per tipus
         if (stats.paradeTypes) {
             Object.keys(stats.paradeTypes).forEach(type => {
                 data.savesByType[type] = (data.savesByType[type] || 0) + (stats.paradeTypes[type] || 0);
             });
         }
         
-        // Penalties
-        data.penalties.saved += data.savesByType.penal || 0;
+        // ✅ Penalties parats d'AQUEST partit
+        data.penalties.saved += (stats.paradeTypes?.penal || 0);
         
         // Calcular penalties afrontats des de chronologicalActions
         if (match.chronologicalActions) {
@@ -13977,13 +13994,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
   <script>
     // 🔒 Bloqueo de clic derecho y atajos
-  /*  document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });*/
+    });
     </script>
 </body>
 </html>
