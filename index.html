@@ -2894,6 +2894,9 @@ if (document.getElementById('scoreboardCNT')) {
     const totalInfraccions2mCNT = currentMatch.jugadors.reduce((sum, j) => {
     return sum + (j.estadistiques.infraccions2m || 0);
 }, 0);
+const totalContrafaltesCNT = currentMatch.jugadors.reduce((sum, j) => {
+        return sum + (j.estadistiques.contrafaltes || 0);
+    }, 0);
 
     // Eficiència de tir
     const totalXutsCNT = totalGoals + totalXutsFallatsCNT;
@@ -3013,6 +3016,12 @@ if (document.getElementById('scoreboardCNT')) {
 <div class="info-item">
     <div class="info-label">📏 Infraccions 2m CNT</div>
     <div class="info-value" style="color: #fb923c;">${totalInfraccions2mCNT}</div>
+</div>
+` : ''}
+            ${totalContrafaltesCNT > 0 ? `
+<div class="info-item">
+    <div class="info-label">⚠️ Contrafaltes CNT</div>
+    <div class="info-value" style="color: #fbbf24;">${totalContrafaltesCNT}</div>
 </div>
 ` : ''}
         </div>
@@ -6543,7 +6552,7 @@ function renderPlayingTimes() {
             ⏱️ Temps màxim: 32 minuts (4 quarts × 8 minuts)
         </p>
         
-        <details style="margin-top: 20px;">
+        <details open style="margin-top: 20px;">
             <summary style="cursor: pointer; color: #22d3ee; font-weight: bold; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
                 📊 Veure taula completa de temps
             </summary>
@@ -7217,8 +7226,8 @@ function calculateQuarterTimeForPlayerHelper(playerNum, quarter, playerWaterChan
 
 function calculateMatchPlayingTimes(match) {
     const playerTimes = {};
-    const quarterDuration = 480; // 8 minuts en segons
-    const totalQuarterTime = 3360; // 7 jugadors x 480 segons = 3360 segons
+    const quarterDuration = 480; // 8 minuts
+    const totalQuarterTime = 3360; // 7 jugadors × 480s
     
     // Inicialitzar jugadors
     match.jugadors.forEach(player => {
@@ -7240,7 +7249,7 @@ function calculateMatchPlayingTimes(match) {
         const quarterStartTime = match.quarterStartTimes?.[quarter];
         if (!quarterStartTime) return;
         
-        // Calcular el temps de finalització del quart
+        // Calcular temps de finalització
         const quarterOrder = ['q1', 'q2', 'q3', 'q4'];
         const currentIndex = quarterOrder.indexOf(quarter);
         let quarterEndTime;
@@ -7258,11 +7267,14 @@ function calculateMatchPlayingTimes(match) {
             quarterEndTime = quarterStartTime + (quarterDuration * 1000);
         }
         
+        const realQuarterDuration = (quarterEndTime - quarterStartTime) / 1000;
+        console.log(`\n=== ${quarter.toUpperCase()} ===`);
+        console.log(`⏱️ Temps REAL: ${realQuarterDuration.toFixed(1)}s`);
+        
         const quarterChanges = match.playerWaterChanges
             .filter(c => c.quarter === quarter)
             .sort((a, b) => a.timestamp - b.timestamp);
         
-        // Primer pas: calcular temps reals i identificar jugadors que juguen tot el quart
         const rawTimes = {};
         const playersFullQuarter = [];
         let sumRawTimesPartial = 0;
@@ -7270,10 +7282,9 @@ function calculateMatchPlayingTimes(match) {
         match.jugadors.forEach(player => {
             const playerNum = player.numero;
             const isTitular = match.lineups?.[quarter]?.includes(playerNum);
-            
             const playerChanges = quarterChanges.filter(c => c.playerNum === playerNum);
             
-            // Eliminar canvis duplicats consecutius
+            // Netejar duplicats
             const cleanChanges = [];
             let lastAction = null;
             playerChanges.forEach(change => {
@@ -7287,27 +7298,35 @@ function calculateMatchPlayingTimes(match) {
             let playsFullQuarter = false;
             
             if (isTitular) {
-                let lastInTime = quarterStartTime;
+                // ✅ Detectar canvis REALS (no els automàtics del final)
+                const realOuts = cleanChanges.filter(c => 
+                    c.action === 'out' && 
+                    c.timestamp < (quarterEndTime - 2000)
+                );
                 
-                cleanChanges.forEach(change => {
-                    if (change.action === 'out' && lastInTime !== null) {
-                        timeInWater += (change.timestamp - lastInTime) / 1000;
-                        lastInTime = null;
-                    } else if (change.action === 'in') {
-                        lastInTime = change.timestamp;
+                if (realOuts.length === 0) {
+                    // NO té canvis reals → juga complet
+                    playsFullQuarter = true;
+                    timeInWater = 0; // No cal calcular
+                } else {
+                    // Té canvis reals → calcular temps REAL
+                    let lastInTime = quarterStartTime;
+                    
+                    cleanChanges.forEach(change => {
+                        if (change.action === 'out' && lastInTime !== null) {
+                            timeInWater += (change.timestamp - lastInTime) / 1000;
+                            lastInTime = null;
+                        } else if (change.action === 'in') {
+                            lastInTime = change.timestamp;
+                        }
+                    });
+                    
+                    if (lastInTime !== null) {
+                        timeInWater += (quarterEndTime - lastInTime) / 1000;
                     }
-                });
-                
-                if (lastInTime !== null) {
-                    timeInWater += (quarterEndTime - lastInTime) / 1000;
                 }
-                
-                // Si és titular i no té canvis d'out, juga tot el quart
-               if (timeInWater > 847) {
-    playsFullQuarter = true;
-}
-                console.log(`Jugador ${playerNum}: ${timeInWater.toFixed(0)}s, Titular: ${isTitular}, Canvis: ${cleanChanges.length}, Juga complet: ${playsFullQuarter}`);
             } else {
+                // Suplent → calcular temps REAL
                 let lastInTime = null;
                 
                 cleanChanges.forEach(change => {
@@ -7323,8 +7342,10 @@ function calculateMatchPlayingTimes(match) {
                     timeInWater += (quarterEndTime - lastInTime) / 1000;
                 }
             }
-            console.log(`Jugador ${playerNum}: ${timeInWater.toFixed(0)}s, Titular: ${isTitular}, Canvis: ${cleanChanges.length}, Juga complet: ${playsFullQuarter}`);
-            rawTimes[playerNum] = Math.max(0, Math.min(timeInWater, quarterDuration));
+            
+            rawTimes[playerNum] = Math.round(Math.max(0, timeInWater));
+            
+            console.log(`👤 J${playerNum}: ${timeInWater.toFixed(1)}s, Complet: ${playsFullQuarter}, Titular: ${isTitular}, RealOuts: ${isTitular ? cleanChanges.filter(c => c.action === 'out' && c.timestamp < (quarterEndTime - 2000)).length : 'N/A'}`);
             
             if (playsFullQuarter) {
                 playersFullQuarter.push(playerNum);
@@ -7333,21 +7354,22 @@ function calculateMatchPlayingTimes(match) {
             }
         });
         
-        // Segon pas: assignar temps
-        const timeUsedByFullQuarter = playersFullQuarter.length * quarterDuration;
-        const remainingTime = totalQuarterTime - timeUsedByFullQuarter;
+        // ✅ PONDERAR: Distribuir el temps restant entre jugadors parcials
+        const timeUsedByFull = playersFullQuarter.length * quarterDuration;
+        const remainingTime = totalQuarterTime - timeUsedByFull;
+        
+        console.log(`📊 Jugadors complets: ${playersFullQuarter.length} × 480s = ${timeUsedByFull}s`);
+        console.log(`📊 Temps restant per parcials: ${remainingTime}s`);
+        console.log(`📊 Suma temps real parcials: ${sumRawTimesPartial.toFixed(1)}s`);
         
         match.jugadors.forEach(player => {
             const playerNum = player.numero;
             
             if (playersFullQuarter.includes(playerNum)) {
-                // Jugador que juga tot el quart: exactament 480 segons
                 playerTimes[playerNum][quarter] = quarterDuration;
             } else {
-                // Jugador parcial: ponderar amb el temps restant
                 if (sumRawTimesPartial > 0) {
-                    const adjustedTime = Math.round((rawTimes[playerNum] / sumRawTimesPartial) * remainingTime);
-                    playerTimes[playerNum][quarter] = adjustedTime;
+                    playerTimes[playerNum][quarter] = Math.round((rawTimes[playerNum] / sumRawTimesPartial) * remainingTime);
                 } else {
                     playerTimes[playerNum][quarter] = 0;
                 }
@@ -7355,11 +7377,15 @@ function calculateMatchPlayingTimes(match) {
             
             playerTimes[playerNum].totalTime += playerTimes[playerNum][quarter];
         });
+        
+        // Verificar suma
+        let total = 0;
+        match.jugadors.forEach(p => total += playerTimes[p.numero][quarter]);
+        console.log(`✅ TOTAL: ${total}s (${(total/60).toFixed(1)} min)`);
     });
     
     return playerTimes;
 }
-
 function renderTotalTimeChart() {
     const ctx = document.getElementById('totalTimeChart');
     if (!ctx) return;
@@ -13951,13 +13977,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
   <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });
+    });*/
     </script>
 </body>
 </html>
