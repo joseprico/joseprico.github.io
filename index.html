@@ -3236,7 +3236,7 @@ const totalContrafaltesCNT = currentMatch.jugadors.reduce((sum, j) => {
 
         const players = lineup.map(num => {
             const player = currentMatch.jugadors.find(j => j.numero === num);
-            return player ? `${player.numero}. ${player.nom.split(' ')[0]}` : num;
+            return player ? `${player.numero}. ${player.nom.split(' ').slice(0, 2).join(' ')}` : num;
         }).join(', ');
 
         const score = currentMatch.periodScores[q];
@@ -3554,7 +3554,7 @@ document.getElementById('matchInfo').insertAdjacentHTML('afterend', `
                             <div style="background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px;">
                                 <div style="text-align: center; margin-bottom: 10px;">
                                     <div style="font-size: 12px; font-weight: bold; color: #22d3ee;">
-                                        ${gk.num}. ${gk.name.split(' ')[0]}
+                                        ${gk.num}. ${gk.name.split(' ').slice(0, 2).join(' ')}
                                     </div>
                                     <div style="font-size: 10px; color: #bae6fd; margin-top: 2px;">
                                         ${gk.totalGolsRebuts} gols rebuts
@@ -4625,7 +4625,7 @@ function displayComparison() {
                         <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px;">
                             <div style="text-align: center; margin-bottom: 12px;">
                                 <div style="font-size: 14px; font-weight: bold; color: #22d3ee;">
-                                    ${gk.num}. ${gk.name.split(' ')[0]}
+                                    ${gk.num}. ${gk.name.split(' ').slice(0, 2).join(' ')}
                                 </div>
                                 <div style="font-size: 12px; color: #bae6fd; margin-top: 4px;">
                                     Total gols rebuts: ${gk.totalGolsRebuts}
@@ -4694,7 +4694,7 @@ function displayComparison() {
                 .sort((a, b) => b.gols - a.gols)
                 .slice(0, 8);
             
-            const labels = topPlayers.map(p => `${p.num}. ${p.name.split(' ')[0]}`);
+            const labels = topPlayers.map(p => `${p.num}. ${p.name.split(' ').slice(0, 2).join(' ')}`);
             const data = topPlayers.map(p => p.gols);
             
             const colors = [
@@ -5340,7 +5340,7 @@ function renderConsistencyChart() {
         }))
         .sort((a, b) => b.percentage - a.percentage);
     
-    const labels = players.map(p => `${p.num}. ${p.name.split(' ')[0]}`);
+    const labels = players.map(p => `${p.num}. ${p.name.split(' ').slice(0, 2).join(' ')}`);
     const data = players.map(p => parseFloat(p.percentage));
     
     // Colores según porcentaje
@@ -5471,7 +5471,7 @@ function renderQuarterPatterns() {
                 <div class="pool-goalkeeper">
                     <div class="pool-player">
                         <div class="pool-player-num" style="background: #8b5cf6;">${goalkeeper.num}</div>
-                        <div class="pool-player-name">${goalkeeper.name.split(' ')[0]}</div>
+                        <div class="pool-player-name">${goalkeeper.name.split(' ').slice(0, 2).join(' ')}</div>
                         <div class="pool-player-stat">${goalkeeper.starts} titularitats (${goalkeeperPercent}%)</div>
                     </div>
                 </div>
@@ -5485,7 +5485,7 @@ function renderQuarterPatterns() {
                         return `
                             <div class="pool-player">
                                 <div class="pool-player-num">${p.num}</div>
-                                <div class="pool-player-name">${p.name.split(' ')[0]}</div>
+                                <div class="pool-player-name">${p.name.split(' ').slice(0, 2).join(' ')}</div>
                                 <div class="pool-player-stat">${p.starts} (${percent}%)</div>
                             </div>
                         `;
@@ -6449,7 +6449,7 @@ function renderMatchTimeline() {
                     if (isRival && action.faltaSobreJugador) {
                         const jugadorCNT = currentMatch.jugadors.find(j => j.numero == action.faltaSobreJugador);
                         if (jugadorCNT) {
-                            detailText += ` <span style="font-size: 11px; opacity: 0.7;">(falta sobre ${jugadorCNT.numero}. ${jugadorCNT.nom.split(' ')[0]})</span>`;
+                            detailText += ` <span style="font-size: 11px; opacity: 0.7;">(falta sobre ${jugadorCNT.numero}. ${jugadorCNT.nom.split(' ').slice(0, 2).join(' ')})</span>`;
                         }
                     }
                 } else if (action.type === 'water-change') {
@@ -6521,7 +6521,7 @@ function renderPlayingTimes() {
                 <div class="pool-goalkeeper">
                     <div class="pool-player">
                         <div class="pool-player-num" style="background: #8b5cf6;">${goalkeeper.num}</div>
-                        <div class="pool-player-name">${goalkeeper.name.split(' ')[0]}</div>
+                        <div class="pool-player-name">${goalkeeper.name.split(' ').slice(0, 2).join(' ')}</div>
                         <div class="pool-player-stat">
                             ${formatTime(goalkeeper.totalTime)}
                         </div>
@@ -6539,7 +6539,7 @@ function renderPlayingTimes() {
                         return `
                             <div class="pool-player" style="opacity: ${opacity};">
                                 <div class="pool-player-num">${p.num}</div>
-                                <div class="pool-player-name">${p.name.split(' ')[0]}</div>
+                                <div class="pool-player-name">${p.name.split(' ').slice(0, 2).join(' ')}</div>
                                 <div class="pool-player-stat">
                                     ${formatTime(p.totalTime)}
                                 </div>
@@ -6727,7 +6727,7 @@ function renderGlobalTimePool() {
                 <div class="pool-goalkeeper">
                     <div class="pool-player">
                         <div class="pool-player-num" style="background: #8b5cf6;">${goalkeeper.num}</div>
-                        <div class="pool-player-name">${goalkeeper.name.split(' ')[0]}</div>
+                        <div class="pool-player-name">${goalkeeper.name.split(' ').slice(0, 2).join(' ')}</div>
                         <div class="pool-player-stat">
                             ${formatTime(goalkeeper.totalTime)}
                         </div>
@@ -6749,7 +6749,7 @@ function renderGlobalTimePool() {
                         return `
                             <div class="pool-player" style="opacity: ${opacity};">
                                 <div class="pool-player-num">${p.num}</div>
-                                <div class="pool-player-name">${p.name.split(' ')[0]}</div>
+                                <div class="pool-player-name">${p.name.split(' ').slice(0, 2).join(' ')}</div>
                                 <div class="pool-player-stat">
                                     ${formatTime(p.totalTime)}
                                 </div>
@@ -7626,7 +7626,7 @@ function renderEfficiencyPerMinuteChart() {
         }))
         .sort((a, b) => b.goalsPerMinute - a.goalsPerMinute);
     
-    const labels = players.map(p => `${p.num}. ${p.name.split(' ')[0]}`);
+    const labels = players.map(p => `${p.num}. ${p.name.split(' ').slice(0, 2).join(' ')}`);
     const goalsData = players.map(p => parseFloat(p.goalsPerMinute));
     const exclusionsData = players.map(p => parseFloat(p.exclusionsPerMinute));
     
@@ -7813,7 +7813,7 @@ function renderMinutesDistributionChart() {
         .sort((a, b) => b.totalTime - a.totalTime)
         .slice(0, 10);
     
-    const labels = players.map(p => `${p.num}. ${p.name.split(' ')[0]}`);
+    const labels = players.map(p => `${p.num}. ${p.name.split(' ').slice(0, 2).join(' ')}`);
     const timeInMinutes = players.map(p => (p.totalTime / 60).toFixed(1));
     
     const colors = [
@@ -7957,7 +7957,7 @@ function renderPlusMinusChart() {
         .sort((a, b) => b.plusMinus - a.plusMinus);
     
     // ✅ GRÀFICA RESUM AMB TOTS ELS JUGADORS
-    const labels = players.map(p => `${p.num}. ${p.name.split(' ')[0]}`);
+    const labels = players.map(p => `${p.num}. ${p.name.split(' ').slice(0, 2).join(' ')}`);
     const data = players.map(p => p.plusMinus);
     const colors = data.map(pm => pm >= 0 ? '#22c55e' : '#ef4444');
     
@@ -8278,14 +8278,14 @@ function renderLoadBalanceStats() {
         </div>
         <div class="info-item">
             <div class="info-label">Jugador con Más Minutos</div>
-            <div class="info-value">${maxPlayer.num}. ${maxPlayer.name.split(' ')[0]}</div>
+            <div class="info-value">${maxPlayer.num}. ${maxPlayer.name.split(' ').slice(0, 2).join(' ')}</div>
             <div style="font-size: 11px; color: #bae6fd; margin-top: 4px;">
                 ${formatTime(maxTime)}
             </div>
         </div>
         <div class="info-item">
             <div class="info-label">Jugador con Menos Minutos</div>
-            <div class="info-value">${minPlayer.num}. ${minPlayer.name.split(' ')[0]}</div>
+            <div class="info-value">${minPlayer.num}. ${minPlayer.name.split(' ').slice(0, 2).join(' ')}</div>
             <div style="font-size: 11px; color: #bae6fd; margin-top: 4px;">
                 ${formatTime(minTime)}
             </div>
@@ -8747,8 +8747,8 @@ function renderRotationStats() {
         const playerMost = match.jugadors.find(j => j.numero === parseInt(mostRotatedPlayerNum));
         const playerLeast = match.jugadors.find(j => j.numero === parseInt(leastRotatedPlayerNum));
         
-        if (playerMost) mostRotatedPlayer = `${playerMost.numero}. ${playerMost.nom.split(' ')[0]}`;
-        if (playerLeast) leastRotatedPlayer = `${playerLeast.numero}. ${playerLeast.nom.split(' ')[0]}`;
+        if (playerMost) mostRotatedPlayer = `${playerMost.numero}. ${playerMost.nom.split(' ').slice(0, 2).join(' ')}`;
+        if (playerLeast) leastRotatedPlayer = `${playerLeast.numero}. ${playerLeast.nom.split(' ').slice(0, 2).join(' ')}`;
     });
     
     container.innerHTML = `
@@ -8839,7 +8839,7 @@ function renderGoalkeeperSavesChart(singleMatch = null) {
         return;
     }
     
-    const labels = goalkeepers.map(gk => `${gk.num}. ${gk.name.split(' ')[0]}`);
+    const labels = goalkeepers.map(gk => `${gk.num}. ${gk.name.split(' ').slice(0, 2).join(' ')}`);
     
     window.goalkeeperSavesChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -9348,7 +9348,7 @@ function renderGoalZoneStats() {
                             <div style="background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px;">
                                 <div style="text-align: center; margin-bottom: 8px;">
                                     <div style="font-size: 12px; font-weight: bold; color: #22d3ee;">
-                                        ${player.num}. ${player.name.split(' ')[0]}
+                                        ${player.num}. ${player.name.split(' ').slice(0, 2).join(' ')}
                                     </div>
                                     <div style="font-size: 10px; color: #bae6fd; margin-top: 2px;">
                                         ${player.totalGols} gols (${totalWithZone} amb zona)
@@ -9639,7 +9639,7 @@ function renderIndividualZoneMaps(players) {
         
         return `
             <div class="individual-zone-card">
-                <div class="player-name">${player.num}. ${player.name.split(' ')[0]}</div>
+                <div class="player-name">${player.num}. ${player.name.split(' ').slice(0, 2).join(' ')}</div>
                 <div style="font-size: 10px; color: #bae6fd; text-align: center; margin-bottom: 8px;">
                     ${player.totalGols} gols (${totalWithZone} amb zona)
                 </div>
@@ -9835,7 +9835,7 @@ function renderMatchGoalZones() {
                     
                     return `
                         <div class="individual-zone-card">
-                            <div class="player-name">${player.num}. ${player.name.split(' ')[0]}</div>
+                            <div class="player-name">${player.num}. ${player.name.split(' ').slice(0, 2).join(' ')}</div>
                             <div style="font-size: 10px; color: #bae6fd; text-align: center; margin-bottom: 8px;">
                                 ${player.totalGols} gols (${totalWithZone} amb zona)
                             </div>
