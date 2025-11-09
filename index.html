@@ -2156,7 +2156,7 @@ body.theme-juvenil {
 </div>
 <!-- ESTADÍSTIQUES DE L'EQUIP -->
             <div class="card" style="background: rgba(0,0,0,0.3);">
-                <h3 class="section-title">📈 Estadístiques</h3>
+                <h3 class="section-title">📈 Estadístiques de la Federació</h3>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Punts</div>
@@ -12146,8 +12146,26 @@ function displayActawpData() {
     document.getElementById('actawpLoading').style.display = 'none';
     document.getElementById('actawpContent').style.display = 'block';
     
-    // Mostrar estadístiques de l'equip
-    const stats = actawpData.team_stats || {};
+     // ✅ Calcular estadístiques des de la classificació (ranking)
+    let stats = {};
+    if (actawpData.ranking && actawpData.ranking.length > 0) {
+        // Buscar CN TERRASSA a la classificació
+        const cntTeam = actawpData.ranking.find(team => 
+            team.equip && team.equip.toUpperCase().includes('TERRASSA')
+        );
+        
+        if (cntTeam) {
+            stats = {
+                'Punts': cntTeam.punts || 0,
+                'Partits jugats': cntTeam.partits || 0,
+                'Partits guanyats': cntTeam.guanyats || 0,
+                'Partits empatats': cntTeam.empatats || 0,
+                'Partits perduts': cntTeam.perduts || 0,
+                'Gols a favor': cntTeam.gols_favor || 0,
+                'Gols en contra': cntTeam.gols_contra || 0
+            };
+        }
+    }
     
     // Mapper de noms d'estadístiques (català/castellà)
     const statNames = {
@@ -12156,7 +12174,7 @@ function displayActawpData() {
         wins: ['Partidos ganados', 'Partits guanyats'],
         draws: ['Partidos empatados', 'Partits empatats'],
         losses: ['Partidos perdidos', 'Partits perduts'],
-        goalsFor: ['A favor', 'A favor', 'Goles a favor', 'Gols a favor'],
+        goalsFor: ['A favor', 'Goles a favor', 'Gols a favor'],
         goalsAgainst: ['En contra', 'Gols en contra', 'Goles en contra']
     };
     
