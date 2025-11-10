@@ -223,7 +223,30 @@ body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(2) {
         font-size: 13px;
     }
 }
+.tab.live {
+  background: #666;
+  color: #fff;
+  border: 2px solid #999;
+  font-weight: 600;
+}
 
+/* Estat actiu, en directe */
+.tab.live.active {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  border: 2px solid #fca5a5;
+}
+/* No pintis en vermell el tab EN DIRECTE quan no està actiu */
+.tab.live:not(.active):hover,
+.tab.live:not(.active):focus,
+.tab.live:not(.active):active {
+  background: #666 !important;
+  border-color: #999 !important;
+  color: #fff !important;
+}
+.tab.live:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 /* Instruccions iOS */
 .ios-instructions {
     position: fixed;
@@ -3010,18 +3033,18 @@ body.live-mode {
     </button>
 </div>
 	
-        <!-- TABS SIEMPRE VISIBLES -->
-        <div class="tabs">
-		<!-- 🔴 NOVA PESTANYA - S'oculta si no hi ha partit -->
-    <button id="liveTab" class="tab" onclick="showTab('live')" style="background: linear-gradient(135deg, #dc2626, #ef4444); border: 2px solid #fca5a5;">
-        🔴 EN DIRECTE
-    </button>
-    <button class="tab active" onclick="showTab('list')">🏠 Inici</button>
-    <button class="tab" onclick="showTab('comparison')">📊 Estadístiques</button>
-    <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
-    <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
-    <button class="tab" onclick="showTab('individual')">👤 Individual</button>
-    <button class="tab" onclick="showTab('actawpTab')">🌐 FCN ACTAWP</button> 
+        <!-- TABS SEMPRE VISIBLES -->
+<div class="tabs">
+  <!-- 🔴 Botó EN DIRECTE (ara sempre visible) -->
+  <button id="liveTab" class="tab live" onclick="showTab('live')">
+    ⏸️ Cap partit en temps real
+  </button>
+  <button class="tab active" onclick="showTab('list')">🏠 Inici</button>
+  <button class="tab" onclick="showTab('comparison')">📊 Estadístiques</button>
+  <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
+  <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
+  <button class="tab" onclick="showTab('individual')">👤 Individual</button>
+  <button class="tab" onclick="showTab('actawpTab')">🌐 FCN ACTAWP</button> 
 </div>
         </div>
 
@@ -3995,6 +4018,7 @@ let liveMatchActive = false;
 let liveMatchData = null;
 let firebaseListeners = [];
 let autoRefreshInterval = null;
+
 // ☁️ API del temps
 const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811'; 	
         let allMatches = [];
@@ -4156,73 +4180,109 @@ const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811';
 // 🔥 ESCOLTAR FIREBASE PER PARTITS EN DIRECTE
 // ============================================
 function listenForLiveMatch(team = 'juvenil') {
-    if (!window.firebaseReady) {
-        console.warn('⚠️ Firebase no disponible');
-        return;
-    }
-    
-    try {
-        console.log('👂 Escoltant Firebase per partits en directe...');
-        
-        // Escoltar TOTS els partits de l'equip
-        const matchesRef = window.firebaseRef(window.firebaseDB, 'matches');
-        
-        const listener = window.firebaseOnValue(matchesRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const allFirebaseMatches = snapshot.val();
-                
-                // Buscar el partit més recent d'aquest equip
-                let latestMatch = null;
-                let latestTimestamp = 0;
-                
-                Object.keys(allFirebaseMatches).forEach(matchId => {
-                    const match = allFirebaseMatches[matchId];
-                    
-                    // Comprovar si és del team correcte
-                    const isCorrectTeam = matchId.includes(`cnt_${team}_`);
-                    
-                    if (isCorrectTeam && match.lastUpdate > latestTimestamp) {
-                        latestTimestamp = match.lastUpdate;
-                        latestMatch = match;
-                    }
-                });
-                
-                if (latestMatch) {
-                    // Comprovar si és un partit "actiu" (actualitzat fa menys de 5 minuts)
-                    const minutesSinceUpdate = (Date.now() - latestTimestamp) / 1000 / 60;
-                    
-                    if (minutesSinceUpdate < 5) {
-                        console.log('🔥 PARTIT EN DIRECTE DETECTAT!');
-                        liveMatchActive = true;
-                        liveMatchData = latestMatch;
-                        
-                        // Actualitzar UI
-                        showLiveBanner(latestMatch);
-                        updateWithLiveData(latestMatch);
-                    } else {
-                        console.log('📊 Partit Firebase disponible però no actiu');
-                        hideLiveBanner();
-                    }
-                } else {
-                    console.log('📊 No hi ha partits actius a Firebase');
-                    hideLiveBanner();
-                }
-            } else {
-                console.log('📊 No hi ha dades a Firebase');
-                hideLiveBanner();
-            }
-        }, (error) => {
-            console.error('❌ Error escoltant Firebase:', error);
-            hideLiveBanner();
-        });
-        
-        firebaseListeners.push(listener);
-        
-    } catch (error) {
-        console.error('❌ Error iniciant listener Firebase:', error);
-    }
-}
+  if (!window.firebaseReady) {
+    console.warn('⚠️ Firebase no disponible');
+    return;
+  }
 
+  try {
+    console.log('👂 Escoltant Firebase per partits en directe...');
+    const matchesRef = window.firebaseRef(window.firebaseDB, 'matches');
+
+    const listener = window.firebaseOnValue(matchesRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        console.log('📊 No hi ha dades a Firebase');
+        liveMatchActive = false;
+        liveMatchData = null;
+        // Abans: hideLiveBanner();
+        updateLiveTab(false);
+        return;
+      }
+
+      const allFirebaseMatches = snapshot.val();
+
+      // Buscar el partit més recent d'aquest equip
+      let latestMatch = null;
+      let latestTimestamp = 0;
+
+      Object.keys(allFirebaseMatches).forEach(matchId => {
+        const match = allFirebaseMatches[matchId];
+        const isCorrectTeam = matchId.includes(`cnt_${team}_`);
+        if (isCorrectTeam && match.lastUpdate > latestTimestamp) {
+          latestTimestamp = match.lastUpdate;
+          latestMatch = match;
+        }
+      });
+
+      if (!latestMatch) {
+        console.log('📊 No hi ha partits d’aquest equip');
+        liveMatchActive = false;
+        liveMatchData = null;
+        // Abans: hideLiveBanner();
+        updateLiveTab(false);
+        return;
+      }
+
+      // Partit actiu si té update < 5 minuts
+      const minutesSinceUpdate = (Date.now() - latestTimestamp) / 1000 / 60;
+
+      if (minutesSinceUpdate < 5) {
+        console.log('🔥 PARTIT EN DIRECTE DETECTAT!');
+        liveMatchActive = true;
+        liveMatchData = latestMatch;
+
+        // UI existent (si ja la tens) + nou estat del tab
+        if (typeof showLiveBanner === 'function') showLiveBanner(latestMatch);
+        if (typeof updateWithLiveData === 'function') updateWithLiveData(latestMatch);
+
+        updateLiveTab(true);
+      } else {
+        console.log('📊 Partit Firebase disponible però no actiu');
+        liveMatchActive = false;
+        liveMatchData = null;
+
+        // Abans: hideLiveBanner();
+        updateLiveTab(false);
+      }
+    }, (error) => {
+      console.error('❌ Error escoltant Firebase:', error);
+      liveMatchActive = false;
+      liveMatchData = null;
+      // Abans: hideLiveBanner();
+      updateLiveTab(false);
+    });
+
+    firebaseListeners.push(listener);
+  } catch (error) {
+    console.error('❌ Error iniciant listener Firebase:', error);
+    liveMatchActive = false;
+    liveMatchData = null;
+    updateLiveTab(false);
+  }
+}
+function updateLiveTab(isActive) {
+  const liveTab = document.getElementById('liveTab');
+  if (!liveTab) return;
+
+  if (isActive) {
+    liveTab.textContent = '🔴 EN DIRECTE';
+    liveTab.classList.add('active');
+    liveTab.title = 'Hi ha un partit en temps real';
+    // Si vols que vagi a la pestanya "live":
+    liveTab.onclick = () => showTab('live');
+    liveTab.style.cursor = 'pointer';
+  } else {
+    liveTab.textContent = '⏸️ Cap partit en temps real';
+    liveTab.classList.remove('active');
+    liveTab.title = 'Ara mateix no hi ha cap partit en temps real';
+    // Manté el clic si vols que obri igualment la pestanya live, o desactiva’l:
+    liveTab.onclick = () => showTab('list'); // o null si prefereixes que no faci res
+    liveTab.style.cursor = 'default';
+  }
+
+  // Sempre visible
+  liveTab.style.display = 'inline-flex';
+}
 // ============================================
 // 🔥 MOSTRAR BANNER DE TEMPS REAL
 // ============================================
