@@ -4355,7 +4355,7 @@ function listenForLiveMatch(team = 'juvenil') {
       // Partit actiu si té update < 5 minuts
       const minutesSinceUpdate = (Date.now() - latestTimestamp) / 1000 / 60;
 
-      if (minutesSinceUpdate < 5) {
+      if (minutesSinceUpdate < 60) {
         console.log('🔥 PARTIT EN DIRECTE DETECTAT!');
         liveMatchActive = true;
         liveMatchData = latestMatch;
