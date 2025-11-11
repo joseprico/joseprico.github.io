@@ -223,17 +223,141 @@ body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(2) {
         font-size: 13px;
     }
 }
+.goal-rect .ball {
+  animation: pop-in 0.3s ease-out;
+}
+@keyframes pop-in {
+  from { transform: scale(0.3); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
 .tab.live {
   background: #666;
   color: #fff;
   border: 2px solid #999;
   font-weight: 600;
 }
+.goal-rect {
+  --cell-w: 14px;     /* amplada cel·la */
+  --cell-h: 10px;     /* alçada cel·la */
+  --cols: 4;
+  --rows: 3;
 
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cell-w));
+  grid-template-rows: repeat(var(--rows), var(--cell-h));
+  justify-items: center;
+  align-items: center;
+  gap: 1px;
+
+  padding: 4px;
+  border: 3px solid #d9e0ea;      /* marc */
+  border-bottom-width: 4px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(90deg, rgba(180,190,200,.5) 0 1px, transparent 1px calc(var(--cell-w))),
+    repeating-linear-gradient(180deg, rgba(180,190,200,.5) 0 1px, transparent 1px calc(var(--cell-h)));
+  background-clip: padding-box;
+  width: calc(var(--cell-w)*var(--cols) + 8px);
+  height: calc(var(--cell-h)*var(--rows) + 8px);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.goal-rect .ball {
+  grid-row: var(--r);
+  grid-column: var(--c);
+  font-size: 15px;
+  transform: translateY(1px);
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.25));
+}
+/* contenidor meta */
+.action-meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+
+.zone-wrap { display:flex; align-items:center; gap:.35rem; }
+.zone-title {
+  font-size:.8rem; color:#cbd5e1; /* to suau */
+  padding:2px 6px; border-radius:6px; background:rgba(148,163,184,.15); border:1px solid rgba(148,163,184,.25);
+}
+/* contenidor amb porteria 3×3 */
+.goal3x3{
+  --size: 36px;         /* ample total (ajusta si cal) */
+  --cell: 10px;         /* mida de cada "quadrat" de xarxa */
+  --gap: 2px;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows:    repeat(3, 1fr);
+  width: calc(var(--size) + 8px);  /* + gruix marc */
+  height: calc(var(--size) + 10px);
+  padding: 4px;
+  border: 3px solid #d9e0ea;       /* pals i travesser */
+  border-bottom-width: 4px;         /* línia de gol més gruixuda */
+  border-radius: 4px;
+  background:
+    /* xarxa més visible amb línies repetides */
+    repeating-linear-gradient(90deg, rgba(180,190,200,.65) 0 1px, transparent 1px var(--cell)),
+    repeating-linear-gradient(180deg, rgba(180,190,200,.65) 0 1px, transparent 1px var(--cell));
+  background-clip: padding-box;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* pilota col·locada a la cel·la (grid-row/column via CSS vars) */
+.goal3x3 .ball{
+  grid-row: var(--r);
+  grid-column: var(--c);
+  display: inline-grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+  transform: translateY(1px); /* petit ajust òptic */
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.25));
+}
+/* mini-porteria */
+.mini-goal{
+  --cell: 12px; --gap:2px;
+  display:grid;
+  grid-template-columns:repeat(3,var(--cell));
+  grid-template-rows:repeat(3,var(--cell));
+  gap:var(--gap);
+  padding:4px;
+  border:3px solid #e2e8f0;        /* pals i travesser */
+  border-bottom-width:4px;          /* línia de gol més gruixuda */
+  border-radius:4px;
+  background:
+    /* xarxa */
+    linear-gradient(90deg, rgba(226,232,240,.5) 1px, transparent 1px) 0 0/ calc(var(--cell)+var(--gap)) 100%,
+    linear-gradient(180deg, rgba(226,232,240,.5) 1px, transparent 1px) 0 0/ 100% calc(var(--cell)+var(--gap));
+}
+.mini-goal .cell{
+  width:var(--cell); height:var(--cell);
+  background:#f8fafc; border:1px solid #e2e8f0; box-sizing:border-box;
+}
+.mini-goal .cell.active{
+  background:#22c55e; border-color:#16a34a; box-shadow:0 0 0 2px rgba(34,197,94,.25) inset;
+}
+
+/* badge “Normal” neutre */
+.action-badge.type-normal{ background:#eef2f7; border:1px solid #d7dee8; color:#344054; }
+
+/* per si queda alguna label buida a HTML antic: amagar */
+.action-meta .zone-label:empty, .action-meta .action-badge:empty{ display:none; }
 /* Estat actiu, en directe */
 .tab.live.active {
   background: linear-gradient(135deg, #dc2626, #ef4444);
   border: 2px solid #fca5a5;
+}
+/* badge genèrica ja la tens; afegim estil neutre per a “normal” */
+.action-badge.type-normal {
+  background: #eef2f7;
+  border: 1px solid #d7dee8;
+  color: #344054;
+}
+
+/* per si alguna vegada es pinta sense text (no hauria), amaguem xips buits */
+.action-meta .zone-label:empty,
+.action-meta .action-badge:empty {
+  display: none;
 }
 /* No pintis en vermell el tab EN DIRECTE quan no està actiu */
 .tab.live:not(.active):hover,
@@ -2485,7 +2609,12 @@ body.live-mode {
     font-size: 11px;
     color: #94a3b8;
 }
-
+.action-item.change { border-left:3px solid rgba(148,163,184,.35); }
+.action-item.change-in  { border-left-color:#22c55e; }
+.action-item.change-out { border-left-color:#f59e0b; }
+.change-badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:.75rem;border:1px solid transparent}
+.change-badge.in{background:#dcfce7;color:#166534;border-color:#86efac}
+.change-badge.out{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
 /* Responsive */
 @media (max-width: 768px) {
     .live-stats-table {
@@ -4358,43 +4487,67 @@ function hideLiveBanner() {
 // 🔥 ACTUALITZAR AMB DADES EN DIRECTE
 // ============================================
 function updateWithLiveData(matchData) {
+  try {
     console.log('🔄 Actualitzant amb dades en directe...');
-    
-    // Afegir el partit en directe al principi de allMatches
-    // (eliminant el mateix partit si ja existeix per evitar duplicats)
-    if (allMatches) {
-        // Eliminar el partit actual si ja estava a la llista
-        allMatches = allMatches.filter(m => {
-            const isSameMatch = m.rivalTeam === matchData.rivalTeam && 
-                               new Date(m.data).toDateString() === new Date(matchData.data).toDateString();
-            return !isSameMatch;
-        });
-        
-        // Afegir el partit en directe al principi
-        allMatches.unshift(matchData);
-        
-        // Recarregar tot el display
-        displayMatchesList();
-        displayComparison();
-        displayTitularStats();
-        
-        console.log('✅ Dades actualitzades amb temps real!');
+
+    window.latestMatch = matchData;
+
+    const livePlayedMap = computeLivePlayingTimes(matchData);
+    window.currentLivePlayingTimes = livePlayedMap;
+	
+	// 2) gols rebuts incremental
+const concededMap = processNewConceded(matchData);
+window.currentLiveGoalsConceded = concededMap;
+
+    // 3) calcula MVP per a cada jugador
+if (Array.isArray(matchData.jugadors)) {
+  matchData.jugadors = matchData.jugadors.map(p => {
+    const secs = livePlayedMap?.[p.numero] || 0;
+    const conceded = (p.numero === 1 || p.numero === 13) ? (concededMap[p.numero] || 0) : 0;
+    p.__liveSeconds = secs;
+    p.mvp = calculateMVP(p, secs, conceded);
+    // depuració opcional:
+    console.log(`Porter ${p.nom} (#${p.numero}) → gols rebuts: ${conceded}, mvp: ${p.mvp}`);
+    return p;
+  });
+}
+
+    if (Array.isArray(allMatches)) {
+      allMatches = allMatches.filter(m => {
+        const sameId =
+          (m.id && matchData.id && m.id === matchData.id) ||
+          (m.rivalTeam === matchData.rivalTeam &&
+           new Date(m.data).toDateString() === new Date(matchData.data).toDateString());
+        return !sameId;
+      });
+      allMatches.unshift(matchData);
+
+      if (typeof displayMatchesList === 'function')  displayMatchesList();
+      if (typeof displayComparison === 'function')   displayComparison();
+      if (typeof displayTitularStats === 'function') displayTitularStats();
+
+      console.log('✅ Dades actualitzades amb temps real!');
     }
-	// 🔴 AFEGIR AL FINAL
-    // Si estem a la vista EN DIRECTE, actualitzar-la
-    const liveView = document.getElementById('liveView');
-    if (liveView && !liveView.classList.contains('hidden')) {
-        updateLiveView();
+
+    // 👇 IMPORTANT: noms locals únics (no globals)
+    const liveViewEl   = document.getElementById('liveView');
+    if (liveViewEl && !liveViewEl.classList.contains('hidden') && typeof updateLiveView === 'function') {
+      updateLiveView();
     }
-	const accionsView = document.getElementById('liveAccionsView');
-    if (accionsView && accionsView.classList.contains('active')) {
-        updateLiveActions();
+
+    const accionsViewEl = document.getElementById('liveAccionsView');
+    if (accionsViewEl && accionsViewEl.classList.contains('active') && typeof updateLiveActions === 'function') {
+      updateLiveActions();
     }
-	// Si estem a la vista de stats, actualitzar-la
-    const statsView = document.getElementById('liveStatsView');
-    if (statsView && statsView.classList.contains('active')) {
-        updateLiveStats();
+
+    const statsViewEl = document.getElementById('liveStatsView');
+    if (statsViewEl && statsViewEl.classList.contains('active') && typeof updateLiveStats === 'function') {
+      updateLiveStats();
     }
+
+  } catch (err) {
+    console.error('❌ Error a updateWithLiveData:', err);
+  }
 }
 // ============================================
 // 🔥 AUTO-REFRESH MENTRE HI HA TEMPS REAL
@@ -4484,94 +4637,79 @@ function updateLiveActions() {
 // ⚡ RENDERITZAR UN ITEM D'ACCIÓ
 // ============================================
 function renderActionItem(action) {
-    const isRival = action.team === 'rival';
-    const quarterLabel = action.quarter?.toUpperCase() || 'Q?';
-    
-    // Formatear timestamp
-    let timeStr = 'N/A';
-    if (action.timestamp) {
-        const date = new Date(action.timestamp);
-        timeStr = date.toLocaleTimeString('ca-ES', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-    
-    // Determinar tipus d'acció i renderitzar
-    switch (action.type) {
-        case 'goal':
-            return renderGoalAction(action, isRival, quarterLabel, timeStr);
-        case 'exclusion':
-            return renderExclusionAction(action, isRival, quarterLabel, timeStr);
-        case 'save':
-            return renderSaveAction(action, quarterLabel, timeStr);
-        case 'action':
-            return renderGeneralAction(action, isRival, quarterLabel, timeStr);
-        case 'swim-race':
-            return renderSwimRaceAction(action, quarterLabel, timeStr);
-        default:
-            return '';
-    }
+  const isRival = action.team === 'rival' || action.equip === 'rival' || action.team === 'away';
+  const quarterLabel = (action.quarter?.toUpperCase()) || 'Q?';
+
+  // Timestamp robust (segons o ms)
+  let timeStr = 'N/A';
+  const ts = toMs(action.timestamp ?? action.ts ?? action.time);
+  if (ts) {
+    const date = new Date(ts);
+    timeStr = date.toLocaleTimeString('ca-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+
+  // 👇 PRIORITAT: si és canvi d'aigua, el pintem aquí i sortim
+  const inOut = detectInOut(action);
+  if (inOut) {
+    return renderChangeAction(action, inOut, quarterLabel, timeStr);
+  }
+
+  // La resta d'accions
+  switch (action.type) {
+    case 'goal':
+      return renderGoalAction(action, isRival, quarterLabel, timeStr);
+    case 'exclusion':
+      return renderExclusionAction(action, isRival, quarterLabel, timeStr);
+    case 'save':
+      return renderSaveAction(action, quarterLabel, timeStr);
+    case 'action':
+      return renderGeneralAction(action, isRival, quarterLabel, timeStr);
+    case 'swim-race':
+      return renderSwimRaceAction(action, quarterLabel, timeStr);
+    default:
+      return '';
+  }
 }
 
 // ============================================
 // ⚡ RENDERITZAR GOL
 // ============================================
 function renderGoalAction(action, isRival, quarterLabel, timeStr) {
-    const playerNum = action.playerNum || '?';
-    const playerName = action.playerName || 'Desconegut';
-    const goalType = action.goalType || 'normal';
-    const zone = action.zone || '';
-    
-    // Mapeig de tipus de gol
-    const goalTypes = {
-        'normal': 'Normal',
-        'h+': 'Superioritat',
-        'penalty': 'Penal',
-        'contra': 'Contraatac',
-        'boya': 'Boia'
-    };
-    
-    const goalTypeText = goalTypes[goalType] || goalType;
-    
-    // Mapeig de zones
-    const zoneEmojis = {
-        'top-left': '⬆️⬅️',
-        'top-center': '⬆️',
-        'top-right': '⬆️➡️',
-        'mid-left': '⬅️',
-        'mid-center': '🎯',
-        'mid-right': '➡️',
-        'bottom-left': '⬇️⬅️',
-        'bottom-center': '⬇️',
-        'bottom-right': '⬇️➡️'
-    };
-    
-    const zoneEmoji = zoneEmojis[zone] || '';
-    
-    return `
-        <div class="action-item ${isRival ? 'goal-rival' : 'goal'}">
-            <div class="action-header">
-                <span class="action-time">⏱️ ${timeStr}</span>
-                <span class="action-quarter">${quarterLabel}</span>
-            </div>
-            <div class="action-content">
-                <div class="action-icon">⚽</div>
-                <div class="action-details">
-                    <div class="action-title">GOL ${isRival ? 'RIVAL' : 'CN TERRASSA'}!</div>
-                    <div class="action-player">
-                        <span class="action-player-number ${isRival ? 'rival' : ''}">${playerNum}</span>
-                        ${playerName}
-                    </div>
-                    <div class="action-meta">
-                        ${goalType !== 'normal' ? `<span class="action-badge type-${goalType}">${goalTypeText}</span>` : ''}
-                        ${zone ? `<span class="action-meta-item">${zoneEmoji} ${zone}</span>` : ''}
-                    </div>
-                </div>
-            </div>
+  const playerNum  = action.playerNum || '?';
+  const playerName = action.playerName || 'Desconegut';
+  const rawType    = (action.goalType || 'normal').toLowerCase();
+  const zone       = (action.goalZone || action.zone || '').trim(); // 👈 trim per evitar espais
+
+  const goalTypes = { normal:'Normal', 'h+':'Superioritat', penalty:'Penal', contra:'Contraatac', boya:'Boia' };
+  const goalTypeText = goalTypes[rawType] || (rawType.charAt(0).toUpperCase()+rawType.slice(1));
+
+  return `
+    <div class="action-item ${isRival ? 'goal-rival' : 'goal'}">
+      <div class="action-header">
+        <span class="action-time">⏱️ ${timeStr}</span>
+        <span class="action-quarter">${quarterLabel}</span>
+      </div>
+      <div class="action-content">
+        <div class="action-icon">⚽</div>
+        <div class="action-details">
+          <div class="action-title">GOL ${isRival ? 'RIVAL' : 'CN TERRASSA'}!</div>
+          <div class="action-player">
+            <span class="action-player-number ${isRival ? 'rival' : ''}">${playerNum}</span>
+            ${playerName}
+          </div>
+
+          <div class="action-meta">
+  <span class="action-badge ${'type-' + rawType}">${goalTypeText}</span>
+  ${zone ? `
+    <div class="zone-wrap">
+      <span class="zone-title">Zona porteria</span>
+      ${goalZoneMiniRect(zone)}
+    </div>
+  ` : ''}
+</div>
         </div>
-    `;
+      </div>
+    </div>`;
 }
 
 // ============================================
@@ -4792,43 +4930,44 @@ function calculateLivePlayingTime(match, playerNum) {
     
     return times;
 }
-// ============================================
-// 📊 CALCULAR VALOR MVP EN TEMPS REAL
-// ============================================
-function calculateMVP(player, playingTime) {
-    const stats = player.estadistiques || {};
-    
-    // Pesos per cada estadística
-    const weights = {
-        gols: 3,
-        assistencies: 2,
-        parades: 2,
-        robatoris: 1.5,
-        blocks: 1,
-        exclusions: -2,
-        perdues: -1,
-        xutsFallats: -0.5,
-        contrafaltes: -1,
-        infraccions2m: -1.5
-    };
-    
-    // Calcular puntuació
-    let score = 0;
-    score += (stats.gols || 0) * weights.gols;
-    score += (stats.assistencies || 0) * weights.assistencies;
-    score += (stats.parades || 0) * weights.parades;
-    score += (stats.robatoris || 0) * weights.robatoris;
-    score += (stats.blocks || 0) * weights.blocks;
-    score -= (stats.exclusions || 0) * Math.abs(weights.exclusions);
-    score -= (stats.perdues || 0) * Math.abs(weights.perdues);
-    score -= (stats.xutsFallats || 0) * Math.abs(weights.xutsFallats);
-    score -= (stats.contrafaltes || 0) * Math.abs(weights.contrafaltes);
-    score -= (stats.infraccions2m || 0) * Math.abs(weights.infraccions2m);
-    
-    // Factor temps (més temps jugat = lleugerament més valor)
-    const timeFactor = playingTime > 0 ? Math.min(1 + (playingTime / 1920), 1.5) : 1;
-    
-    return (score * timeFactor).toFixed(1);
+// ✅ Nou càlcul MVP: sense multiplicador de temps.
+// 'conceded' són els gols rebuts mentre AQUEST jugador-porter era dins l’aigua.
+function calculateMVP(player, playingSeconds, conceded = 0) {
+  const s = player.estadistiques || {};
+  const isGoalkeeper = (player.numero === 1 || player.numero === 13) ||
+                       (player.posicio && String(player.posicio).toLowerCase() === 'porter');
+
+  const w = {
+    gols: 2,
+    assistencies: 1,
+    parades: 1,
+    robatoris: 1,
+    blocks: 1,
+    exclusions: -1,
+    perdues: -0.5,
+    xutsFallats: -0.5,
+    contrafaltes: -0.75,
+    infraccions2m: -0.5
+  };
+
+  let score = 0;
+  score += (s.gols || 0) * w.gols;
+  score += (s.assistencies || 0) * w.assistencies;
+  score += (s.parades || 0) * w.parades;
+  score += (s.robatoris || 0) * w.robatoris;
+  score += (s.blocks || 0) * w.blocks;
+  score += (s.exclusions || 0) * w.exclusions;       // ja negatiu
+  score += (s.perdues || 0) * w.perdues;             // negatiu
+  score += (s.xutsFallats || 0) * w.xutsFallats;     // negatiu
+  score += (s.contrafaltes || 0) * w.contrafaltes;   // negatiu
+  score += (s.infraccions2m || 0) * w.infraccions2m; // negatiu
+
+  // 👇 només penalitza el porter que juga (ha tingut playingSeconds > 0)
+  if (isGoalkeeper && playingSeconds > 0) {
+    score -= (conceded || 0) * 1; // -1 per cada gol rival atribuït a ell
+  }
+
+  return Number(score.toFixed(1));
 }
 // ============================================
 // 📈 RENDERITZAR TAULA D'ESTADÍSTIQUES
@@ -4836,105 +4975,177 @@ function calculateMVP(player, playingTime) {
 let statsCurrentSort = { column: 'mvp', order: 'desc' };
 
 function updateLiveStats() {
-    if (!liveMatchData) {
-        console.warn('⚠️ No hi ha dades de partit per mostrar stats');
-        return;
-    }
-    
-    const container = document.getElementById('statsTableContainer');
-    if (!container) return;
-    
-    const match = liveMatchData;
-    
-    // Processar jugadors CNT
-    const cntPlayers = (match.jugadors || []).map(player => {
-        const playingTime = calculateLivePlayingTime(match, player.numero);
-        const mvp = calculateMVP(player, playingTime.total);
-        const isInWater = match.playersInWater?.includes(player.numero) || false;
-        
-        return {
-            team: 'cnt',
-            numero: player.numero,
-            nom: player.nom,
-            stats: player.estadistiques || {},
-            playingTime: playingTime,
-            mvp: parseFloat(mvp),
-            isGoalkeeper: player.numero === 1 || player.numero === 13,
-            isInWater: isInWater
-        };
-    });
-    
-    // Processar jugadors rivals
-    const rivalPlayers = (match.rivalStats || []).map(player => {
-        return {
-            team: 'rival',
-            numero: player.num,
-            nom: player.name || `Rival ${player.num}`,
-            stats: {
-                gols: player.gols || 0,
-                exclusions: player.exclusions || 0
-            },
-            playingTime: { total: 0, byQuarter: {} },
-            mvp: (player.gols || 0) * 3 - (player.exclusions || 0) * 2,
-            isGoalkeeper: false,
-            isInWater: false
-        };
-    });
-    
-    // 🔴 ORDENAR CADA EQUIP PER SEPARAT segons columna actual
-    sortPlayersByColumn(cntPlayers, statsCurrentSort.column, statsCurrentSort.order);
-    sortPlayersByColumn(rivalPlayers, statsCurrentSort.column, statsCurrentSort.order);
-    
-    // Trobar millor jugador CNT
-    const bestCNTPlayer = cntPlayers.reduce((best, current) => 
-        current.mvp > best.mvp ? current : best
-    , cntPlayers[0]);
-    
-    // Renderitzar taula
-    const html = `
-        <table class="live-stats-table">
-            <thead>
-                <tr>
-                    <th class="sortable" onclick="sortStatsTable('numero')">#</th>
-                    <th class="sortable" onclick="sortStatsTable('nom')">Jugador</th>
-                    <th class="sortable" onclick="sortStatsTable('gols')" data-tooltip="Gols">Gols⚽</th>
-                    <th class="sortable" onclick="sortStatsTable('assistencies')" data-tooltip="Assistències">Ass🎯</th>
-                    <th class="sortable" onclick="sortStatsTable('exclusions')" data-tooltip="Exclusions">Excl.🟥</th>
-                    <th class="sortable" onclick="sortStatsTable('parades')" data-tooltip="Parades">Par.🧤</th>
-                    <th class="sortable" onclick="sortStatsTable('robatoris')" data-tooltip="Robatoris">Rob.💪</th>
-                    <th class="sortable" onclick="sortStatsTable('perdues')" data-tooltip="Pèrdues">Perd.❌</th>
-                    <th class="sortable" onclick="sortStatsTable('blocks')" data-tooltip="Blocks">Bloc.🛡️</th>
-                    <th class="sortable" onclick="sortStatsTable('xutsFallats')" data-tooltip="Xuts Fallats">X.F.🎯❌</th>
-                    <th class="sortable" onclick="sortStatsTable('contrafaltes')" data-tooltip="Contrafaltes">C.F⚠️</th>
-                    <th class="sortable" onclick="sortStatsTable('infraccions2m')" data-tooltip="Infraccions 2m">2m🔴</th>
-                    <th class="sortable" onclick="sortStatsTable('mvp')" data-tooltip="Valor MVP">MVP📊</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- CN TERRASSA -->
-                <tr class="team-header">
-                    <td colspan="14">🔵 CN TERRASSA</td>
-                </tr>
-                ${cntPlayers.map(p => renderPlayerStatsRow(p, bestCNTPlayer)).join('')}
-                
-                <!-- RIVAL -->
-                <tr class="team-separator"><td colspan="14"></td></tr>
-                <tr class="team-header rival">
-                    <td colspan="14">🔴 ${match.rivalTeam || 'RIVAL'}</td>
-                </tr>
-                ${rivalPlayers.map(p => renderPlayerStatsRow(p, null)).join('')}
-            </tbody>
-        </table>
-    `;
-    
-    container.innerHTML = html;
-    
-    // Marcar columna ordenada
-    updateSortIndicators();
-    
-    console.log('✅ Taula d\'estadístiques actualitzada (ordenada per:', statsCurrentSort.column, statsCurrentSort.order + ')');
-}
+  if (!liveMatchData) {
+    console.warn('⚠️ No hi ha dades de partit per mostrar stats');
+    return;
+  }
 
+  const container = document.getElementById('statsTableContainer');
+  if (!container) return;
+
+  const match = liveMatchData;
+
+  // Fonts “live” si ja les tens preparades a updateWithLiveData
+  const liveMap = window.currentLivePlayingTimes || null;
+  const concededMapFromState = window.currentLiveGoalsConceded || null;
+
+  // helpers
+  const z = (v) => (typeof v === 'number' ? v : (parseFloat(v) || 0));
+  const fmt = (secs) => {
+    const s = Math.max(0, Math.round(secs || 0));
+    const m = Math.floor(s / 60), r = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+  };
+  const getSecsPlayed = (playerNum, fallbackObj) => {
+    if (liveMap && typeof liveMap[playerNum] === 'number') return liveMap[playerNum];
+    return (fallbackObj?.total) ? fallbackObj.total : 0;
+  };
+
+  // Si no tenim concededMap en estat (per qualsevol motiu), el calculem ara mateix:
+  const concededMap = concededMapFromState || processNewConceded(match);
+
+  // ------ CN TERRASSA (jugadors locals) ------
+  const cntPlayers = (match.jugadors || []).map(player => {
+    const playingTime = typeof calculateLivePlayingTime === 'function'
+      ? calculateLivePlayingTime(match, player.numero) : { total: 0, byQuarter: {} };
+
+    const secs = getSecsPlayed(player.numero, playingTime);
+    const isGoalkeeper = player.numero === 1 || player.numero === 13 ||
+                         (player.posicio && String(player.posicio).toLowerCase() === 'porter');
+    const conceded = isGoalkeeper ? (concededMap[player.numero] || 0) : 0;
+
+    // 🔑 MVP: si ja ve precomputat a matchData.jugadors, el respectem; sinó, el calculem bé (amb conceded)
+    const mvpValue = (typeof player.mvp === 'number')
+      ? player.mvp
+      : calculateMVP(player, secs, conceded);
+
+    const isInWater = !!(match.playersInWater?.includes(player.numero));
+
+    return {
+      team: 'cnt',
+      numero: player.numero,
+      nom: player.nom,
+      stats: player.estadistiques || {},
+      temps: secs,
+      mvp: mvpValue,
+      isGoalkeeper,
+      isInWater,
+      conceded
+    };
+  });
+
+  // ------ RIVAL (temps 0; MVP simple) ------
+  const rivalPlayers = (match.rivalStats || []).map(p => ({
+    team: 'rival',
+    numero: p.num,
+    nom: p.name || `Rival ${p.num}`,
+    stats: {
+      gols: z(p.gols),
+      exclusions: z(p.exclusions),
+      assistencies: z(p.assistencies),
+      parades: z(p.parades),
+      robatoris: z(p.robatoris),
+      perdues: z(p.perdues),
+      blocks: z(p.blocks),
+      xutsFallats: z(p.xutsFallats),
+      contrafaltes: z(p.contrafaltes),
+      infraccions2m: z(p.infraccions2m)
+    },
+    temps: 0,
+    mvp: (z(p.gols) * 2) - (z(p.exclusions) * 1),
+    isGoalkeeper: false,
+    isInWater: false,
+    conceded: 0
+  }));
+
+  // Ordenació (admet 'temps' i 'mvp')
+  sortPlayersByColumn(cntPlayers, statsCurrentSort.column, statsCurrentSort.order);
+  sortPlayersByColumn(rivalPlayers, statsCurrentSort.column, statsCurrentSort.order);
+
+  // Millor MVP CNT (opcional destacar)
+  const bestCNTPlayer = cntPlayers.length
+    ? cntPlayers.reduce((b, c) => (c.mvp > b.mvp ? c : b), cntPlayers[0])
+    : null;
+
+  const cell = (v) => `<td>${v ?? 0}</td>`;
+  const renderRow = (p, hi = false) => {
+    const s = p.stats || {};
+    const rowClass = [
+      p.team === 'rival' ? 'rival' : '',
+      hi ? 'best-mvp' : '',
+      p.isInWater ? 'in-water' : ''
+    ].filter(Boolean).join(' ');
+
+    return `
+      <tr class="${rowClass}" data-num="${p.numero}">
+        <td>${p.numero}</td>
+        <td>
+  ${p.nom || ''}
+  ${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
+  ${p.isInWater ? ' <span class="inwater" title="Jugant ara">💧</span>' : ''}
+</td>
+
+        <!-- ordre: Gols, Exclusions, Assistències -->
+        ${cell(s.gols)}
+        ${cell(s.exclusions)}
+        ${cell(s.assistencies)}
+
+        ${cell(s.parades)}
+        ${cell(s.robatoris)}
+        ${cell(s.perdues)}
+        ${cell(s.blocks)}
+        ${cell(s.xutsFallats)}
+        ${cell(s.contrafaltes)}
+        ${cell(s.infraccions2m)}
+
+        <!-- Temps -->
+        <td class="col-time" data-seconds="${p.temps}">${fmt(p.temps)}</td>
+
+        <!-- MVP (ja calculat i coherent amb consola) -->
+        <td>${Number.isFinite(p.mvp) ? p.mvp.toFixed(1) : '0.0'}</td>
+      </tr>
+    `;
+  };
+
+  const html = `
+    <table class="live-stats-table">
+      <thead>
+        <tr>
+          <th class="sortable" onclick="sortStatsTable('numero')">#</th>
+          <th class="sortable" onclick="sortStatsTable('nom')">Jugador</th>
+
+          <th class="sortable" onclick="sortStatsTable('gols')" data-tooltip="Gols">Gols⚽</th>
+          <th class="sortable" onclick="sortStatsTable('exclusions')" data-tooltip="Exclusions">Excl.🟥</th>
+          <th class="sortable" onclick="sortStatsTable('assistencies')" data-tooltip="Assistències">Ass🎯</th>
+
+          <th class="sortable" onclick="sortStatsTable('parades')" data-tooltip="Parades">Par.🧤</th>
+          <th class="sortable" onclick="sortStatsTable('robatoris')" data-tooltip="Robatoris">Rob.💪</th>
+          <th class="sortable" onclick="sortStatsTable('perdues')" data-tooltip="Pèrdues">Perd.❌</th>
+          <th class="sortable" onclick="sortStatsTable('blocks')" data-tooltip="Blocks">Bloc.🛡️</th>
+          <th class="sortable" onclick="sortStatsTable('xutsFallats')" data-tooltip="Xuts Fallats">X.F.🎯❌</th>
+          <th class="sortable" onclick="sortStatsTable('contrafaltes')" data-tooltip="Contrafaltes">C.F⚠️</th>
+          <th class="sortable" onclick="sortStatsTable('infraccions2m')" data-tooltip="Infraccions 2m">2m🔴</th>
+
+          <th class="sortable" onclick="sortStatsTable('temps')" data-tooltip="Temps jugat">Temps⏱️</th>
+          <th class="sortable" onclick="sortStatsTable('mvp')" data-tooltip="Valor MVP">MVP📊</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="team-header"><td colspan="14">🔵 CN TERRASSA</td></tr>
+        ${cntPlayers.map(p => renderRow(p, bestCNTPlayer && p.numero === bestCNTPlayer.numero)).join('')}
+
+        <tr class="team-separator"><td colspan="14"></td></tr>
+        <tr class="team-header rival"><td colspan="14">🔴 ${match.rivalTeam || 'RIVAL'}</td></tr>
+        ${rivalPlayers.map(p => renderRow(p, false)).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+
+  if (typeof updateSortIndicators === 'function') updateSortIndicators();
+  console.log('✅ Taula d’estadístiques actualitzada (ordenada per:', statsCurrentSort.column, statsCurrentSort.order + ')');
+}
 // ============================================
 // 📊 RENDERITZAR FILA DE JUGADOR
 // ============================================
@@ -8732,7 +8943,28 @@ function renderMatchTimeline() {
     const container = document.getElementById('matchTimeline');
     const swimRacesContainer = document.getElementById('matchSwimRacesContainer');
     const swimRacesCard = document.getElementById('swimRacesCard');
+     // Mapeig de tipus de gol a icones
+    const goalTypeIcons = {
+        'normal': '🟢',
+        'boya': '⚓',
+        'h+': '➕',
+        'contra': '⚡',
+        'penalty': '🎯'
+    };
     
+    // Mapeig de zones a text
+    const goalZoneNames = {
+        'top-left': 'Sup. Esq.',
+        'top-center': 'Sup. Centre',
+        'top-right': 'Sup. Dreta',
+        'mid-left': 'Mig Esq.',
+        'mid-center': 'Mig Centre',
+        'mid-right': 'Mig Dreta',
+        'bottom-left': 'Inf. Esq.',
+        'bottom-center': 'Inf. Centre',
+        'bottom-right': 'Inf. Dreta',
+        // Afegeix les zones que utilitzis si són diferents
+    };
     if (!container || !currentMatch) return;
     
     // Verificar si hay acciones cronológicas guardadas
@@ -9850,6 +10082,351 @@ function calculateMatchPlayingTimes(match) {
     });
     
     return playerTimes;
+}
+// intervals [in,out) per a un jugador (1 o 13) a partir de canvis (o lineups si no n’hi ha)
+function buildIntervalsForPlayer(match, playerNum){
+  const Q = ['q1','q2','q3','q4'];
+  const qs = match.quarterStartTimes || {};
+  const qe = match.quarterRealEndTimes || {};
+
+  const changes = (match.playerWaterChanges || [])
+    .filter(ev => ev.playerNum === playerNum)
+    .map(ev => ({...ev, timestamp: toMs(ev.timestamp)}));
+
+  // Sense canvis → lineups per cada quart
+  if (!changes.length) {
+    const ivals = [];
+    Q.forEach(q=>{
+      const start = toMs(qs[q]); if(!start) return;
+      const end = toMs(qe[q]) || (start + 8*60*1000);
+      const starters = match.lineups?.[q] || [];
+      if (starters.includes(playerNum)) ivals.push([start,end]);
+    });
+    return ivals;
+  }
+
+  // Amb canvis
+  const perQ = {};
+  changes.forEach(ev=>{
+    const t = ev.timestamp;
+    if (!t) return;
+    let q = ev.quarter;
+    if (!q) {
+      q = ['q1','q2','q3','q4'].find(qq=>{
+        const s = toMs(qs[qq]); const e = toMs(qe[qq]) || (s ? s+8*60*1000 : null);
+        return s && e && t>=s && t<=e;
+      }) || null;
+    }
+    if (!q) return;
+    (perQ[q] ||= []).push(ev);
+  });
+
+  const ivals = [];
+  Object.entries(perQ).forEach(([q, evs])=>{
+    evs.sort((a,b)=>a.timestamp-b.timestamp);
+    const s = toMs(qs[q]); if(!s) return;
+    const e = toMs(qe[q]) || (s + 8*60*1000);
+    let lastIn = null;
+    evs.forEach(ev=>{
+      if (ev.action === 'in')  lastIn = Math.max(s, ev.timestamp);
+      if (ev.action === 'out' && lastIn!=null) {
+        const outTs = Math.min(e, ev.timestamp);
+        if (outTs > lastIn) ivals.push([lastIn, outTs]);
+        lastIn = null;
+      }
+    });
+    if (lastIn!=null) ivals.push([lastIn, e]);
+  });
+
+  return ivals;
+}
+function whoWasGoalieAt(match, tsMs, cachedIntervals) {
+  const iv1 = cachedIntervals[1]  || [];
+  const iv13= cachedIntervals[13] || [];
+  const in1  = iv1.some(([a,b]) => tsMs>=a && tsMs<b);
+  const in13 = iv13.some(([a,b]) => tsMs>=a && tsMs<b);
+  if (in1 && !in13) return 1;
+  if (in13 && !in1) return 13;
+
+  // Fallback: porter inicial del quart (mai “porter actual ara” → no reassignar passat)
+  const qs = match.quarterStartTimes || {};
+  const qe = match.quarterRealEndTimes || {};
+  const q = ['q1','q2','q3','q4'].find(qq=>{
+    const s = toMs(qs[qq]); const e = toMs(qe[qq]) || (s ? s+8*60*1000 : null);
+    return s && e && tsMs>=s && tsMs<=e;
+  }) || null;
+
+  if (q) {
+    const starters = match.lineups?.[q] || [];
+    if (starters.includes(1) && !starters.includes(13)) return 1;
+    if (starters.includes(13) && !starters.includes(1)) return 13;
+    // Si inclou ambdós o cap → no sabem
+  }
+  return null;
+}
+// Retorna {1: golsRebutsPel1, 13: golsRebutsPel13}
+function computeLiveGoalsConceded(match){
+  const goalieNums = [1,13];
+  const intervals = {
+    1: buildIntervalsForPlayer(match, 1),
+    13: buildIntervalsForPlayer(match, 13)
+  };
+
+  const actions = match.chronologicalActions || match.actions || [];
+  const conceded = {1:0, 13:0};
+
+  actions.forEach(a=>{
+    const isRivalGoal =
+      (a.type==='goal' && (a.team==='rival' || a.team==='away')) ||
+      (a.tipus==='gol' && a.equip==='rival');
+    if(!isRivalGoal) return;
+
+    const t = toMs(a.timestamp);
+    if(!t) return;
+
+    // A quin porter li cau?
+    let who = null;
+    for (const g of goalieNums){
+      if (intervals[g].some(([inTs,outTs]) => t>=inTs && t<outTs)) { who = g; break; }
+    }
+    // Fallback si no trobem interval: usa porter actual dins l’aigua, si n’hi ha
+    if (!who && Array.isArray(match.playersInWater)){
+      if (match.playersInWater.includes(1)) who = 1;
+      else if (match.playersInWater.includes(13)) who = 13;
+    }
+    if (who) conceded[who] += 1;
+  });
+
+  return conceded;
+}
+// Normalitza qualsevol timestamp a mil·lisegons
+function toMs(ts) {
+  if (ts == null) return null;
+  // si ve en segons (p.ex. 1710000000), multiplica
+  return ts > 1e12 ? ts : ts * 1000;
+}
+// Estat incremental per NO reassignar gols antics al porter actual
+window.__concededTally = window.__concededTally || {1:0, 13:0};
+window.__lastProcessedActionTs = window.__lastProcessedActionTs || 0;
+window.__currentMatchKey = window.__currentMatchKey || null;
+
+// crida això a cada update amb matchData
+function processNewConceded(match) {
+  // Detectar canvi de partit per reiniciar comptador
+  const key = match.id || `${match.rivalTeam || ''}_${new Date(match.data || 0).toDateString()}`;
+  if (window.__currentMatchKey !== key) {
+    window.__currentMatchKey = key;
+    window.__concededTally = {1:0, 13:0};
+    window.__lastProcessedActionTs = 0;
+  }
+
+  const actions = (match.chronologicalActions || match.actions || []).slice()
+    .map(a => ({...a, __ts: toMs(a.timestamp)}))
+    .filter(a => a.__ts) // amb timestamp vàlid
+    .sort((a,b)=>a.__ts - b.__ts);
+
+  // Precompute intervals per porter (1 i 13)
+  const intervalsCache = {
+    1:  buildIntervalsForPlayer(match, 1),
+    13: buildIntervalsForPlayer(match, 13)
+  };
+
+  // Processa NOMÉS els gols nous (ts > lastProcessed)
+  for (const a of actions) {
+    if (a.__ts <= window.__lastProcessedActionTs) continue;
+
+    const isRivalGoal =
+      (a.type==='goal' && (a.team==='rival' || a.team==='away')) ||
+      (a.tipus==='gol' && a.equip==='rival');
+
+    if (!isRivalGoal) continue;
+
+    const who = whoWasGoalieAt(match, a.__ts, intervalsCache);
+    if (who === 1 || who === 13) {
+      window.__concededTally[who] = (window.__concededTally[who] || 0) + 1;
+    } else {
+      // sense informació fiable: no atribuïm
+      // (opcional: log) console.warn('Gol rival sense porter atribuït', a);
+    }
+
+    window.__lastProcessedActionTs = a.__ts; // avança el cursor
+  }
+
+  return {...window.__concededTally}; // còpia
+}
+
+function detectInOut(action){
+  const low = s => (typeof s==='string'? s.toLowerCase(): s);
+  const typ = low(action.type || action.tipus || action.event || action.kind || '');
+  const act = low(action.action || action.accion || action.state || '');
+  const isChangeType = ['change','sub','player_change','water_change','water-change'].includes(typ);
+  const isInOutOnly  = act==='in' || act==='out' || action.enter===true || action.leave===true;
+  if (!isChangeType && !isInOutOnly) return null;
+
+  const inOut =
+    act==='in' || typ==='in' || action.enter===true ? 'in' :
+    act==='out'|| typ==='out'|| action.leave===true ? 'out' : null;
+
+  return inOut;
+}
+
+// Calcula temps jugat “ara” per cada jugador (en segons)
+function computeLivePlayingTimes(match) {
+  const quarters = ['q1','q2','q3','q4'];
+  const SEC_PER_Q = 8 * 60;
+  const nowMs = Date.now();
+
+  // Normalitza inicis i finals de quart
+  const qStart = {};
+  const qEnd   = {};
+  quarters.forEach(q => {
+    qStart[q] = toMs(match.quarterStartTimes?.[q]);
+    // usa final real si hi és; sinó, assumeix 8:00 des de l’inici
+    const realEnd = toMs(match.quarterRealEndTimes?.[q]);
+    qEnd[q] = realEnd || (qStart[q] ? qStart[q] + SEC_PER_Q * 1000 : null);
+  });
+
+  // Canvis reals?
+  const haveChanges = Array.isArray(match.playerWaterChanges) && match.playerWaterChanges.length > 0;
+
+  // Muntem una llista d'events normalitzats {playerNum, quarter, action, timestamp(ms)}
+  const changes = [];
+  if (haveChanges) {
+    match.playerWaterChanges.forEach(ev => {
+      // inferim quart si no ve definit pel rang temporal
+      let q = ev.quarter;
+      const ts = toMs(ev.timestamp);
+      if (!q && ts) {
+        q = quarters.find(qq => qStart[qq] && qEnd[qq] && ts >= qStart[qq] && ts <= qEnd[qq]) || null;
+      }
+      if (!q || !ts) return;
+      changes.push({ playerNum: ev.playerNum, quarter: q, action: ev.action, timestamp: ts });
+    });
+  } else {
+    // Fallback: lineups → entren a l’inici, surten al final (fins ara si quart obert)
+    quarters.forEach(q => {
+      const start = qStart[q], end = qEnd[q] || null;
+      if (!start) return;
+      const effectiveEnd = end ? Math.min(end, nowMs) : nowMs;
+      const starters = match.lineups?.[q] || [];
+      starters.forEach(num => {
+        changes.push({ playerNum: num, quarter: q, action: 'in',  timestamp: start });
+        changes.push({ playerNum: num, quarter: q, action: 'out', timestamp: effectiveEnd });
+      });
+    });
+  }
+
+  // Agrupa per jugador/quart
+  const byPlayer = {};
+  changes.forEach(ev => {
+    const key = ev.playerNum;
+    (byPlayer[key] ||= {});
+    (byPlayer[key][ev.quarter] ||= []).push(ev);
+  });
+
+  // Suma intervals per jugador
+  const played = {};
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  Object.keys(byPlayer).forEach(numStr => {
+    const num = parseInt(numStr, 10);
+    let totalSec = 0;
+
+    quarters.forEach(q => {
+      const evs = (byPlayer[num][q] || []).sort((a,b) => a.timestamp - b.timestamp);
+      const start = qStart[q];
+      const endHard = qEnd[q] || nowMs;
+      if (!start) return;
+
+      let lastIn = null;
+      evs.forEach(e => {
+        if (e.action === 'in') lastIn = clamp(e.timestamp, start, endHard);
+        if (e.action === 'out' && lastIn != null) {
+          const outTs = clamp(e.timestamp, start, endHard);
+          if (outTs > lastIn) totalSec += (outTs - lastIn) / 1000;
+          lastIn = null;
+        }
+      });
+      // si encara està dins, acumula fins ara o final de quart
+      if (lastIn != null) {
+        const outTs = endHard ? Math.min(endHard, nowMs) : nowMs;
+        if (outTs > lastIn) totalSec += (outTs - lastIn) / 1000;
+      }
+    });
+
+    // Capar a màxim raonable (4 quarts = 32:00)
+    totalSec = Math.max(0, Math.min(totalSec, 4 * SEC_PER_Q));
+    played[num] = Math.round(totalSec);
+  });
+
+  // Assegura 0 per a jugadors sense events
+  (match.jugadors || []).forEach(j => { if (!(j.numero in played)) played[j.numero] = 0; });
+
+  return played;
+}
+// Format helper
+function fmtMMSS(sec) {
+  const s = Math.max(0, Math.round(sec));
+  const m = Math.floor(s/60), r = s%60;
+  return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+}
+function upsertTempsColumn() {
+  const root = document.getElementById('liveStatsView') || document;
+  // Intenta trobar la taula de live stats:
+  const table =
+    root.querySelector('#liveStatsTable') ||
+    root.querySelector('#statsTable') ||
+    root.querySelector('table');
+
+  if (!table) return;
+
+  // ---- capçalera
+  const theadRow =
+    table.querySelector('thead tr') ||
+    (table.tHead && table.tHead.rows[0]) ||
+    table.querySelector('tr');
+  if (!theadRow) return;
+
+  let tempsTh = theadRow.querySelector('th[data-col="temps"]');
+  if (!tempsTh) {
+    tempsTh = document.createElement('th');
+    tempsTh.setAttribute('data-col', 'temps');
+    tempsTh.textContent = 'Temps';
+    theadRow.appendChild(tempsTh);
+  }
+
+  // ---- files
+  const tbody = table.tBodies[0] || table.querySelector('tbody') || table;
+  const rows = Array.from(tbody.rows);
+  rows.forEach(tr => {
+    // dorsal: preferim dataset.num; sinó, prova cel·la amb classe .num o [data-num]
+    const ds = tr.dataset?.num;
+    let num = ds ? parseInt(ds, 10) : NaN;
+
+    if (Number.isNaN(num)) {
+      const numCell =
+        tr.querySelector('[data-num]') ||
+        tr.querySelector('.num') ||
+        tr.cells[0];
+      if (numCell) {
+        const parsed = parseInt(numCell.getAttribute('data-num') || numCell.textContent, 10);
+        if (!Number.isNaN(parsed)) num = parsed;
+      }
+    }
+
+    // busca/crea la cel·la de temps
+    let timeTd = tr.querySelector('td.col-time');
+    if (!timeTd) {
+      timeTd = document.createElement('td');
+      timeTd.className = 'col-time';
+      tr.appendChild(timeTd);
+    }
+
+    const secs = (window.currentLivePlayingTimes && num in window.currentLivePlayingTimes)
+      ? window.currentLivePlayingTimes[num]
+      : 0;
+
+    timeTd.textContent = fmtMMSS(secs);
+  });
 }
 function renderTotalTimeChart() {
     const ctx = document.getElementById('totalTimeChart');
@@ -16260,6 +16837,67 @@ function isInstalledPWA() {
 const installButton = document.getElementById('installButton');
 const iosInstructions = document.getElementById('iosInstructions');
 const alreadyInstalled = document.getElementById('alreadyInstalled');
+function getActionsArray(match) {
+  const arr = [match.chronologicalActions, match.actions, match.events, match.eventLog, match.accions]
+    .filter(Array.isArray)
+    .sort((a,b)=>b.length-a.length)[0];
+  return arr || [];
+}
+
+// Detectar i normalitzar una acció de canvi d'aigua
+function normalizeChangeAction(a, match) {
+  const low = s => (typeof s === 'string' ? s.toLowerCase() : s);
+  const type = low(a.type || a.tipus || a.event || a.kind || '');
+  const action = low(a.action || a.accion || a.state || '');
+
+  // 1) explícit per accions de canvi
+  let isChange = (type === 'change' || type === 'sub' || type === 'player_change' || type === 'water_change');
+  if (!isChange) {
+    // 2) a vegades ve només amb action 'in'/'out'
+    isChange = (action === 'in' || action === 'out');
+  }
+  if (!isChange) return null;
+
+  const inOut = (action === 'in' || type === 'in') ? 'in'
+               : (action === 'out' || type === 'out') ? 'out'
+               : (a.enter === true) ? 'in'
+               : (a.leave === true) ? 'out'
+               : null;
+  if (!inOut) return null;
+
+  const playerNum = a.playerNum ?? a.jugadorNum ?? a.num ?? a.number ?? null;
+  const playerName = a.playerName || a.name || '';
+
+  return { kind: 'change', inOut, playerNum, playerName };
+}
+function renderChangeAction(action, inOut, quarterLabel, timeStr) {
+  const isIn = inOut === 'in';
+  const playerNum  = action.playerNum ?? action.jugadorNum ?? action.num ?? '?';
+  const playerName = action.playerName || action.name || '';
+
+  const badge = isIn
+    ? '<span class="change-badge in">ENTRA</span>'
+    : '<span class="change-badge out">SURT</span>';
+
+  return `
+    <div class="action-item change ${isIn ? 'change-in':'change-out'}">
+      <div class="action-header">
+        <span class="action-time">⏱️ ${timeStr}</span>
+        <span class="action-quarter">${quarterLabel}</span>
+      </div>
+      <div class="action-content">
+        <div class="action-icon">${isIn ? '💧➡️' : '💧⬅️'}</div>
+        <div class="action-details">
+          <div class="action-title">${badge}</div>
+          <div class="action-player">
+            <span class="action-player-number">${playerNum}</span>
+            ${playerName}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 // ============================================
 // 🔴 ACTUALITZAR VISTA EN DIRECTE
 // ============================================
@@ -16572,6 +17210,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+function goalZoneMiniRect(zone) {
+  const pos = {
+    'top-left':[1,1],   'top-center':[1,2],   'top-right':[1,3],
+    'mid-left':[2,1],   'mid-center':[2,2],   'mid-right':[2,3],
+    'bottom-left':[3,1],'bottom-center':[3,2],'bottom-right':[3,3]
+  };
+  const [r, c] = pos[zone] || [2,2];
+  // ampliem la graella a 4 columnes per fer-la més rectangular
+  return `
+    <div class="goal-rect" style="--r:${r}; --c:${c};" aria-label="Zona porteria: ${zone||'mid-center'}" title="${zone||'mid-center'}">
+      <span class="ball" role="img" aria-label="gol">⚽</span>
+    </div>
+  `;
+}
+function goalZoneMini(zone) {
+  const pos = {
+    'top-left':[1,1],   'top-center':[1,2],   'top-right':[1,3],
+    'mid-left':[2,1],   'mid-center':[2,2],   'mid-right':[2,3],
+    'bottom-left':[3,1],'bottom-center':[3,2],'bottom-right':[3,3]
+  };
+  const [r, c] = pos[zone] || [2,2]; // per defecte mid-center
+  // fem servir CSS variables per posicionar la pilota
+  return `
+    <div class="goal3x3" style="--r:${r}; --c:${c};" aria-label="Zona porteria: ${zone||'mid-center'}" title="${zone||'mid-center'}">
+      <span class="ball" role="img" aria-label="gol">⚽</span>
+    </div>
+  `;
+}
 </script>
 
   
@@ -16653,5 +17319,39 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       }
     });*/
     </script>
+	<script>
+(() => {
+  // --- desactiva coses en local (file://) perquè no trenquin la pàgina
+  const isHttpish = location.protocol === 'https:' || location.protocol === 'http:';
+  if (!isHttpish) {
+    // OneSignal: evita que peti en local
+    window.OneSignal = window.OneSignal || {};
+    if (typeof window.OneSignal.init !== 'function') {
+      window.OneSignal.init = async () => { console.warn('OneSignal desactivat en local'); };
+    }
+    // Service Worker: no a file://
+    if ('serviceWorker' in navigator) {
+      const _reg = navigator.serviceWorker.register;
+      navigator.serviceWorker.register = () => Promise.reject(new Error('SW disabled on file://'));
+    }
+  }
+
+  // --- shim per evitar "selectTeam is not defined"
+  if (typeof window.selectTeam !== 'function') {
+    window.selectTeam = function (team) {
+      window.currentTeam = team;
+      console.log('[selectTeam]', team);
+      try {
+        if (typeof showTab === 'function') showTab('list'); // o 'live' segons vulguis
+        if (typeof displayMatchesList === 'function') displayMatchesList();
+      } catch (e) { console.warn(e); }
+    };
+  }
+
+  // --- util: evita col·lisions de noms globals "const X" re-declarats
+  // (no declaris "const statsView = ..." al nivell global; usa variables locals dins funcions)
+  window.__guardNoGlobalConsts = true;
+})();
+</script>
 </body>
 </html>
