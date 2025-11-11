@@ -558,7 +558,82 @@ body.theme-juvenil {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
 }
+/* Banner per l'altre equip */
+.other-team-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5);
+    border-bottom: 3px solid #fbbf24;
+    animation: slideDown 0.3s ease-out;
+}
 
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.other-team-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.other-team-content span {
+    font-size: 16px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.switch-team-btn {
+    background: white;
+    color: #d97706;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.switch-team-btn:hover {
+    background: #fef3c7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajustar padding del body quan apareix el banner */
+body.other-team-live {
+    padding-top: 60px;
+}
+
+@media (max-width: 768px) {
+    .other-team-content span {
+        font-size: 14px;
+    }
+    
+    .switch-team-btn {
+        font-size: 12px;
+        padding: 6px 16px;
+    }
+}
 @media (max-width: 768px) {
     .stats-grid {
         grid-template-columns: 1fr;
@@ -2538,7 +2613,33 @@ body.live-mode {
     font-size: 14px;
     color: #fbbf24;
 }
+/* 1) permet sticky fiable en <td> i habilita ample > viewport */
+.live-stats-table {
+  border-collapse: separate;  /* abans: collapse */
+  border-spacing: 0;
+  min-width: max-content;
+}
 
+/* 2) fila “nom d’equip” enganxada a l’esquerra tot i l’scroll horitzontal */
+.live-stats-table tr.team-header > td,
+.live-stats-table tr.team-header.rival > td {
+  position: sticky;
+  left: 0;
+  z-index: 7; /* > 5 de les primeres columnes */
+  background: rgba(15, 23, 42, 0.98); /* mateix to que les sticky cols */
+  color: #fff;
+  font-weight: 700;
+  backdrop-filter: saturate(120%);
+  /* línia visual a la dreta perquè es noti el “tall” */
+  box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.45);
+}
+
+/* (opcional) separador entre equips que no es mogui verticalment amb la hover-row */
+.live-stats-table tr.team-separator > td {
+  height: 6px;
+  background: transparent;
+  border: 0;
+}
 /* Badge MVP */
 .mvp-badge {
     display: inline-block;
@@ -3029,7 +3130,15 @@ body.live-mode {
         Carregant partit en directe...
     </div>
 </div>
-
+<!-- Banner per l'altre equip en directe -->
+<div id="otherTeamLiveBanner" class="other-team-banner" style="display: none;">
+    <div class="other-team-content">
+        <span id="otherTeamText">🟦 JUVENIL EN DIRECTE</span>
+        <button onclick="switchToLiveTeam()" class="switch-team-btn">
+            👁️ Veure partit
+        </button>
+    </div>
+</div>
 <!-- Indicador petit (sempre visible quan hi ha temps real) -->
 <div id="liveIndicatorSmall" class="live-indicator-small">
     <div class="dot"></div>
@@ -3749,15 +3858,15 @@ body.live-mode {
         <div id="liveMarcadorView" class="live-sub-view active">
             <!-- Marcador principal -->
             <div class="live-scoreboard">
-                <div class="live-title">
-                    <div class="live-pulse-dot"></div>
-                    PARTIT EN DIRECTE
-                    <div class="live-pulse-dot"></div>
-                </div>
+    <div class="live-title" id="liveTitleText">
+        <div class="live-pulse-dot" id="livePulseDot1"></div>
+        PARTIT EN DIRECTE
+        <div class="live-pulse-dot" id="livePulseDot2"></div>
+    </div>
                 
                 <div class="live-main-score">
                     <div class="live-team">
-                        <div class="live-team-name">CN TERRASSA</div>
+                        <div class="live-team-name" id="liveCNTName">CN TERRASSA</div>
                         <div class="live-team-score" id="liveScoreCNT">0</div>
                     </div>
                     
@@ -4311,84 +4420,168 @@ const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811';
 function listenForLiveMatch(team = 'juvenil') {
   if (!window.firebaseReady) {
     console.warn('⚠️ Firebase no disponible');
+    showNoLiveBanner();
     return;
   }
 
   try {
-    console.log('👂 Escoltant Firebase per partits en directe...');
-    const matchesRef = window.firebaseRef(window.firebaseDB, 'matches');
+    showNoLiveBanner();
 
+    const matchesRef = window.firebaseRef(window.firebaseDB, 'matches');
     const listener = window.firebaseOnValue(matchesRef, (snapshot) => {
       if (!snapshot.exists()) {
         console.log('📊 No hi ha dades a Firebase');
-        liveMatchActive = false;
-        liveMatchData = null;
-        // Abans: hideLiveBanner();
-        updateLiveTab(false);
+        showNoLiveBanner();
+        hideOtherTeamBanner(); // ✅ Amagar banner de l'altre equip
         return;
       }
 
-      const allFirebaseMatches = snapshot.val();
+      const all = snapshot.val();
+      
+      // ✅ BUSCAR PARTITS DE TOTS DOS EQUIPS
+      let currentTeamMatch = null;
+      let otherTeamMatch = null;
+      let currentTeamLatestTs = -1;
+      let otherTeamLatestTs = -1;
+      
+      const otherTeam = team === 'cadet' ? 'juvenil' : 'cadet';
 
-      // Buscar el partit més recent d'aquest equip
-      let latestMatch = null;
-      let latestTimestamp = 0;
-
-      Object.keys(allFirebaseMatches).forEach(matchId => {
-        const match = allFirebaseMatches[matchId];
-        const isCorrectTeam = matchId.includes(`cnt_${team}_`);
-        if (isCorrectTeam && match.lastUpdate > latestTimestamp) {
-          latestTimestamp = match.lastUpdate;
-          latestMatch = match;
+      for (const id of Object.keys(all)) {
+        const m = all[id];
+        const lu = toMs(m.lastUpdate || m.updatedAt || m.last_update);
+        
+        // Partit de l'equip actual
+        if (id.includes(`cnt_${team}_`)) {
+          if (lu && lu > currentTeamLatestTs) {
+            currentTeamLatestTs = lu;
+            currentTeamMatch = { ...m, id };
+          }
         }
-      });
-
-      if (!latestMatch) {
-        console.log('📊 No hi ha partits d’aquest equip');
-        liveMatchActive = false;
-        liveMatchData = null;
-        // Abans: hideLiveBanner();
-        updateLiveTab(false);
-        return;
+        
+        // Partit de l'altre equip
+        if (id.includes(`cnt_${otherTeam}_`)) {
+          if (lu && lu > otherTeamLatestTs) {
+            otherTeamLatestTs = lu;
+            otherTeamMatch = { ...m, id };
+          }
+        }
       }
 
-      // Partit actiu si té update < 5 minuts
-      const minutesSinceUpdate = (Date.now() - latestTimestamp) / 1000 / 60;
+      const now = Date.now();
 
-      if (minutesSinceUpdate < 60) {
-        console.log('🔥 PARTIT EN DIRECTE DETECTAT!');
-        liveMatchActive = true;
-        liveMatchData = latestMatch;
+      // ✅ GESTIONAR PARTIT DE L'EQUIP ACTUAL
+      if (currentTeamMatch) {
+        const minutesSinceUpdate = currentTeamLatestTs > 0 ? (now - currentTeamLatestTs)/60000 : Infinity;
+        const period = getPeriodStatus(currentTeamMatch);
+        const isWithin60 = minutesSinceUpdate < 60;
 
-        // UI existent (si ja la tens) + nou estat del tab
-        if (typeof showLiveBanner === 'function') showLiveBanner(latestMatch);
-        if (typeof updateWithLiveData === 'function') updateWithLiveData(latestMatch);
+        if (isWithin60) {
+          showLiveBanner(currentTeamMatch, minutesSinceUpdate);
+          liveMatchActive = true;
+          liveMatchData = currentTeamMatch;
 
-        updateLiveTab(true);
+          try { ensurePeriodEndActions && ensurePeriodEndActions(liveMatchData); } catch(e){}
+          try { updateWithLiveData(currentTeamMatch); } catch(e){ console.error(e); }
+        } else {
+          showNoLiveBanner();
+          liveMatchActive = false;
+          liveMatchData = null;
+        }
       } else {
-        console.log('📊 Partit Firebase disponible però no actiu');
+        showNoLiveBanner();
         liveMatchActive = false;
         liveMatchData = null;
-
-        // Abans: hideLiveBanner();
-        updateLiveTab(false);
       }
-    }, (error) => {
-      console.error('❌ Error escoltant Firebase:', error);
-      liveMatchActive = false;
-      liveMatchData = null;
-      // Abans: hideLiveBanner();
-      updateLiveTab(false);
+
+      // ✅ GESTIONAR PARTIT DE L'ALTRE EQUIP
+      if (otherTeamMatch) {
+        const minutesSinceUpdate = otherTeamLatestTs > 0 ? (now - otherTeamLatestTs)/60000 : Infinity;
+        const period = getPeriodStatus(otherTeamMatch);
+        const isWithin60 = minutesSinceUpdate < 60;
+
+        if (isWithin60) {
+          showOtherTeamBanner(otherTeam, period.finished);
+        } else {
+          hideOtherTeamBanner();
+        }
+      } else {
+        hideOtherTeamBanner();
+      }
+
+    }, (err) => {
+      console.error('❌ Error escoltant Firebase:', err);
+      showNoLiveBanner();
+      hideOtherTeamBanner();
     });
 
-    firebaseListeners.push(listener);
-  } catch (error) {
-    console.error('❌ Error iniciant listener Firebase:', error);
-    liveMatchActive = false;
-    liveMatchData = null;
-    updateLiveTab(false);
+    (window.firebaseListeners ||= []).push(listener);
+  } catch (e) {
+    console.error('❌ Error iniciant listener Firebase:', e);
+    showNoLiveBanner();
+    hideOtherTeamBanner();
   }
 }
+// ✅ Mostrar banner de l'altre equip
+function showOtherTeamBanner(otherTeam, isFinished) {
+    const banner = document.getElementById('otherTeamLiveBanner');
+    const text = document.getElementById('otherTeamText');
+    
+    if (!banner || !text) return;
+    
+    const teamEmoji = otherTeam === 'cadet' ? '⬛' : '🟦';
+    const teamName = otherTeam === 'cadet' ? 'CADET' : 'JUVENIL';
+    const status = isFinished ? 'FINALITZAT' : 'EN DIRECTE';
+    
+    text.textContent = `${teamEmoji} ${teamName} ${status}`;
+    banner.style.display = 'block';
+    document.body.classList.add('other-team-live');
+    
+    console.log(`📢 Mostrant banner: ${teamName} ${status}`);
+}
+
+// ✅ Amagar banner de l'altre equip
+function hideOtherTeamBanner() {
+    const banner = document.getElementById('otherTeamLiveBanner');
+    if (banner) {
+        banner.style.display = 'none';
+        document.body.classList.remove('other-team-live');
+    }
+}
+
+// ✅ Canviar a l'equip que està jugant
+function switchToLiveTeam() {
+    const currentTeam = localStorage.getItem('selectedTeam') || 'juvenil';
+    const otherTeam = currentTeam === 'cadet' ? 'juvenil' : 'cadet';
+    
+    // Canviar d'equip
+    selectTeam(otherTeam);
+    
+    // Recarregar per actualitzar
+    setTimeout(() => {
+        showTab('live');
+    }, 500);
+}
+function getPeriodStatus(match){
+  const Q = ['q1','q2','q3','q4'];
+  const qs = match.quarterStartTimes || {};
+  const qe = match.quarterRealEndTimes || {};
+  const now = Date.now();
+
+  const start = Object.fromEntries(Q.map(q=>[q, toMs(qs[q])]));
+  const end   = Object.fromEntries(Q.map(q=>[q, toMs(qe[q])]));
+
+  if (end.q4) return { label:'Finalitzat', code:'FINAL', finished:true };
+
+  for (const q of Q) if (start[q] && !end[q] && now >= start[q]) return { label:q.toUpperCase()+' en joc', code:q.toUpperCase(), finished:false };
+
+  if (start.q1 && end.q1 && !start.q2) return { label:'Descans Q1–Q2', code:'BREAK12', finished:false };
+  if (start.q2 && end.q2 && !start.q3) return { label:'Descans Q2–Q3', code:'BREAK23', finished:false };
+  if (start.q3 && end.q3 && !start.q4) return { label:'Descans Q3–Q4', code:'BREAK34', finished:false };
+
+  if (!start.q1) return { label:'Pre-partit', code:'PRE', finished:false };
+  return { label:'En joc', code:'LIVE', finished:false };
+}
+
 function updateLiveTab(isActive) {
   const liveTab = document.getElementById('liveTab');
   if (!liveTab) return;
@@ -4412,44 +4605,127 @@ function updateLiveTab(isActive) {
   // Sempre visible
   liveTab.style.display = 'inline-flex';
 }
+function getLiveTab(){
+  const el = document.getElementById('liveTab');
+  if (!el) {
+    console.warn('⚠️ No s’ha trobat #liveTab. Revisa l’HTML de les tabs.');
+    return null;
+  }
+  // assegura que no queda ocult per classes
+  el.classList.remove('hidden');
+  el.style.display = 'inline-block';
+  return el;
+}
+
 // ============================================
 // 🔥 MOSTRAR BANNER DE TEMPS REAL
 // ============================================
-function showLiveBanner(matchData) {
-    const banner = document.getElementById('liveBanner');
-    const indicator = document.getElementById('liveIndicatorSmall');
-    const matchInfo = document.getElementById('liveMatchInfo');
-    
-    if (banner) {
-        banner.classList.add('active');
-        document.body.classList.add('live-mode');
-        
-        if (matchInfo) {
-            const score = `${matchData.scoreCNT || 0} - ${matchData.scoreRival || 0}`;
-            const rival = matchData.rivalTeam || 'Rival';
-            matchInfo.textContent = `CN Terrassa ${score} ${rival}`;
-        }
-    }
-    
-    if (indicator) {
-        indicator.classList.add('active');
-    }
-	startAutoRefresh();
-	// 🔴 AFEGIR AIXÒ AL FINAL
-    // Mostrar pestanya EN DIRECTE
-    const liveTab = document.getElementById('liveTab');
-    if (liveTab) {
-        liveTab.classList.add('active');
-        liveTab.style.display = 'inline-block';
-    }
-    
-    // Auto-canviar a la pestanya EN DIRECTE si no estem a cap vista específica
-    const currentView = document.querySelector('[id$="View"]:not(.hidden)');
-    if (!currentView || currentView.id === 'listView') {
-        showTab('live');
-    }
-}
+function showLiveBanner(match){
+  const btn = document.getElementById('liveTab');
+  if (!btn) return;
 
+  // Detectar quin equip està jugant
+  const currentTeam = localStorage.getItem('selectedTeam') || 'juvenil';
+  const teamEmoji = currentTeam === 'cadet' ? '⬛' : '🟦';
+  const teamName = currentTeam === 'cadet' ? 'CADET' : 'JUVENIL';
+
+  // calcula estat
+  const st = getPeriodStatus(match);
+  const lastMs = getLastUpdateMs(match);
+  const ago = lastMs ? formatAgoFromMs(Date.now() - lastMs) : '';
+
+  if (st.finished){
+    btn.textContent = `🏁 ${teamName} FINALITZAT` + (ago ? ` · actual. ${ago}` : '');
+    btn.style.background = 'linear-gradient(135deg,#6b7280,#9ca3af)';
+    btn.style.border = '2px solid #d1d5db';
+  } else {
+    btn.textContent = `🔴 ${teamEmoji} ${teamName} EN DIRECTE — ${st.label}` + (ago ? ` · actual. ${ago}` : '');
+    btn.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)';
+    btn.style.border = '2px solid #fca5a5';
+  }
+  
+  // ✅ Reactivar el botó (molt important!)
+  btn.style.cursor = 'pointer';
+  btn.style.opacity = '1';
+  btn.style.color = 'white';
+  btn.onclick = () => showTab('live');
+  btn.title = st.finished ? 'Veure resultat del partit' : 'Veure partit en directe';
+
+  // refresc cada 15s perquè passi de "30s" a "1′", etc.
+  clearInterval(liveBannerTicker);
+  liveBannerTicker = setInterval(() => {
+    const lms = getLastUpdateMs(match);
+    const ago2 = lms ? formatAgoFromMs(Date.now() - lms) : '';
+    if (st.finished){
+      btn.textContent = `🏁 ${teamName} FINALITZAT` + (ago2 ? ` · actual. ${ago2}` : '');
+    } else {
+      btn.textContent = `🔴 ${teamEmoji} ${teamName} EN DIRECTE — ${st.label}` + (ago2 ? ` · actual. ${ago2}` : '');
+    }
+  }, 15000);
+}
+function showNoLiveBanner(){
+  const btn = getLiveTab();
+  if (!btn) return;
+  
+  btn.textContent = '⚪ No hi ha cap partit en temps real';
+  
+  // ✅ Color més fosc i menys blanc
+  btn.style.background = 'linear-gradient(135deg, #4b5563, #6b7280)';
+  btn.style.border = '2px solid #9ca3af';
+  btn.style.color = '#d1d5db'; // Text més apagat
+  
+  // ✅ Desactivar click
+  btn.style.cursor = 'not-allowed';
+  btn.style.opacity = '0.6';
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  // ✅ Opcional: Afegir tooltip
+  btn.title = 'Ara mateix no hi ha cap partit en directe';
+}
+function ensurePeriodEndActions(match){
+  const listKey = Array.isArray(match.chronologicalActions) ? 'chronologicalActions'
+               : Array.isArray(match.actions) ? 'actions' : null;
+  if (!listKey) return;
+
+  const arr = match[listKey];
+  const hasType = (t, q) => arr.some(a => a.type === t && (!q || a.quarter === q));
+
+  const qs = match.quarterStartTimes || {};
+  const qe = match.quarterRealEndTimes || {};
+  const toMs = (x)=> x ? (x>1e12?x:x*1000) : null;
+
+  // Finals de Q1..Q3..Q4
+  (['q1','q2','q3','q4']).forEach(q=>{
+    const endMs = toMs(qe[q]);
+    if (endMs && !hasType('period-end', q)) {
+      arr.push({
+        type: 'period-end',
+        quarter: q,
+        timestamp: endMs,
+        label: q.toUpperCase() + ' final'
+      });
+    }
+  });
+
+  // Final del partit si Q4 té final
+  if (qe.q4 && !hasType('match-end')) {
+    arr.push({
+      type: 'match-end',
+      timestamp: toMs(qe.q4),
+      label: 'Final del partit'
+    });
+  }
+
+  // Mantén ordenades
+  arr.sort((a,b)=>{
+    const ta = Number(a.timestamp || a.ts || 0);
+    const tb = Number(b.timestamp || b.ts || 0);
+    return ta - tb;
+  });
+}
 // ============================================
 // 🔥 AMAGAR BANNER
 // ============================================
@@ -4548,6 +4824,42 @@ if (Array.isArray(matchData.jugadors)) {
   } catch (err) {
     console.error('❌ Error a updateWithLiveData:', err);
   }
+  ensurePeriodEndActions(matchData);
+}
+function renderPeriodEndAction(action, quarterLabel, timeStr){
+  const label = action.label || (quarterLabel + ' final');
+  return `
+    <div class="action-item period-end">
+      <div class="action-header">
+        <span class="action-time">⏱️ ${timeStr}</span>
+        <span class="action-quarter">${quarterLabel}</span>
+      </div>
+      <div class="action-content">
+        <div class="action-icon">🔔</div>
+        <div class="action-details">
+          <div class="action-title">${label}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatchEndAction(action, timeStr){
+  const label = action.label || 'Final del partit';
+  return `
+    <div class="action-item match-end">
+      <div class="action-header">
+        <span class="action-time">⏱️ ${timeStr}</span>
+        <span class="action-quarter">Q4</span>
+      </div>
+      <div class="action-content">
+        <div class="action-icon">🏁</div>
+        <div class="action-details">
+          <div class="action-title">${label}</div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 // ============================================
 // 🔥 AUTO-REFRESH MENTRE HI HA TEMPS REAL
@@ -4621,7 +4933,22 @@ function updateLiveActions() {
     }
     
     // Ordenar per timestamp (més recent primer)
-    const sortedActions = [...actions].sort((a, b) => b.timestamp - a.timestamp);
+    // ✅ AMB CRITERI SECUNDARI: si mateix timestamp, 'out' abans que 'in'
+    const sortedActions = [...actions].sort((a, b) => {
+        const timeDiff = b.timestamp - a.timestamp;
+        
+        // Si tenen el mateix timestamp
+        if (timeDiff === 0) {
+            // Si tots dos són water-change
+            if (a.type === 'water-change' && b.type === 'water-change') {
+                // 'out' va primer (retorna -1 si a és 'out' i b és 'in')
+                if (a.action === 'out' && b.action === 'in') return -1;
+                if (a.action === 'in' && b.action === 'out') return 1;
+            }
+        }
+        
+        return timeDiff;
+    });
     
     // Renderitzar accions
     const html = sortedActions.map(action => {
@@ -4637,37 +4964,32 @@ function updateLiveActions() {
 // ⚡ RENDERITZAR UN ITEM D'ACCIÓ
 // ============================================
 function renderActionItem(action) {
-  const isRival = action.team === 'rival' || action.equip === 'rival' || action.team === 'away';
-  const quarterLabel = (action.quarter?.toUpperCase()) || 'Q?';
+  const isRival = action.team === 'rival' || action.team === 'away' || action.equip === 'rival';
+  const quarterLabel = action.quarter?.toUpperCase() || 'Q?';
 
-  // Timestamp robust (segons o ms)
-  let timeStr = 'N/A';
+  // timestamp robust
+  const toMs = (x)=> x ? (x>1e12?x:x*1000) : null;
   const ts = toMs(action.timestamp ?? action.ts ?? action.time);
-  if (ts) {
-    const date = new Date(ts);
-    timeStr = date.toLocaleTimeString('ca-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  }
+  const timeStr = ts ? new Date(ts).toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'N/A';
 
-  // 👇 PRIORITAT: si és canvi d'aigua, el pintem aquí i sortim
-  const inOut = detectInOut(action);
-  if (inOut) {
+  // nous tipus
+  if (action.type === 'period-end') return renderPeriodEndAction(action, quarterLabel, timeStr);
+  if (action.type === 'match-end')  return renderMatchEndAction(action, timeStr);
+
+// ✅ AFEGIR AQUESTA LÍNIA:
+  if (action.type === 'water-change') {
+    const inOut = action.action; // 'in' o 'out'
     return renderChangeAction(action, inOut, quarterLabel, timeStr);
   }
-
-  // La resta d'accions
+  
+  // existents
   switch (action.type) {
-    case 'goal':
-      return renderGoalAction(action, isRival, quarterLabel, timeStr);
-    case 'exclusion':
-      return renderExclusionAction(action, isRival, quarterLabel, timeStr);
-    case 'save':
-      return renderSaveAction(action, quarterLabel, timeStr);
-    case 'action':
-      return renderGeneralAction(action, isRival, quarterLabel, timeStr);
-    case 'swim-race':
-      return renderSwimRaceAction(action, quarterLabel, timeStr);
-    default:
-      return '';
+    case 'goal':       return renderGoalAction(action, isRival, quarterLabel, timeStr);
+    case 'exclusion':  return renderExclusionAction(action, isRival, quarterLabel, timeStr);
+    case 'save':       return renderSaveAction(action, quarterLabel, timeStr);
+    case 'action':     return renderGeneralAction(action, isRival, quarterLabel, timeStr);
+    case 'swim-race':  return renderSwimRaceAction(action, quarterLabel, timeStr);
+    default:           return '';
   }
 }
 
@@ -4716,39 +5038,61 @@ function renderGoalAction(action, isRival, quarterLabel, timeStr) {
 // ⚡ RENDERITZAR EXCLUSIÓ
 // ============================================
 function renderExclusionAction(action, isRival, quarterLabel, timeStr) {
-    const playerNum = action.playerNum || '?';
-    const playerName = action.playerName || 'Desconegut';
-    const exclusionType = action.exclusionType || 'ordinaria';
-    
-    const exclusionTypes = {
-        'ordinaria': 'Ordinària',
-        'brutalitat': 'Brutalitat',
-        'antiesportiva': 'Antiesportiva'
-    };
-    
-    const exclusionText = exclusionTypes[exclusionType] || exclusionType;
-    
-    return `
-        <div class="action-item exclusion">
-            <div class="action-header">
-                <span class="action-time">⏱️ ${timeStr}</span>
-                <span class="action-quarter">${quarterLabel}</span>
-            </div>
-            <div class="action-content">
-                <div class="action-icon">🟥</div>
-                <div class="action-details">
-                    <div class="action-title">EXCLUSIÓ ${isRival ? 'RIVAL' : 'CN TERRASSA'}</div>
-                    <div class="action-player">
-                        <span class="action-player-number ${isRival ? 'rival' : ''}">${playerNum}</span>
-                        ${playerName}
-                    </div>
-                    <div class="action-meta">
-                        <span class="action-badge">${exclusionText}</span>
-                    </div>
-                </div>
-            </div>
+  const playerNum = action.playerNum || '?';
+  const playerName = action.playerName || 'Desconegut';
+  const exclusionType = action.exclusionType || 'ordinaria';
+
+  const exclusionTypes = {
+    'ordinaria': 'Ordinària',
+    'brutalitat': 'Brutalitat',
+    'antiesportiva': 'Antiesportiva'
+  };
+// després de latestMatch = ...
+liveMatchData = latestMatch;
+
+// normalitza llistat i crea mapa num->nom
+const list = liveMatchData.players
+  ? liveMatchData.players.map(p => ({ num: Number(p.num), name: p.name }))
+  : (liveMatchData.jugadors || []).map(j => ({ num: Number(j.numero), name: j.nom }));
+
+window.liveNameByNum = Object.fromEntries(
+  list.map(p => [Number(p.num), p.name])
+);
+  const exclusionText = exclusionTypes[exclusionType] || exclusionType;
+
+  // 🟦 si és exclusió rival i hi ha jugador CNT afectat
+let faltaRebudaHTML = '';
+if (isRival && action.faltaSobreJugador != null && action.faltaSobreJugador !== '') {
+  const n = Number(action.faltaSobreJugador);
+  const frName = (window.liveNameByNum && window.liveNameByNum[n]) || `Jugador ${n}`;
+  faltaRebudaHTML = `
+    <div class="action-falta-rebuda" style="margin-top:4px;font-size:12px;color:#38bdf8;">
+      🟦 Falta rebuda per <b>${frName}</b> <span style="opacity:0.7;">(#${n})</span>
+    </div>`;
+}
+
+  return `
+    <div class="action-item exclusion">
+      <div class="action-header">
+        <span class="action-time">⏱️ ${timeStr}</span>
+        <span class="action-quarter">${quarterLabel}</span>
+      </div>
+      <div class="action-content">
+        <div class="action-icon">🟥</div>
+        <div class="action-details">
+          <div class="action-title">EXCLUSIÓ ${isRival ? 'RIVAL' : 'CN TERRASSA'}</div>
+          <div class="action-player">
+            <span class="action-player-number ${isRival ? 'rival' : ''}">${playerNum}</span>
+            ${playerName}
+          </div>
+          <div class="action-meta">
+            <span class="action-badge">${exclusionText}</span>
+          </div>
+          ${faltaRebudaHTML}   <!-- ✅ afegim la falta rebuda si existeix -->
         </div>
-    `;
+      </div>
+    </div>
+  `;
 }
 
 // ============================================
@@ -4947,7 +5291,8 @@ function calculateMVP(player, playingSeconds, conceded = 0) {
     perdues: -0.5,
     xutsFallats: -0.5,
     contrafaltes: -0.75,
-    infraccions2m: -0.5
+    infraccions2m: -0.5,
+	faltesRebudes: 1
   };
 
   let score = 0;
@@ -4961,6 +5306,7 @@ function calculateMVP(player, playingSeconds, conceded = 0) {
   score += (s.xutsFallats || 0) * w.xutsFallats;     // negatiu
   score += (s.contrafaltes || 0) * w.contrafaltes;   // negatiu
   score += (s.infraccions2m || 0) * w.infraccions2m; // negatiu
+  score += (s.faltesRebudes || 0) * w.faltesRebudes;
 
   // 👇 només penalitza el porter que juga (ha tingut playingSeconds > 0)
   if (isGoalkeeper && playingSeconds > 0) {
@@ -5005,34 +5351,41 @@ function updateLiveStats() {
   const concededMap = concededMapFromState || processNewConceded(match);
 
   // ------ CN TERRASSA (jugadors locals) ------
-  const cntPlayers = (match.jugadors || []).map(player => {
-    const playingTime = typeof calculateLivePlayingTime === 'function'
-      ? calculateLivePlayingTime(match, player.numero) : { total: 0, byQuarter: {} };
+const cntPlayers = (match.jugadors || []).map(player => {
+  const playingTime = typeof calculateLivePlayingTime === 'function'
+    ? calculateLivePlayingTime(match, player.numero) : { total: 0, byQuarter: {} };
 
-    const secs = getSecsPlayed(player.numero, playingTime);
-    const isGoalkeeper = player.numero === 1 || player.numero === 13 ||
-                         (player.posicio && String(player.posicio).toLowerCase() === 'porter');
-    const conceded = isGoalkeeper ? (concededMap[player.numero] || 0) : 0;
+  const secs = getSecsPlayed(player.numero, playingTime);
+  const isGoalkeeper = player.numero === 1 || player.numero === 13 ||
+                       (player.posicio && String(player.posicio).toLowerCase() === 'porter');
+  const conceded = isGoalkeeper ? (concededMap[player.numero] || 0) : 0;
 
-    // 🔑 MVP: si ja ve precomputat a matchData.jugadors, el respectem; sinó, el calculem bé (amb conceded)
-    const mvpValue = (typeof player.mvp === 'number')
-      ? player.mvp
-      : calculateMVP(player, secs, conceded);
+  // 🟦 NOVETAT: FR del jugador
+  const fr = z(player?.estadistiques?.faltesRebudes);
 
-    const isInWater = !!(match.playersInWater?.includes(player.numero));
+  // MVP: si ve precomputat, el respectem però el **restem per FR**; sinó, calculem (ja resta FR dins calculateMVP)
+  const baseMvp = (typeof player.mvp === 'number')
+  ? player.mvp
+  : calculateMVP(player, secs, conceded);
 
-    return {
-      team: 'cnt',
-      numero: player.numero,
-      nom: player.nom,
-      stats: player.estadistiques || {},
-      temps: secs,
-      mvp: mvpValue,
-      isGoalkeeper,
-      isInWater,
-      conceded
-    };
-  });
+// ✅ ja no restem res, el càlcul ja ho fa
+const mvpValue = baseMvp;
+
+  const isInWater = !!(match.playersInWater?.includes(player.numero));
+
+  return {
+    team: 'cnt',
+    numero: player.numero,
+    nom: player.nom,
+    // 🟦 Incloem FR dins stats perquè la taula el pugui pintar
+    stats: { ...(player.estadistiques || {}), faltesRebudes: fr },
+    temps: secs,
+    mvp: mvpValue,
+    isGoalkeeper,
+    isInWater,
+    conceded
+  };
+});
 
   // ------ RIVAL (temps 0; MVP simple) ------
   const rivalPlayers = (match.rivalStats || []).map(p => ({
@@ -5080,9 +5433,10 @@ function updateLiveStats() {
       <tr class="${rowClass}" data-num="${p.numero}">
         <td>${p.numero}</td>
         <td>
-  ${p.nom || ''}
-  ${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
-  ${p.isInWater ? ' <span class="inwater" title="Jugant ara">💧</span>' : ''}
+${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
+  ${p.isInWater ? ' <span class="inwater" title="Jugant ara">💧</span>' : ''} 
+ ${p.nom || ''}
+  
 </td>
 
         <!-- ordre: Gols, Exclusions, Assistències -->
@@ -5097,6 +5451,7 @@ function updateLiveStats() {
         ${cell(s.xutsFallats)}
         ${cell(s.contrafaltes)}
         ${cell(s.infraccions2m)}
+		${cell(s.faltesRebudes)}
 
         <!-- Temps -->
         <td class="col-time" data-seconds="${p.temps}">${fmt(p.temps)}</td>
@@ -5115,27 +5470,33 @@ function updateLiveStats() {
           <th class="sortable" onclick="sortStatsTable('nom')">Jugador</th>
 
           <th class="sortable" onclick="sortStatsTable('gols')" data-tooltip="Gols">Gols⚽</th>
-          <th class="sortable" onclick="sortStatsTable('exclusions')" data-tooltip="Exclusions">Excl.🟥</th>
-          <th class="sortable" onclick="sortStatsTable('assistencies')" data-tooltip="Assistències">Ass🎯</th>
+          <th class="sortable" onclick="sortStatsTable('exclusions')" data-tooltip="Exclusions">Excl.</th>
+          <th class="sortable" onclick="sortStatsTable('assistencies')" data-tooltip="Assistències">Ass</th>
 
-          <th class="sortable" onclick="sortStatsTable('parades')" data-tooltip="Parades">Par.🧤</th>
-          <th class="sortable" onclick="sortStatsTable('robatoris')" data-tooltip="Robatoris">Rob.💪</th>
-          <th class="sortable" onclick="sortStatsTable('perdues')" data-tooltip="Pèrdues">Perd.❌</th>
-          <th class="sortable" onclick="sortStatsTable('blocks')" data-tooltip="Blocks">Bloc.🛡️</th>
-          <th class="sortable" onclick="sortStatsTable('xutsFallats')" data-tooltip="Xuts Fallats">X.F.🎯❌</th>
-          <th class="sortable" onclick="sortStatsTable('contrafaltes')" data-tooltip="Contrafaltes">C.F⚠️</th>
-          <th class="sortable" onclick="sortStatsTable('infraccions2m')" data-tooltip="Infraccions 2m">2m🔴</th>
-
-          <th class="sortable" onclick="sortStatsTable('temps')" data-tooltip="Temps jugat">Temps⏱️</th>
-          <th class="sortable" onclick="sortStatsTable('mvp')" data-tooltip="Valor MVP">MVP📊</th>
+          <th class="sortable" onclick="sortStatsTable('parades')" data-tooltip="Parades">Par.</th>
+          <th class="sortable" onclick="sortStatsTable('robatoris')" data-tooltip="Robatoris">Rob.</th>
+          <th class="sortable" onclick="sortStatsTable('perdues')" data-tooltip="Pèrdues">Perd.</th>
+          <th class="sortable" onclick="sortStatsTable('blocks')" data-tooltip="Blocks">Bloc.</th>
+          <th class="sortable" onclick="sortStatsTable('xutsFallats')" data-tooltip="Xuts Fallats">X.F.</th>
+          <th class="sortable" onclick="sortStatsTable('contrafaltes')" data-tooltip="Contrafaltes">C.F</th>
+          <th class="sortable" onclick="sortStatsTable('infraccions2m')" data-tooltip="Infraccions 2m">2m</th>
+		  <th class="sortable" onclick="sortStatsTable('faltesRebudes')" data-tooltip="Faltes rebudes">FR</th>
+          <th class="sortable" onclick="sortStatsTable('temps')" data-tooltip="Temps jugat">⏱️</th>
+          <th class="sortable" onclick="sortStatsTable('mvp')" data-tooltip="Valor MVP">MVP</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="team-header"><td colspan="14">🔵 CN TERRASSA</td></tr>
+        <tr class="team-header">
+  <td class="team-title-sticky" colspan="2">🔵 CN TERRASSA</td>
+  <td class="team-title-fill" colspan="13"></td>
+</tr>
         ${cntPlayers.map(p => renderRow(p, bestCNTPlayer && p.numero === bestCNTPlayer.numero)).join('')}
 
-        <tr class="team-separator"><td colspan="14"></td></tr>
-        <tr class="team-header rival"><td colspan="14">🔴 ${match.rivalTeam || 'RIVAL'}</td></tr>
+        <tr class="team-separator"><td colspan="15"></td></tr>
+        <tr class="team-header rival">
+  <td class="team-title-sticky" colspan="2">🔴 ${match.rivalTeam || 'RIVAL'}</td>
+  <td class="team-title-fill" colspan="13"></td>
+</tr>
         ${rivalPlayers.map(p => renderRow(p, false)).join('')}
       </tbody>
     </table>
@@ -5181,6 +5542,7 @@ function renderPlayerStatsRow(player, bestPlayer) {
             <td class="${stats.xutsFallats > 0 ? 'stat-negative' : ''}">${stats.xutsFallats || 0}</td>
             <td class="${stats.contrafaltes > 0 ? 'stat-negative' : ''}">${stats.contrafaltes || 0}</td>
             <td class="${stats.infraccions2m > 0 ? 'stat-negative' : ''}">${stats.infraccions2m || 0}</td>
+			<td class="${(stats.faltesRebudes||0) > 0 ? 'stat-positive' : ''}">${stats.faltesRebudes || 0}</td>
             <td class="mvp-score">${player.mvp.toFixed(1)}</td>
         </tr>
     `;
@@ -7956,7 +8318,30 @@ function renderRivalsHistory() {
     renderQuarterPatterns();
     renderPerformanceTable();
 }
+function renderLiveActionRow(a) {
+  // ➕ Cas nou
+  if (a.type === 'falta-rebuda') {
+    return `<div class="live-action">🟦 Falta rebuda per <b>${a.playerName}</b></div>`;
+  }
 
+  // ⬇️ Exemples mínims; deixa els teus casos existents
+  if (a.type === 'goal' && a.team === 'cnt') {
+    return `<div class="live-action">⚽ Gol de <b>${a.playerName}</b></div>`;
+  }
+  if (a.type === 'exclusion' && a.team === 'rival') {
+    return `<div class="live-action">🟥 Exclusió rival</div>`;
+  }
+
+  // fallback
+  return `<div class="live-action">∙ ${a.type}</div>`;
+}
+
+function renderLiveActions(match) {
+  const cont = document.getElementById('liveActionsList'); // ID del teu contenidor
+  if (!cont) return;
+  const acts = explodeLiveActions(match);
+  cont.innerHTML = acts.map(renderLiveActionRow).join('');
+}
 // NUEVA FUNCIÓN: Gráfico de Consistencia
 function renderConsistencyChart() {
     const ctx = document.getElementById('consistencyChart');
@@ -8764,7 +9149,30 @@ const paradeLabels = {
     
     document.getElementById('playerStatsCard').scrollIntoView({ behavior: 'smooth' });
 }
+function explodeLiveActions(match) {
+  const acts = match?.chronologicalActions || [];
+  const out = [];
 
+  for (const a of acts) {
+    // deixem passar totes les accions existents
+    out.push(a);
+
+    // 👉 crear una acció virtual de "falta rebuda" quan el RIVAL és exclòs sobre un jugador CNT
+    if (a.type === 'exclusion' && a.team === 'rival' && a.faltaSobreJugador) {
+      out.push({
+        timestamp: a.timestamp,
+        quarter: a.quarter,
+        type: 'falta-rebuda',
+        team: 'cnt',
+        playerNum: Number(a.faltaSobreJugador),
+        playerName: (match.players || []).find(p => p.num === Number(a.faltaSobreJugador))?.name || `Jugador ${a.faltaSobreJugador}`
+      });
+    }
+  }
+  // ordena per temps per si cal
+  out.sort((x,y) => x.timestamp - y.timestamp);
+  return out;
+}
 function renderSwimRacesStats() {
     if (allMatches.length === 0) return;
     
@@ -10199,12 +10607,7 @@ function computeLiveGoalsConceded(match){
 
   return conceded;
 }
-// Normalitza qualsevol timestamp a mil·lisegons
-function toMs(ts) {
-  if (ts == null) return null;
-  // si ve en segons (p.ex. 1710000000), multiplica
-  return ts > 1e12 ? ts : ts * 1000;
-}
+
 // Estat incremental per NO reassignar gols antics al porter actual
 window.__concededTally = window.__concededTally || {1:0, 13:0};
 window.__lastProcessedActionTs = window.__lastProcessedActionTs || 0;
@@ -10254,6 +10657,41 @@ function processNewConceded(match) {
 
   return {...window.__concededTally}; // còpia
 }
+// Converteix qualsevol timestamp de Firebase a mil·lisegons
+// --- helpers ---
+function toMs(x){
+  if (x == null) return null;
+  if (typeof x === 'number') return x > 1e12 ? x : x*1000;
+  if (typeof x === 'string') { const n=Number(x); return isFinite(n) ? (n>1e12?n:n*1000) : null; }
+  if (typeof x === 'object') { if (typeof x.seconds==='number') return x.seconds*1000; if (typeof x.toMillis==='function') return x.toMillis(); }
+  return null;
+}
+
+// Agafa l’últim “update” fiable (lastUpdate -> accions -> finals de quart)
+function getLastUpdateMs(match){
+  const cands = [];
+  const lu = toMs(match.lastUpdate || match.updatedAt || match.last_update); if (lu) cands.push(lu);
+  const arr = (match.chronologicalActions || match.actions || []);
+  for (const a of arr){
+    const t = toMs(a.timestamp ?? a.ts ?? a.time); if (t) cands.push(t);
+  }
+  const qe = match.quarterRealEndTimes || {};
+  ['q1','q2','q3','q4'].forEach(q=>{ const t=toMs(qe[q]); if (t) cands.push(t); });
+  return cands.length ? Math.max(...cands) : null;
+}
+
+function formatAgoFromMs(ms){
+  if (ms == null) return '';
+  const s = Math.max(0, Math.floor(ms/1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s/60);
+  if (m < 60) return `${m}′`;
+  const h = Math.floor(m/60), mm = m%60;
+  return mm ? `${h}h ${mm}′` : `${h}h`;
+}
+
+// --- banner ---
+let liveBannerTicker;
 
 function detectInOut(action){
   const low = s => (typeof s==='string'? s.toLowerCase(): s);
@@ -16837,6 +17275,7 @@ function isInstalledPWA() {
 const installButton = document.getElementById('installButton');
 const iosInstructions = document.getElementById('iosInstructions');
 const alreadyInstalled = document.getElementById('alreadyInstalled');
+
 function getActionsArray(match) {
   const arr = [match.chronologicalActions, match.actions, match.events, match.eventLog, match.accions]
     .filter(Array.isArray)
@@ -16910,6 +17349,51 @@ function updateLiveView() {
     console.log('🔄 Actualitzant vista EN DIRECTE...');
     
     const match = liveMatchData;
+    
+    // ✅ Detectar si el partit està finalitzat
+    const periodStatus = getPeriodStatus(match);
+    const isFinished = periodStatus.finished;
+    
+    // ✅ Actualitzar títol segons estat del partit
+    const titleElement = document.getElementById('liveTitleText');
+    const pulseDot1 = document.getElementById('livePulseDot1');
+    const pulseDot2 = document.getElementById('livePulseDot2');
+    
+    if (titleElement) {
+        if (isFinished) {
+            titleElement.innerHTML = `
+                <div class="live-pulse-dot" style="background: #9ca3af; animation: none;"></div>
+                PARTIT FINALITZAT
+                <div class="live-pulse-dot" style="background: #9ca3af; animation: none;"></div>
+            `;
+            // Canviar també el color del fons del marcador
+            const scoreboard = document.querySelector('.live-scoreboard');
+            if (scoreboard) {
+                scoreboard.style.background = 'linear-gradient(135deg, #374151 0%, #4b5563 100%)';
+                scoreboard.style.border = '3px solid #9ca3af';
+            }
+        } else {
+            titleElement.innerHTML = `
+                <div class="live-pulse-dot"></div>
+                PARTIT EN DIRECTE
+                <div class="live-pulse-dot"></div>
+            `;
+            // Restaurar colors originals
+            const scoreboard = document.querySelector('.live-scoreboard');
+            if (scoreboard) {
+                scoreboard.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)';
+                scoreboard.style.border = '3px solid #22d3ee';
+            }
+        }
+    }
+    
+    // Detectar quin equip està jugant
+    const currentTeam = localStorage.getItem('selectedTeam') || 'juvenil';
+    const teamEmoji = currentTeam === 'cadet' ? '⬛' : '🟦';
+    const teamName = currentTeam === 'cadet' ? 'CADET' : 'JUVENIL';
+    
+    // Actualitzar nom de l'equip CN Terrassa amb l'equip corresponent
+    document.getElementById('liveCNTName').textContent = `${teamEmoji} CN TERRASSA ${teamName}`;
     
     // Marcador principal
     document.getElementById('liveScoreCNT').textContent = match.scoreCNT || 0;
