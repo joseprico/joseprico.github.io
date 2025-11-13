@@ -15495,6 +15495,11 @@ const sortedMatches = [...matches].sort((a, b) => {
     };
 }
 
+// Fer funcions accessibles globalment
+window.generateICS = generateICS;
+window.downloadICS = downloadICS;
+
+
 function displayLastResults() {
     const results = actawpData.last_results || [];
 	// ✅ ORDENAR PER DATA (més recent primer)
@@ -16086,8 +16091,15 @@ function displayActawpMatches() {
     const upcomingContainer = document.getElementById('actawp-upcoming-matches');
     if (upcomingContainer && upcomingMatches.length > 0) {
         let html = '<div style="display: grid; gap: 15px;">';
-        
-        upcomingMatches.forEach(match => {
+        // Botó únic per descarregar TOTS els partits
+html += `
+    <div style="text-align: center; margin-bottom: 15px;">
+        <button onclick="window.downloadAllUpcomingMatches()" style="padding: 10px 20px; background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 2px solid #a855f7; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: inherit; font-weight: bold;">
+            📅 Descarregar tots els partits al teu calendari Google o Apple
+        </button>
+    </div>
+`;
+        upcomingMatches.forEach((match, index) => {
             console.log('\n📅 Processant pròxim:', match);
             
             const team1 = match.team1 || '';
@@ -16175,9 +16187,14 @@ const rivalLogoHtml = rivalLogo ? `<img src="${rivalLogo}" style="width: 24px; h
     <a href="${match.url || '#'}" target="_blank" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px; text-align: center;">
         ℹ️ Detalls
     </a>
-    <button onclick="window.downloadMatchICS_${index}()" style="padding: 8px 16px; background: rgba(168, 85, 247, 0.2); color: #a855f7; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-family: inherit;">
-        📅 Calendari
-    </button>
+     ${rival ? `
+    <a href="https://www.google.com/maps/dir/Terrassa,+Barcelona,+Spain/${encodeURIComponent(isHome ? 'CN Terrassa, Terrassa' : rival)}"
+       target="_blank" 
+       rel="noopener noreferrer"
+       style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px; text-align: center;">
+        🚗 Com arribar
+    </a>
+    ` : ''}
 </div>
                     </div>
                 </div>
@@ -16773,6 +16790,15 @@ const match = sortedMatches[0];
             <span style="color: rgba(255,255,255,0.9); font-size: 12px;">${weather.condition}</span>
         </div>
         ` : ''}
+		<div style="margin-top: 12px;">
+    <a href="https://www.google.com/maps/dir/Terrassa,+Barcelona,+Spain/${encodeURIComponent(isHome ? 'CN Terrassa, Terrassa' : (match.venue || awayTeam))}" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       style="display: inline-flex; align-items: center; gap: 8px; background: rgba(34, 211, 238, 0.25); color: #22d3ee; padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+        🚗 Com arribar des de Terrassa
+    </a>
+</div>
+
     `;
 }
 function loadLastResultsMini() {
@@ -17178,7 +17204,7 @@ if (currentStreak >= 7) {
     console.log('✅ Esperit d\'equip carregat amb estadístiques ampliades');
 }
 // Variable global per guardar l'interval
-let countdownInterval = null;
+var countdownInterval = null;
 
 function startCountdownTimer() {
     // Netejar interval anterior si existeix
