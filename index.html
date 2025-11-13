@@ -1053,12 +1053,30 @@ body.other-team-live {
 .goal-zone-heatmap {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    max-width: 300px;
+    grid-template-rows: repeat(3, 60px); /* Files més altes per fer-ho rectangular */
+    gap: 3px;
+    max-width: 280px; /* Una mica més estret */
     margin: 0 auto;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 10px;
+    background: rgba(20, 30, 40, 0.4);
+    padding: 12px;
     border-radius: 8px;
+    border: 3px solid #cbd5e1; /* Marc de porteria */
+    border-bottom-width: 5px; /* Línia de gol més gruixuda */
+    position: relative;
+    /* Efecte de xarxa amb gradient */
+    background-image: 
+        repeating-linear-gradient(0deg, 
+            transparent, 
+            transparent 19px, 
+            rgba(203, 213, 225, 0.3) 19px, 
+            rgba(203, 213, 225, 0.3) 20px),
+        repeating-linear-gradient(90deg, 
+            transparent, 
+            transparent 29px, 
+            rgba(203, 213, 225, 0.3) 29px, 
+            rgba(203, 213, 225, 0.3) 30px);
+    background-color: rgba(20, 30, 40, 0.4);
+    background-position: 12px 12px;
 }
 .player-row-clickable {
     cursor: pointer;
@@ -1068,21 +1086,23 @@ body.other-team-live {
     background: rgba(34, 211, 238, 0.2) !important;
 }
 .goal-zone-cell {
-    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 16px;
     font-weight: bold;
-    transition: transform 0.2s;
+    transition: transform 0.2s, border-color 0.2s;
+    min-height: 60px; /* Altura mínima per mantenir proporcions */
+    background-clip: padding-box;
 }
 
 .goal-zone-cell:hover {
     transform: scale(1.05);
     border-color: #22d3ee;
+    z-index: 10;
 }
 
 .zone-label {
