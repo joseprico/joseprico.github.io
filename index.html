@@ -3134,7 +3134,10 @@ body.live-mode {
   });
 </script>
 
-
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <!-- ============================================
@@ -3362,7 +3365,16 @@ body.live-mode {
 <div id="last-results-mini" style="margin-bottom: 20px; padding: 12px; background: rgba(148, 163, 184, 0.05); border-radius: 8px; border-left: 3px solid #22d3ee;">
     <div style="color: #64748b; text-align: center; font-size: 12px;">Carregant últims resultats...</div>
 </div>
-
+<!-- 🗺️ MAPA DE RIVALS -->
+<div id="rivals-map-pill" style="margin-bottom: 20px; padding: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; color: white; overflow: hidden;">
+    <div style="padding: 15px 15px 0 15px;">
+        <div style="font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">🗺️ RIVALS TEMPORADA 25/26</div>
+    </div>
+    <div id="rivals-map" style="height: 250px; width: 100%;"></div>
+    <div id="rivals-map-stats" style="padding: 12px 15px; background: rgba(0,0,0,0.2); font-size: 12px;">
+        <div style="color: rgba(255,255,255,0.8);">Carregant mapa...</div>
+    </div>
+</div>
 <!-- ⭐ ESPERIT D'EQUIP -->
 <div id="team-spirit" style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 8px; color: white; text-align: center;">
     <div style="font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">💪 ESPERIT D'EQUIP</div>
@@ -16801,6 +16813,120 @@ const match = sortedMatches[0];
 
     `;
 }
+// 🗺️ MAPA DE RIVALS
+function loadRivalsMap() {
+    // Coordenades dels clubs de waterpolo a Catalunya
+    const clubLocations = {
+        'C.N. TERRASSA': { lat: 41.5654, lng: 2.0089, name: 'CN Terrassa', home: true },
+        'C.N. MANRESA': { lat: 41.7265, lng: 1.8245, name: 'CN Manresa' },
+        'C.N. ATL BARCELONETA': { lat: 41.3788, lng: 2.1894, name: 'CN Atl Barceloneta' },
+        'C.N. BARCELONA': { lat: 41.3874, lng: 2.1686, name: 'CN Barcelona' },
+        'C.N. MONTJUIC': { lat: 41.3644, lng: 2.1519, name: 'CN Montjuïc' },
+        'C.E. MEDITERRANI': { lat: 41.3851, lng: 2.1734, name: 'CE Mediterrani' },
+        'C.N. MOLINS DE REI': { lat: 41.4115, lng: 2.0169, name: 'CN Molins de Rei' },
+        'C.N. RUBÍ': { lat: 41.4930, lng: 2.0311, name: 'CN Rubí' }
+    };
+    
+    // Obtenir rivals del ranking (tots els equips de la lliga menys nosaltres)
+    let rivals = [];
+    if (actawpData && actawpData.ranking) {
+        rivals = actawpData.ranking
+            .map(team => team.equip || '')
+            .filter(name => name && !name.toUpperCase().includes('TERRASSA'));
+    }
+    
+    // Si no hi ha rivals, no mostrar res
+    if (rivals.length === 0) {
+        document.getElementById('rivals-map-pill').style.display = 'none';
+        return;
+    }
+    
+    // Crear mapa centrat a Catalunya
+    const map = L.map('rivals-map', {
+        zoomControl: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        dragging: false,
+        touchZoom: false
+    }).setView([41.50, 1.95], 9);
+    
+    // Afegir capa base d'OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 13
+    }).addTo(map);
+    
+    // Icones personalitzades
+    const homeIcon = L.divIcon({
+        html: '<div style="background: #fbbf24; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🏠</div>',
+        className: '',
+        iconSize: [24, 24]
+    });
+    
+    const rivalIcon = L.divIcon({
+        html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+        className: '',
+        iconSize: [20, 20]
+    });
+    
+    // Afegir marcador de CN Terrassa
+    L.marker([41.5654, 2.0089], { icon: homeIcon })
+        .bindPopup('<b>🏠 CN Terrassa</b><br>Casa nostra!')
+        .addTo(map);
+    
+    // Afegir marcadors de rivals
+    let maxDistance = 0;
+    let farthestRival = '';
+    let closestRival = '';
+    let minDistance = Infinity;
+    
+    rivals.forEach(rivalName => {
+        // Buscar coordenades (normalitzar noms)
+        const normalizedRival = rivalName.toUpperCase().trim();
+        let location = null;
+        
+        // Buscar coincidència exacta o parcial
+        for (const [key, value] of Object.entries(clubLocations)) {
+            const normalizedKey = key.toUpperCase();
+            if (normalizedKey === normalizedRival || 
+                normalizedRival.includes(normalizedKey.replace('C.N. ', '').replace('C.E. ', '')) ||
+                normalizedKey.includes(normalizedRival.replace('C.N. ', '').replace('C.E. ', ''))) {
+                location = value;
+                break;
+            }
+        }
+        
+        if (location && !location.home) {
+            L.marker([location.lat, location.lng], { icon: rivalIcon })
+                .bindPopup(`<b>${location.name}</b>`)
+                .addTo(map);
+            
+            // Calcular distància aproximada en km
+            const distance = Math.sqrt(
+                Math.pow((location.lat - 41.5654) * 111, 2) + 
+                Math.pow((location.lng - 2.0089) * 85, 2)
+            );
+            
+            if (distance > maxDistance) {
+                maxDistance = distance;
+                farthestRival = location.name;
+            }
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestRival = location.name;
+            }
+        }
+    });
+    
+    // Actualitzar stats
+    document.getElementById('rivals-map-stats').innerHTML = `
+        <div style="display: flex; justify-content: space-around; gap: 10px; text-align: center;">
+            <div><strong>${rivals.length}</strong> rivals</div>
+            <div>Més lluny: <strong>${farthestRival}</strong> (${maxDistance.toFixed(0)} km)</div>
+        </div>
+    `;
+}
+
 function loadLastResultsMini() {
     const container = document.getElementById('last-results-mini');
     
@@ -17286,6 +17412,10 @@ async function loadFrontPagePills() {
     loadNextMatchPill();
     loadRankingPill();
     loadLastResultsMini();
+	// Carregar mapa de rivals
+if (document.getElementById('rivals-map')) {
+    loadRivalsMap();
+}
     loadTeamSpirit();
     
     // ⭐ Iniciar compte enrere dinàmic
