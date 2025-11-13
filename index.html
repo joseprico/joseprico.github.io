@@ -16818,7 +16818,7 @@ function loadRivalsMap() {
     // Coordenades dels clubs de waterpolo a Catalunya
     const clubLocations = {
         'C.N. TERRASSA': { lat: 41.5654, lng: 2.0089, name: 'CN Terrassa', home: true },
-        'C.N. MANRESA': { lat: 41.7265, lng: 1.8245, name: 'CN Manresa' },
+        'C.N. MANRESA': { lat: 41.7285, lng: 1.8262, name: 'CN Manresa' },
         'C.N. ATL BARCELONETA': { lat: 41.3788, lng: 2.1894, name: 'CN Atl Barceloneta' },
         'C.N. BARCELONA': { lat: 41.3874, lng: 2.1686, name: 'CN Barcelona' },
         'C.N. MONTJUIC': { lat: 41.3644, lng: 2.1519, name: 'CN Montjuïc' },
@@ -16835,6 +16835,8 @@ function loadRivalsMap() {
             .filter(name => name && !name.toUpperCase().includes('TERRASSA'));
     }
     
+    console.log('🗺️ Rivals trobats:', rivals);
+    
     // Si no hi ha rivals, no mostrar res
     if (rivals.length === 0) {
         document.getElementById('rivals-map-pill').style.display = 'none';
@@ -16848,7 +16850,7 @@ function loadRivalsMap() {
         doubleClickZoom: false,
         dragging: false,
         touchZoom: false
-    }).setView([41.50, 1.95], 9);
+    }).setView([41.60, 1.95], 9);
     
     // Afegir capa base d'OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -16873,6 +16875,18 @@ function loadRivalsMap() {
     L.marker([41.5654, 2.0089], { icon: homeIcon })
         .bindPopup('<b>🏠 CN Terrassa</b><br>Casa nostra!')
         .addTo(map);
+    
+    // Funció Haversine per calcular distància real
+    function calcDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radi de la Terra en km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
     
     // Afegir marcadors de rivals
     let maxDistance = 0;
@@ -16901,11 +16915,9 @@ function loadRivalsMap() {
                 .bindPopup(`<b>${location.name}</b>`)
                 .addTo(map);
             
-            // Calcular distància aproximada en km
-            const distance = Math.sqrt(
-                Math.pow((location.lat - 41.5654) * 111, 2) + 
-                Math.pow((location.lng - 2.0089) * 85, 2)
-            );
+            // Calcular distància amb Haversine
+            const distance = calcDistance(41.5654, 2.0089, location.lat, location.lng) * 1.4;
+            console.log(`  ${location.name}: ${distance.toFixed(1)} km`);
             
             if (distance > maxDistance) {
                 maxDistance = distance;
@@ -16918,6 +16930,13 @@ function loadRivalsMap() {
         }
     });
     
+    console.log('📊 Resum:', {
+        maxDistance: maxDistance.toFixed(1) + ' km',
+        farthestRival,
+        minDistance: minDistance.toFixed(1) + ' km', 
+        closestRival
+    });
+    
     // Actualitzar stats
     document.getElementById('rivals-map-stats').innerHTML = `
         <div style="display: flex; justify-content: space-around; gap: 10px; text-align: center;">
@@ -16926,7 +16945,6 @@ function loadRivalsMap() {
         </div>
     `;
 }
-
 function loadLastResultsMini() {
     const container = document.getElementById('last-results-mini');
     
