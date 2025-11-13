@@ -12988,12 +12988,25 @@ function renderSwimRacesStats() {
     `;
 }
 function renderGoalkeeperZoneStats() {
-    // Aquesta funció es cridarà al displayMatchData() i displayComparison()
+    // Detectar automàticament els noms dels porters des dels partits
+    const goalkeeperNames = {
+        1: 'Porter 1',
+        13: 'Porter 13'
+    };
+    
+    // Buscar els noms reals dels porters als partits
+    allMatches.forEach(match => {
+        match.jugadors.forEach(j => {
+            if (j.numero === 1 || j.numero === 13) {
+                goalkeeperNames[j.numero] = j.nom;
+            }
+        });
+    });
     
     const goalkeeperZones = {
-        1: {  // Max Valls
+        1: {
             num: 1,
-            name: 'MAX VALLS',
+            name: goalkeeperNames[1],
             totalGolsRebuts: 0,
             zones: {
                 'top-left': 0, 'top-center': 0, 'top-right': 0,
@@ -13002,9 +13015,9 @@ function renderGoalkeeperZoneStats() {
                 'unknown': 0
             }
         },
-        13: {  // Eric Mora
+        13: {
             num: 13,
-            name: 'ERIC MORA',
+            name: goalkeeperNames[13],
             totalGolsRebuts: 0,
             zones: {
                 'top-left': 0, 'top-center': 0, 'top-right': 0,
