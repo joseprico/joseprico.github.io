@@ -15357,7 +15357,7 @@ const sortedMatches = [...matches].sort((a, b) => {
                 <div style="background: rgba(34, 211, 238, 0.1); border-left: 4px solid #22d3ee; border-radius: 8px; padding: 12px;">
                     <!-- Data i hora -->
                     <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
-                        <strong>Jornada ${match.jornada || '?'}</strong> • 📅 ${date} ${time ? `• ⏰ ${time}` : ''}
+                         • 📅 ${date} ${time ? `• ⏰ ${time}` : ''}
                     </div>
                     
                     <!-- Equips en vertical -->
@@ -15586,7 +15586,7 @@ function parseActawpDate(dateTimeStr) {
             <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 4px solid ${borderColor};">
                 <!-- Indicador de resultat -->
                 <div style="font-size: 12px; color: #bae6fd; margin-bottom: 12px;">
-                    <strong>Jornada ${result.jornada || '?'}</strong> • ${resultIcon} ${resultText}
+                     • ${resultIcon} ${resultText}
                 </div>
                 
                 <!-- Equips i marcador en vertical -->
@@ -16148,7 +16148,7 @@ const rivalLogoHtml = rivalLogo ? `<img src="${rivalLogo}" style="width: 24px; h
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div style="flex: 1; min-width: 200px;">
                             <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">
-                                <strong>Jornada ${match.jornada || '?'}</strong> • 📅 ${date}
+                                 • 📅 ${date}
                             </div>
                             
 							${isHome ? `
@@ -16749,7 +16749,7 @@ const match = sortedMatches[0];
     
     container.innerHTML = `
     <div style="font-size: 12px; margin-bottom: 12px; color: #bfdbfe;">
-        <strong style="color: #22d3ee;">Jornada ${match.jornada || '?'}</strong> • ${date} ${time ? '• ' + time : ''}
+         • ${date} ${time ? '• ' + time : ''}
     </div>
         
         <!-- Equips amb logos -->
