@@ -13663,10 +13663,46 @@ function showIndividualPlayerDetails(player) {
             <div class="info-grid" id="playerSummaryGrid"></div>
         </div>
         
-        <div class="card">
-            <h2 class="section-title">📈 Evolució per Partit</h2>
-            <canvas id="playerEvolutionChart" style="max-height: 300px;"></canvas>
-        </div>
+        <!-- SUBSTITUEIX AQUEST BLOC AL TEU index.html -->
+<!-- Busca la secció "Evolució per Partit" i substitueix-la per aquest codi: -->
+
+<div class="card">
+    <h2 class="section-title">📈 Evolució per Partit</h2>
+    
+    <!-- Llegenda explicativa -->
+    <div style="margin-bottom: 15px; padding: 12px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; font-size: 13px; color: #bae6fd;">
+        <strong>📊 Visualització completa:</strong> Totes les mètriques positives del jugador per partit
+        <br>
+        <span style="font-size: 11px; opacity: 0.8;">
+            Eix esquerre: Accions | Eix dret: Valoració MVP | 
+            <span style="border-bottom: 2px dashed #f87171; padding: 0 4px;">Línia discontínua = Exclusions</span>
+        </span>
+    </div>
+    
+    <!-- Gràfic (més alt per tenir espai per totes les línies) -->
+    <canvas id="playerEvolutionChart" style="max-height: 450px;"></canvas>
+    
+    <!-- Llegenda de colors -->
+    <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; font-size: 11px; text-align: center;">
+        <span style="color: #fde047; font-weight: bold;">⚽ Gols</span>
+        <span style="color: #a78bfa; font-weight: bold;">🎯 Assistències</span>
+        <span style="color: #fb923c; font-weight: bold;">💪 Robades</span>
+        <span style="color: #34d399; font-weight: bold;">🛡️ Blocatges</span>
+        <span style="color: #38bdf8; font-weight: bold;">🟦 Faltes Rebudes</span>
+        <span style="color: #f87171; font-weight: bold;">🟥 Exclusions</span>
+        <span style="color: #22d3ee; font-weight: bold; font-size: 12px;">📊 MVP</span>
+        <span style="color: #60a5fa; font-weight: bold;">🧤 Parades</span>
+    </div>
+</div>
+    
+    <!-- GRÀFIC -->
+    <canvas id="playerEvolutionChart" style="max-height: 300px;"></canvas>
+    
+    <!-- LLEGENDA EXPLICATIVA (OPCIONAL) -->
+    <div style="margin-top: 15px; padding: 12px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; font-size: 12px; color: #bae6fd;">
+        <strong>💡 Consell:</strong> La línia de punts mostra la tendència general. Si puja, el jugador està millorant!
+    </div>
+</div>
         
         <div class="card">
             <h2 class="section-title">🎯 Zones de Gol</h2>
@@ -13710,12 +13746,435 @@ function showIndividualPlayerDetails(player) {
             </div>
         </div>
     `;
+ // ============================================
+// 📈 EVOLUCIÓ TEMPORAL DEL JUGADOR - VERSIÓ MILLORADA
+// ============================================
+
+// Variable global per mantenir les dades del jugador actual
+let currentPlayerData = null;
+
+// Funció per actualitzar el gràfic quan canvia la mètrica seleccionada
+function updateEvolutionChart() {
+    if (!currentPlayerData) return;
     
+    const metric = document.getElementById('evolutionMetricSelector').value;
+    renderPlayerEvolutionChartImproved(currentPlayerData, metric);
+}
+
+
+// Funció per renderitzar el gràfic amb TOTES les mètriques
+function renderPlayerEvolutionChartImproved(data, metric = 'all') {
+    const ctx = document.getElementById('playerEvolutionChart');
+    if (!ctx) {
+        console.error('No s\'ha trobat el canvas playerEvolutionChart');
+        return;
+    }
+    
+    // Comprovar que data.evolution existeix i té dades
+    if (!data.evolution || data.evolution.length === 0) {
+        console.warn('No hi ha dades d\'evolució per mostrar');
+        return;
+    }
+    
+    // Destruir gràfic anterior si existeix
+    if (window.playerEvolutionChartInstance) {
+        window.playerEvolutionChartInstance.destroy();
+    }
+    
+    // Preparar labels (dates)
+    const labels = data.evolution.map(match => match.date);
+    const rivals = data.evolution.map(match => match.rival);
+    
+    // Detectar si és porter
+    const isGoalkeeper = data.totalSaves > 0 || data.num === 1 || data.num === 13;
+    
+    // Crear datasets per cada mètrica POSITIVA
+    const datasets = [
+        {
+            label: '⚽ Gols',
+            data: data.evolution.map(m => m.goals || 0),
+            borderColor: '#fde047',
+            backgroundColor: 'rgba(253, 224, 71, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: '🎯 Assistències',
+            data: data.evolution.map(m => m.assists || 0),
+            borderColor: '#a78bfa',
+            backgroundColor: 'rgba(167, 139, 250, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: '💪 Robades',
+            data: data.evolution.map(m => m.steals || 0),
+            borderColor: '#fb923c',
+            backgroundColor: 'rgba(251, 146, 60, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: '🛡️ Blocatges',
+            data: data.evolution.map(m => m.blocks || 0),
+            borderColor: '#34d399',
+            backgroundColor: 'rgba(52, 211, 153, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: '🟦 Faltes Rebudes',
+            data: data.evolution.map(m => m.foulsReceived || 0),
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: '🟥 Exclusions',
+            data: data.evolution.map(m => m.exclusions || 0),
+            borderColor: '#f87171',
+            backgroundColor: 'rgba(248, 113, 113, 0.1)',
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderDash: [5, 5] // Línia discontínua per diferenciar que és negatiu
+        },
+        {
+            label: '📊 MVP',
+            data: data.evolution.map(m => m.mvp || 0),
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34, 211, 238, 0.1)',
+            tension: 0.3,
+            borderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            yAxisID: 'y1' // Eix secundari per MVP
+        }
+    ];
+    
+    // Si és porter, afegir parades
+    if (isGoalkeeper) {
+        datasets.push({
+            label: '🧤 Parades',
+            data: data.evolution.map(m => m.saves || 0),
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        });
+    }
+    
+    window.playerEvolutionChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { 
+                mode: 'index', 
+                intersect: false 
+            },
+            plugins: {
+                legend: { 
+                    display: true,
+                    position: 'top',
+                    labels: { 
+                        color: 'white',
+                        font: { size: 11 },
+                        padding: 8,
+                        usePointStyle: true,
+                        pointStyle: 'line'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#22d3ee',
+                    bodyColor: 'white',
+                    borderColor: '#22d3ee',
+                    borderWidth: 1,
+                    padding: 15,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return `${rivals[index]} - ${labels[index]}`;
+                        },
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            
+                            // Format segons la mètrica
+                            if (label.includes('MVP')) {
+                                return `${label}: ${value.toFixed(1)}`;
+                            }
+                            return `${label}: ${value}`;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const match = data.evolution[index];
+                            return `\n⏱️ Minuts: ${match.minutes}'`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    ticks: { 
+                        color: 'white',
+                        font: { size: 10 },
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: { 
+                        color: 'rgba(255,255,255,0.1)',
+                        drawOnChartArea: true
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Accions per Partit',
+                        color: 'white',
+                        font: { size: 12 }
+                    },
+                    ticks: { 
+                        color: 'white',
+                        stepSize: 1
+                    },
+                    grid: { 
+                        color: 'rgba(255,255,255,0.1)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Valoració MVP',
+                        color: '#22d3ee',
+                        font: { size: 12 }
+                    },
+                    ticks: { 
+                        color: '#22d3ee',
+                        callback: function(value) {
+                            return value.toFixed(1);
+                        }
+                    },
+                    grid: { 
+                        display: false // No mostrar grid de l'eix secundari
+                    }
+                }
+            }
+        }
+    });
+}
+
+console.log('✅ Gràfic d\'evolució multi-mètrica (versió completa) carregat correctament');
+
+
+// Funció per preparar dades segons la mètrica
+function prepareChartData(data, metric) {
+    const labels = [];
+    const values = [];
+    const rivals = [];
+    const extraInfo = [];
+    
+    let datasetLabel, color, bgColor, formatValue, yAxisFormat;
+    
+    // Configuració per cada mètrica
+    switch(metric) {
+        case 'mvp':
+            datasetLabel = 'Valoració MVP';
+            color = '#22d3ee';
+            bgColor = 'rgba(34, 211, 238, 0.1)';
+            formatValue = (v) => v.toFixed(1);
+            yAxisFormat = (v) => v.toFixed(1);
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.mvp);
+                rivals.push(match.rival);
+                extraInfo.push(`Minuts: ${match.minutes}'`);
+            });
+            break;
+            
+        case 'goals':
+            datasetLabel = 'Gols per Partit';
+            color = '#fde047';
+            bgColor = 'rgba(253, 224, 71, 0.1)';
+            formatValue = (v) => v;
+            yAxisFormat = (v) => v;
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.goals);
+                rivals.push(match.rival);
+                extraInfo.push(`Minuts: ${match.minutes}'`);
+            });
+            break;
+            
+        case 'assists':
+            datasetLabel = 'Assistències per Partit';
+            color = '#a78bfa';
+            bgColor = 'rgba(167, 139, 250, 0.1)';
+            formatValue = (v) => v;
+            yAxisFormat = (v) => v;
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.assists);
+                rivals.push(match.rival);
+                extraInfo.push(`Gols: ${match.goals}`);
+            });
+            break;
+            
+        case 'efficiency':
+            datasetLabel = 'Eficàcia en Tirs (%)';
+            color = '#34d399';
+            bgColor = 'rgba(52, 211, 153, 0.1)';
+            formatValue = (v) => v.toFixed(1) + '%';
+            yAxisFormat = (v) => v.toFixed(0) + '%';
+            
+            data.evolution.forEach(match => {
+                const totalShots = match.goals + match.missedShots;
+                const efficiency = totalShots > 0 ? (match.goals / totalShots) * 100 : 0;
+                labels.push(match.date);
+                values.push(efficiency);
+                rivals.push(match.rival);
+                extraInfo.push(`${match.goals}/${totalShots} gols`);
+            });
+            break;
+            
+        case 'exclusions':
+            datasetLabel = 'Exclusions per Partit';
+            color = '#f87171';
+            bgColor = 'rgba(248, 113, 113, 0.1)';
+            formatValue = (v) => v;
+            yAxisFormat = (v) => v;
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.exclusions);
+                rivals.push(match.rival);
+                extraInfo.push(`Minuts: ${match.minutes}'`);
+            });
+            break;
+            
+        case 'steals':
+            datasetLabel = 'Robades per Partit';
+            color = '#fb923c';
+            bgColor = 'rgba(251, 146, 60, 0.1)';
+            formatValue = (v) => v;
+            yAxisFormat = (v) => v;
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.steals);
+                rivals.push(match.rival);
+                extraInfo.push(`Pèrdues: ${match.losses}`);
+            });
+            break;
+            
+        case 'saves':
+            datasetLabel = 'Parades per Partit';
+            color = '#60a5fa';
+            bgColor = 'rgba(96, 165, 250, 0.1)';
+            formatValue = (v) => v;
+            yAxisFormat = (v) => v;
+            
+            data.evolution.forEach(match => {
+                labels.push(match.date);
+                values.push(match.saves || 0);
+                rivals.push(match.rival);
+                extraInfo.push(`Gols rebuts: ${match.goalsConceded || 0}`);
+            });
+            break;
+            
+        case 'savePercentage':
+            datasetLabel = '% Parades';
+            color = '#c084fc';
+            bgColor = 'rgba(192, 132, 252, 0.1)';
+            formatValue = (v) => v.toFixed(1) + '%';
+            yAxisFormat = (v) => v.toFixed(0) + '%';
+            
+            data.evolution.forEach(match => {
+                const totalShots = (match.saves || 0) + (match.goalsConceded || 0);
+                const savePercentage = totalShots > 0 ? ((match.saves || 0) / totalShots) * 100 : 0;
+                labels.push(match.date);
+                values.push(savePercentage);
+                rivals.push(match.rival);
+                extraInfo.push(`${match.saves || 0}/${totalShots} parades`);
+            });
+            break;
+    }
+    
+    return {
+        labels,
+        values,
+        rivals,
+        extraInfo,
+        datasetLabel,
+        color,
+        bgColor,
+        formatValue,
+        yAxisFormat
+    };
+}
+
+// Funció per calcular la línia de tendència (regressió lineal simple)
+function calculateTrendLine(values) {
+    const n = values.length;
+    if (n === 0) return [];
+    
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    
+    for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += values[i];
+        sumXY += i * values[i];
+        sumX2 += i * i;
+    }
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    const trendLine = [];
+    for (let i = 0; i < n; i++) {
+        trendLine.push(slope * i + intercept);
+    }
+    
+    return trendLine;
+}
+
+console.log('✅ Codi d\'evolució temporal del jugador carregat correctament');
+   
     // Esperar que el DOM es renderitzi abans de cridar les funcions
     setTimeout(() => {
         renderPlayerHeader(playerData);
         renderPlayerSummary(playerData);
-        renderPlayerEvolutionChart(playerData);
+        renderPlayerEvolutionChartImproved(playerData, 'mvp');
         renderPlayerGoalZones(playerData);
         renderPlayerVsTeamChart(playerData);
         renderHomeAwayChart(playerData);
@@ -13766,7 +14225,7 @@ function showPlayerStats() {
         
         renderPlayerHeader(playerData);
         renderPlayerSummary(playerData);
-        renderPlayerEvolutionChart(playerData);
+        renderPlayerEvolutionChartImproved(playerData, 'mvp');
         renderPlayerGoalZones(playerData);
         renderPlayerVsTeamChart(playerData);
         renderHomeAwayChart(playerData);
@@ -13906,13 +14365,46 @@ function calculatePlayerFullStats(player) {
             data.awayStats.minutes += minutes;
         }
         
-        // Evolution (per gràfic temporal)
-        data.evolution.push({
-            date: match.data || match.rival || `Partit ${data.totalMatches}`,
-            rival: match.rivalTeam || match.rival,
-            goals: stats.gols || 0,
-            minutes: minutes
+        // Evolution (per gràfic temporal) - VERSIÓ MILLORADA
+        // Calcular MVP del jugador en aquest partit
+        const playingTime = matchPlayer.temps?.total || (minutes * 60);
+        const isGoalkeeperMatch = matchPlayer.numero === 1 || matchPlayer.numero === 13 || (stats.parades || 0) > 0;
+        const conceded = isGoalkeeperMatch ? (matchPlayer.golsRebuts || stats.golsRebuts || 0) : 0;
+        
+        // Calcular MVP específic d'aquest partit
+        const matchMVP = calculatePlayerValue({
+            gols: stats.gols || 0,
+            goalTypes: stats.goalTypes || {},
+            assistencies: stats.assistencies || 0,
+            robatoris: stats.robatoris || 0,
+            blocatges: stats.blocks || 0,
+            parades: stats.parades || 0,
+            faltesRebudes: stats.faltesRebudes || 0,
+            exclusions: stats.exclusions || 0,
+            exclusionTypes: stats.exclusionTypes || { normal: 0, penalty: 0 },
+            penaltyMissed: stats.penaltyMissed || 0,
+            perdues: stats.perdues || 0,
+            xutsFallats: stats.xutsFallats || 0,
+            golsRebuts: conceded
         });
+        
+        data.evolution.push({
+            date: match.data ? match.data.split('-').reverse().join('/') : (match.rival || `Partit ${data.totalMatches}`),
+            rival: match.rivalTeam || match.rival || 'Desconegut',
+            goals: stats.gols || 0,
+            assists: stats.assistencies || 0,
+            exclusions: stats.exclusions || 0,
+            steals: stats.robatoris || 0,
+            losses: stats.perdues || 0,
+            blocks: stats.blocks || 0,  // ← AFEGIT
+            foulsReceived: stats.faltesRebudes || 0,  // ← AFEGIT
+            saves: stats.parades || 0,
+            goalsConceded: conceded,
+            missedShots: (stats.xutsFallats || 0) + (stats.penaltyMissed || 0),
+            minutes: minutes,
+            mvp: matchMVP
+        });
+
         
         // Match details (per taula)
         const isMVP = mvp && mvp.numero === player.num && mvp.nom === player.name;
@@ -13944,7 +14436,7 @@ function calculatePlayerFullStats(player) {
         const dateB = parseSpanishDate(b.date);
         return dateA - dateB;
     });
-    
+    console.log('🔍 DEBUG: Dades evolution', data.evolution);
     return data;
 }
 // Funció auxiliar per formatar segons a format mm:ss
@@ -17929,6 +18421,9 @@ function goalZoneMini(zone) {
     </div>
   `;
 }
+
+
+
 </script>
 
   
@@ -18000,16 +18495,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 }
 
 </script>
-  <script>
-    // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
-    document.addEventListener("keydown", event => {
-      if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
-          event.key === "F12") {
-        event.preventDefault();
-      }
-    });
-    </script>
+  
 	<script>
 (() => {
   // --- desactiva coses en local (file://) perquè no trenquin la pàgina
@@ -18044,6 +18530,15 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   window.__guardNoGlobalConsts = true;
 })();
 </script>
-
+<script>
+    // 🔒 Bloqueo de clic derecho y atajos
+ /*   document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("keydown", event => {
+      if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
+          event.key === "F12") {
+        event.preventDefault();
+      }
+    });*/
+    </script>
 </body>
 </html>
