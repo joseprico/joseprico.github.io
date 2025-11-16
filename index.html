@@ -5021,10 +5021,36 @@ function renderActionItem(action) {
     case 'save':       return renderSaveAction(action, quarterLabel, timeStr);
     case 'action':     return renderGeneralAction(action, isRival, quarterLabel, timeStr);
     case 'swim-race':  return renderSwimRaceAction(action, quarterLabel, timeStr);
+	case 'penalty-missed': return renderPenaltyMissedAction(action, isRival, quarterLabel, timeStr);
     default:           return '';
   }
 }
-
+// ============================================
+// âš¡ RENDERITZAR PENAL FALLAT
+// ============================================
+function renderPenaltyMissedAction(action, isRival, quarterLabel, timeStr) {
+    const playerNum = action.playerNum || '?';
+    const playerName = action.playerName || 'Desconegut';
+    
+    return `
+        <div class="action-item exclusion">
+            <div class="action-header">
+                <span class="action-time">⏱️ ${timeStr}</span>
+                <span class="action-quarter">${quarterLabel}</span>
+            </div>
+            <div class="action-content">
+                <div class="action-icon">🥅❌</div>
+                <div class="action-details">
+                    <div class="action-title">PENAL FALLAT ${isRival ? 'RIVAL' : 'CN TERRASSA'}</div>
+                    <div class="action-player">
+                        <span class="action-player-number ${isRival ? 'rival' : ''}">${playerNum}</span>
+                        ${playerName}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
 // ============================================
 // ⚡ RENDERITZAR GOL
 // ============================================
@@ -9587,7 +9613,11 @@ function renderMatchTimeline() {
                     icon = action.result === 'win' ? '🏊✅' : '🏊❌';
                     cssClass = action.result === 'win' ? 'goal' : 'exclusion';
                     detailText = `Cursa inici quart - ${action.result === 'win' ? 'Guanyada' : 'Perduda'}`;
-                }
+                } else if (action.type === 'penalty-missed') {
+					icon = '🥅❌';
+					cssClass = 'penalty-missed';
+				    detailText = 'Penal fallat';
+				}
                 
                 return `
                     <div class="timeline-item ${cssClass}">
@@ -18068,11 +18098,11 @@ function updateLiveView() {
                 scoreboard.style.border = '3px solid #9ca3af';
             }
         } else {
-            titleElement.innerHTML = `
-                <div class="live-pulse-dot"></div>
-                PARTIT EN DIRECTE
-                <div class="live-pulse-dot"></div>
-            `;
+    titleElement.innerHTML = `
+        <div class="live-pulse-dot"></div>
+        PARTIT EN DIRECTE - ${periodStatus.label}
+        <div class="live-pulse-dot"></div>
+    `;
             // Restaurar colors originals
             const scoreboard = document.querySelector('.live-scoreboard');
             if (scoreboard) {
