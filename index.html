@@ -3365,6 +3365,20 @@ body.live-mode {
 <div id="last-results-mini" style="margin-bottom: 20px; padding: 12px; background: rgba(148, 163, 184, 0.05); border-radius: 8px; border-left: 3px solid #22d3ee;">
     <div style="color: #64748b; text-align: center; font-size: 12px;">Carregant últims resultats...</div>
 </div>
+
+
+<div style="margin-bottom: 20px;">
+        <button class="btn" onclick="window.print()" style="background: #8b5cf6; padding: 12px 20px;">
+            🖨️ Imprimir / Exportar PDF
+        </button>
+    </div>
+                <div class="card">
+                    <h2 class="section-title">Estadístiques de partits ja jugats</h2>
+                    <div class="matches-list" id="availableMatches"></div>
+                </div>
+            </div>
+	</div>
+	
 <!-- 🗺️ MAPA DE RIVALS -->
 <div id="rivals-map-pill" style="margin-bottom: 20px; padding: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; color: white; overflow: hidden;">
     <div style="padding: 15px 15px 0 15px;">
@@ -3374,14 +3388,37 @@ body.live-mode {
     <div id="rivals-map-stats" style="padding: 12px 15px; background: rgba(0,0,0,0.2); font-size: 12px;">
         <div style="color: rgba(255,255,255,0.8);">Carregant mapa...</div>
     </div>
-</div>
+</div>	
 <!-- ⭐ ESPERIT D'EQUIP -->
 <div id="team-spirit" style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 8px; color: white; text-align: center;">
     <div style="font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">💪 ESPERIT D'EQUIP</div>
     <div id="team-spirit-content" style="font-size: 14px;">
         <div style="color: rgba(255,255,255,0.8); font-size: 12px;">Carregant...</div>
     </div>
-</div>
+</div>	
+<!-- TAB: TIEMPO DE JUEGO -->
+<div id="tiempoTab" class="hidden">
+ <!--
+ <div style="margin-bottom: 20px;">
+        <button class="btn" onclick="generateTimePDF()" style="background: #8b5cf6; padding: 12px 20px;">
+            📄 Generar PDF Temps de Joc
+        </button>
+    </div>
+	-->
+	
+    <!-- Filtro por jugador -->
+    <div class="card">
+        <div class="filter-bar">
+            <div class="filter-item">
+                <label class="filter-label">Filtrar por jugador</label>
+                <select class="filter-input" id="filterPlayerTime" onchange="filterByPlayerTime()">
+                    <option value="">Todos los jugadores</option>
+                </select>
+            </div>
+            <button class="btn" onclick="clearPlayerTimeFilter()" style="margin-top: 20px;">Limpiar filtro</button>
+        </div>
+    </div>
+
 
 <div class="card">
     <div class="filter-bar">
@@ -3408,41 +3445,6 @@ body.live-mode {
                         </div>
                     </div>
                 </div>
-<div style="margin-bottom: 20px;">
-        <button class="btn" onclick="window.print()" style="background: #8b5cf6; padding: 12px 20px;">
-            🖨️ Imprimir / Exportar PDF
-        </button>
-    </div>
-                <div class="card">
-                    <h2 class="section-title">Partidos Disponibles</h2>
-                    <div class="matches-list" id="availableMatches"></div>
-                </div>
-            </div>
-	</div>
-	
-<!-- TAB: TIEMPO DE JUEGO -->
-<div id="tiempoTab" class="hidden">
- <!--
- <div style="margin-bottom: 20px;">
-        <button class="btn" onclick="generateTimePDF()" style="background: #8b5cf6; padding: 12px 20px;">
-            📄 Generar PDF Temps de Joc
-        </button>
-    </div>
-	-->
-	
-    <!-- Filtro por jugador -->
-    <div class="card">
-        <div class="filter-bar">
-            <div class="filter-item">
-                <label class="filter-label">Filtrar por jugador</label>
-                <select class="filter-input" id="filterPlayerTime" onchange="filterByPlayerTime()">
-                    <option value="">Todos los jugadores</option>
-                </select>
-            </div>
-            <button class="btn" onclick="clearPlayerTimeFilter()" style="margin-top: 20px;">Limpiar filtro</button>
-        </div>
-    </div>
-
     <!-- Estadísticas individuales del jugador seleccionado -->
     <div id="playerTimeStatsCard" class="card hidden">
         <h2 class="section-title">⏱️ Estadísticas de Tiempo - <span id="selectedPlayerTimeName"></span></h2>
