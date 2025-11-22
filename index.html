@@ -313,6 +313,59 @@ body.theme-juvenil #singleMatchStatsTable thead tr:first-child th:nth-child(2) {
   transform: translateY(1px); /* petit ajust òptic */
   filter: drop-shadow(0 0 1px rgba(0,0,0,.25));
 }
+/* Piscineta per zones del camp */
+.field-rect {
+  --cell-w: 14px;     /* amplada cel·la */
+  --cell-h: 10px;     /* alçada cel·la */
+  --cols: 4;
+  --rows: 3;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  
+  padding: 4px;
+  border: 3px solid #0284c7;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #0ea5e9 100%);
+  box-shadow: inset 0 2px 4px rgba(14, 165, 233, 0.2);
+  width: calc(var(--cell-w)*var(--cols) + 14px);
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Indicador de porteria rival */
+.field-rect .goal-indicator {
+  text-align: center;
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Grid de la piscina */
+.field-rect .pool-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cell-w));
+  grid-template-rows: repeat(var(--rows), var(--cell-h));
+  justify-items: center;
+  align-items: center;
+  gap: 1px;
+  /* Fons blau simulant aigua amb efecte d'ones */
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 60% 70%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #0ea5e9 100%);
+  position: relative;
+}
+
+.field-rect .player-marker {
+  grid-row: var(--r);
+  grid-column: var(--c);
+  font-size: 16px;
+  transform: translateY(1px);
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.5));
+  animation: pop-in 0.3s ease-out;
+}
 /* mini-porteria */
 .mini-goal{
   --cell: 12px; --gap:2px;
@@ -1129,6 +1182,28 @@ body.other-team-live {
     margin-bottom: 8px;
     text-align: center;
 }
+/* Estil especial per zones del camp (simulant piscina) */
+.field-zone-heatmap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 60px);
+    gap: 3px;
+    max-width: 280px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #0ea5e9 100%);
+    padding: 12px;
+    border-radius: 8px;
+    border: 3px solid #0284c7;
+    border-bottom-width: 5px;
+    position: relative;
+    /* Efecte d'ones d'aigua amb gradient */
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 60% 70%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    background-color: #7dd3fc;
+    box-shadow: inset 0 2px 8px rgba(14, 165, 233, 0.3);
+}
 
 .individual-zone-card .goal-zone-heatmap {
     max-width: 180px;
@@ -1137,6 +1212,8 @@ body.other-team-live {
 .individual-zone-card .zone-count {
     font-size: 14px;
 }
+
+
 .team-section h2 {
     margin: 0;
     font-size: 20px;
@@ -1723,6 +1800,7 @@ body.other-team-live {
         max-width: 65px !important;
     }
 }
+
 @media (max-width: 768px) {
     /* Reduir font de la taula al mòbil */
     #singleMatchStatsTable {
@@ -4120,6 +4198,10 @@ body.live-mode {
     <h2 class="section-title">🎯 Zones de Porteria CN Terrassa</h2>
     <div id="matchGoalZonesContainer"></div>
 </div>  
+<div class="card">
+    <h2 class="section-title">📍 Zones del Camp CN Terrassa</h2>
+    <div id="matchFieldZonesContainer"></div>
+</div>
 <div class="card" id="swimRacesCard" style="display: none;">
     <h2 class="section-title">🏊 Curses Inicials</h2>
     <div id="matchSwimRacesContainer"></div>
@@ -5055,10 +5137,18 @@ function renderGoalAction(action, isRival, quarterLabel, timeStr) {
   const playerNum  = action.playerNum || '?';
   const playerName = action.playerName || 'Desconegut';
   const rawType    = (action.goalType || 'normal').toLowerCase();
-  const zone       = (action.goalZone || action.zone || '').trim(); // 👈 trim per evitar espais
+  const zone       = (action.goalZone || action.zone || '').trim();
+  const fieldZone  = (action.fieldZone || '').trim(); // ✅ AFEGIR ZONA DEL CAMP
 
   const goalTypes = { normal:'Normal', 'h+':'Superioritat', penalty:'Penal', contra:'Contraatac', boya:'Boia' };
   const goalTypeText = goalTypes[rawType] || (rawType.charAt(0).toUpperCase()+rawType.slice(1));
+
+  // ✅ Mapeig de zones del camp
+  const fieldZoneNames = {
+    '2m-left': '2m Esq.', '2m-center': '2m Centre', '2m-right': '2m Dre.',
+    '5m-left': '-6m Esq.', '5m-center': '-6m Centre', '5m-right': '5m Dre.',
+    '+6m-left': '+6m Esq.', '+6m-center': '+6m Centre', '+6m-right': '+6m Dre.'
+  };
 
   return `
     <div class="action-item ${isRival ? 'goal-rival' : 'goal'}">
@@ -5077,9 +5167,15 @@ function renderGoalAction(action, isRival, quarterLabel, timeStr) {
 
           <div class="action-meta">
   <span class="action-badge ${'type-' + rawType}">${goalTypeText}</span>
+  ${fieldZone && fieldZoneNames[fieldZone] ? `
+    <div class="zone-wrap">
+      <span class="zone-title">📍 Camp</span>
+      ${fieldZoneMiniRect(fieldZone)}
+    </div>
+  ` : ''}
   ${zone ? `
     <div class="zone-wrap">
-      <span class="zone-title">Zona porteria</span>
+      <span class="zone-title">🎯 Porteria</span>
       ${goalZoneMiniRect(zone)}
     </div>
   ` : ''}
@@ -6552,7 +6648,7 @@ document.getElementById('matchInfo').insertAdjacentHTML('afterend', `
     renderSingleMatchStatsTable();
     renderPlayingTimes();
     renderMatchGoalZones();
-    
+    renderMatchFieldZones();
     // ✅ AFEGIR AQUÍ les zones de gols rebuts pels porters
     
     // Zones de Porteria dels Porters (només per aquest partit)
@@ -7668,6 +7764,7 @@ function displayComparison() {
 
     // ✅ ZONES DE GOL DELS JUGADORS
     renderGoalZoneStats();
+	renderFieldZoneStats();  // ← AFEGEIX AQUESTA LÍNIA
 
     // ✅ ZONES DE GOLS REBUTS PELS PORTERS
     const goalkeeperZones = renderGoalkeeperZoneStats();
@@ -9428,6 +9525,18 @@ function renderMatchTimeline() {
         'bottom-right': 'Inf. Dreta',
         // Afegeix les zones que utilitzis si són diferents
     };
+	// Mapeig de zones del camp
+const fieldZoneNames = {
+    '2m-left': '2m Esq.',
+    '2m-center': '2m Centre',
+    '2m-right': '2m Dre.',
+    '5m-left': '-6m Esq.',
+    '5m-center': '-6m Centre',
+    '5m-right': '-6m Dre.',
+    '+6m-left': '+6m Esq.',
+    '+6m-center': '+6m Centre',
+    '+6m-right': '+6m Dre.'
+};
     if (!container || !currentMatch) return;
     
     // Verificar si hay acciones cronológicas guardadas
@@ -9583,10 +9692,23 @@ function renderMatchTimeline() {
                     cssClass = 'goal';
                     detailText = action.saveType === 'atrapa' ? 'Aturada - Atrapa' : 'Aturada - Desvia';
                 } else if (action.type === 'goal') {
-                    icon = '🥅🏐';
-                    cssClass = 'goal';
-                    detailText = `Gol ${goalTypeLabels[action.goalType]}`;
-                } else if (action.type === 'exclusion') {
+    icon = '🥅🎯';
+    cssClass = 'goal';
+    detailText = `Gol ${goalTypeLabels[action.goalType]}`;
+    
+    // Afegir informació de zones si existeix
+    const zoneInfo = [];
+    if (action.fieldZone && fieldZoneNames[action.fieldZone]) {
+        zoneInfo.push(`📍 ${fieldZoneNames[action.fieldZone]}`);
+    }
+    if (action.goalZone && goalZoneNames[action.goalZone]) {
+        zoneInfo.push(`🎯 ${goalZoneNames[action.goalZone]}`);
+    }
+    
+    if (zoneInfo.length > 0) {
+        detailText += ` <span style="font-size: 11px; opacity: 0.8;">(${zoneInfo.join(' · ')})</span>`;
+    }
+} else if (action.type === 'exclusion') {
                     if (action.exclusionType === 'penalty') {
                         icon = '🔴🏐';
                         detailText = 'Penalty cometido';
@@ -12928,6 +13050,260 @@ function renderGoalZoneStats() {
         console.error('❌ No s\'ha trobat #comparisonTable');
     }
 }
+function renderFieldZoneStats() {
+    if (allMatches.length === 0) return;
+    
+    console.log('🎯 renderFieldZoneStats INICIADA');
+    
+    // Calcular zones globals del camp
+    const globalFieldZones = {
+        '2m-left': 0, '2m-center': 0, '2m-right': 0,
+        '5m-left': 0, '5m-center': 0, '5m-right': 0,
+        '+6m-left': 0, '+6m-center': 0, '+6m-right': 0,
+        'unknown': 0
+    };
+    
+    const playerFieldZones = {};
+    
+    allMatches.forEach(match => {
+        // NOMÉS jugadors del CN Terrassa (no rivals)
+        match.jugadors.forEach(j => {
+            if (!j.numero) return;
+            
+            const playerName = j.nom.trim();
+            
+            if (!playerFieldZones[playerName]) {
+                playerFieldZones[playerName] = {
+                    num: j.numero,
+                    name: playerName,
+                    totalGols: 0,
+                    zones: {
+                        '2m-left': 0, '2m-center': 0, '2m-right': 0,
+                        '5m-left': 0, '5m-center': 0, '5m-right': 0,
+                        '+6m-left': 0, '+6m-center': 0, '+6m-right': 0,
+                        'unknown': 0
+                    }
+                };
+            }
+            
+            playerFieldZones[playerName].totalGols += j.estadistiques.gols || 0;
+            
+            // Comprovar si hi ha dades de fieldZones
+            if (j.estadistiques.fieldZones) {
+                console.log(`Jugador ${playerName} (${j.numero}) té fieldZones:`, JSON.stringify(j.estadistiques.fieldZones), 'Total gols:', j.estadistiques.gols);
+                Object.keys(j.estadistiques.fieldZones).forEach(zone => {
+                    const count = j.estadistiques.fieldZones[zone] || 0;
+                    globalFieldZones[zone] = (globalFieldZones[zone] || 0) + count;
+                    playerFieldZones[playerName].zones[zone] = (playerFieldZones[playerName].zones[zone] || 0) + count;
+                });
+            }
+        });
+    });
+    
+    const totalGols = Object.values(globalFieldZones).reduce((sum, count) => sum + count, 0) - globalFieldZones.unknown;
+    
+    console.log('📊 Total gols amb zona del camp:', totalGols);
+    console.log('📊 Zones del camp globals:', globalFieldZones);
+    
+    // Si no hi ha dades de zones del camp, mostrar missatge informatiu
+    if (totalGols === 0) {
+        console.warn('⚠️ No hi ha dades de zones del camp');
+        
+        const noDataHTML = `
+            <div class="card" id="fieldZonesAnalysisCard">
+                <h2 class="section-title">📍 Anàlisi de Zones del Camp</h2>
+                <div class="no-data" style="padding: 40px; text-align: center;">
+                    <p style="font-size: 16px; color: #fbbf24; margin-bottom: 10px;">⚠️ No hi ha dades de zones del camp</p>
+                    <p style="font-size: 14px; color: #bae6fd;">
+                        Els partits nous registrats amb l'app actualitzada mostraran des d'on del camp es marquen els gols.
+                    </p>
+                    <p style="font-size: 12px; color: #bae6fd; margin-top: 10px;">
+                        Partits analitzats: ${allMatches.length}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        const zonesCard = document.getElementById('goalZonesAnalysisCard');
+        
+        if (zonesCard) {
+            const existingCard = document.getElementById('fieldZonesAnalysisCard');
+            if (existingCard) existingCard.remove();
+            
+            zonesCard.insertAdjacentHTML('afterend', noDataHTML);
+            console.log('✅ Card "no data" de fieldZones inserit');
+        }
+        
+        return;
+    }
+    
+    // Top 6 golejadors
+    const topScorers = Object.values(playerFieldZones)
+        .filter(p => p.totalGols > 0)
+        .sort((a, b) => b.totalGols - a.totalGols)
+        .slice(0, 6);
+    
+    console.log('👤 Top scorers per fieldZones:', topScorers.length);
+    
+    const zoneOrder = [
+        '2m-left', '2m-center', '2m-right',
+        '5m-left', '5m-center', '5m-right',
+        '+6m-left', '+6m-center', '+6m-right'
+    ];
+    
+    const zoneLabels = {
+        '2m-left': '⬅️ Esq 2m',
+        '2m-center': '🎯 Cen 2m',
+        '2m-right': '➡️ Dre 2m',
+        '5m-left': '⬅️ Esq -6m',
+        '5m-center': '🎯 Cen -6m',
+        '5m-right': '➡️ Dre -6m',
+        '+6m-left': '⬅️ Esq +6m',
+        '+6m-center': '🎯 Cen +6m',
+        '+6m-right': '➡️ Dre +6m'
+    };
+    
+    const zoneLabelsShort = {
+        '2m-left': '⬅️E',
+        '2m-center': '🎯',
+        '2m-right': '➡️D',
+        '5m-left': '⬅️E',
+        '5m-center': '🎯',
+        '5m-right': '➡️D',
+        '+6m-left': '⬅️E',
+        '+6m-center': '🎯',
+        '+6m-right': '➡️D'
+    };
+    
+    const maxCountGlobal = Math.max(...zoneOrder.map(z => globalFieldZones[z] || 0));
+    
+    // Crear el HTML complet del card
+    const fieldZonesHTML = `
+        <div class="card" id="fieldZonesAnalysisCard">
+            <h2 class="section-title">📍 Anàlisi de Zones del Camp</h2>
+            <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
+                Des d'on marquen els gols els jugadors del CN Terrassa (🔴 a 2m | 🟡 a 5m | 🔵 +6m)
+            </p>
+            
+            <!-- Indicador de porteria rival -->
+            <div style="text-align: center; margin: 10px auto 15px auto; max-width: 280px; padding: 8px; background: rgba(239, 68, 68, 0.2); border-radius: 8px; border: 2px solid #ef4444;">
+                <div style="font-size: 20px; margin-bottom: 4px;">🥅</div>
+                <div style="font-size: 11px; font-weight: bold; color: #fca5a5;">PORTERIA RIVAL</div>
+            </div>
+            
+            <!-- Heatmap Global del Camp -->
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #22d3ee; font-size: 14px; margin-bottom: 10px;">📊 Mapa Global d'Equip - Zones del Camp</h3>
+                <div class="field-zone-heatmap">
+                    ${zoneOrder.map((zone, index) => {
+                        const count = globalFieldZones[zone] || 0;
+                        const percentage = totalGols > 0 ? ((count / totalGols) * 100).toFixed(1) : 0;
+                        const intensity = maxCountGlobal > 0 ? count / maxCountGlobal : 0;
+                        const bgColor = getHeatmapColor(intensity);
+                        
+                        // Afegir separadors visuals cada 3 zones
+                        const extraStyle = (index === 2 || index === 5) ? 'border-bottom: 2px dashed rgba(255,255,255,0.3);' : '';
+                        
+                        return `
+                            <div class="goal-zone-cell" style="background: ${bgColor}; ${extraStyle}">
+                                <div class="zone-label">${zoneLabels[zone]}</div>
+                                <div class="zone-count">${count}</div>
+                                <div style="font-size: 9px; color: rgba(255,255,255,0.7);">${percentage}%</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                ${globalFieldZones.unknown > 0 ? `
+                    <div style="text-align: center; margin-top: 10px; font-size: 11px; color: #bae6fd;">
+                        ❓ Gols sense zona del camp registrada: ${globalFieldZones.unknown}
+                    </div>
+                ` : ''}
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #fde047;">
+                    Total de gols amb zona del camp: ${totalGols}
+                </div>
+            </div>
+            
+            <!-- Heatmaps Individuals -->
+            <div style="margin-top: 20px;">
+                <h3 style="color: #22d3ee; font-size: 14px; margin-bottom: 10px;">👤 Mapes Individuals (Top 6 Golejadors)</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    ${topScorers.map(player => {
+                        console.log(`🔍 ${player.name} fieldZones individuals:`, JSON.stringify(player.zones));
+                        const totalWithZone = Object.values(player.zones).reduce((sum, count) => sum + count, 0) - (player.zones.unknown || 0);
+                        const maxCount = Math.max(...zoneOrder.map(z => player.zones[z] || 0));
+                        
+                        const preferredZone = zoneOrder.reduce((max, zone) => 
+                            (player.zones[zone] || 0) > (player.zones[max] || 0) ? zone : max
+                        , zoneOrder[0]);
+                        
+                        const preferredZoneLabel = {
+                            '2m-left': 'Esquerra 2m',
+                            '2m-center': 'Centre 2m',
+                            '2m-right': 'Dreta 2m',
+                            '5m-left': 'Esquerra -6m',
+                            '5m-center': 'Centre -6m',
+                            '5m-right': 'Dreta -6m',
+                            '+6m-left': 'Esquerra +6m',
+                            '+6m-center': 'Centre +6m',
+                            '+6m-right': 'Dreta +6m'
+                        }[preferredZone];
+                        
+                        return `
+                            <div style="background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px;">
+                                <div style="text-align: center; margin-bottom: 8px;">
+                                    <div style="font-size: 12px; font-weight: bold; color: #22d3ee;">
+                                        ${player.num}. ${player.name.split(' ').slice(0, 2).join(' ')}
+                                    </div>
+                                    <div style="font-size: 10px; color: #bae6fd; margin-top: 2px;">
+                                        ${player.totalGols} gols (${totalWithZone} amb zona)
+                                    </div>
+                                </div>
+                                
+                                <div class="field-zone-heatmap" style="max-width: 180px; margin: 0 auto;">
+                                    ${zoneOrder.map((zone, index) => {
+                                        const count = player.zones[zone] || 0;
+                                        const intensity = maxCount > 0 ? count / maxCount : 0;
+                                        const bgColor = getHeatmapColor(intensity);
+                                        const extraStyle = (index === 2 || index === 5) ? 'border-bottom: 2px dashed rgba(255,255,255,0.3);' : '';
+                                        
+                                        return `
+                                            <div class="goal-zone-cell" style="background: ${bgColor}; ${extraStyle}">
+                                                <div class="zone-label">${zoneLabelsShort[zone]}</div>
+                                                <div class="zone-count">${count}</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                
+                                ${totalWithZone > 0 && player.zones[preferredZone] > 0 ? `
+                                    <div style="font-size: 10px; color: #fde047; text-align: center; margin-top: 8px;">
+                                        ⭐ ${preferredZoneLabel} (${player.zones[preferredZone]})
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Inserir el card després del card de zones de porteria
+    const goalZonesCard = document.getElementById('goalZonesAnalysisCard');
+    
+    if (goalZonesCard) {
+        // Eliminar card anterior si existeix
+        const existingCard = document.getElementById('fieldZonesAnalysisCard');
+        if (existingCard) {
+            existingCard.remove();
+        }
+        
+        goalZonesCard.insertAdjacentHTML('afterend', fieldZonesHTML);
+        console.log('✅ Card de zones del camp inserit correctament amb dades');
+    } else {
+        console.error('❌ No s\'ha trobat #goalZonesAnalysisCard');
+    }
+}
 function renderSwimRacesStats() {
     if (allMatches.length === 0) return '';
     
@@ -13407,7 +13783,192 @@ function renderMatchGoalZones() {
         </div>
     `;
 }
-
+function renderMatchFieldZones() {
+    const container = document.getElementById('matchFieldZonesContainer');
+    if (!container || !currentMatch) return;
+    
+    // ✅ Calcular zones del camp NOMÉS d'aquest partit
+    const matchFieldZones = {
+        '2m-left': 0, '2m-center': 0, '2m-right': 0,
+        '5m-left': 0, '5m-center': 0, '5m-right': 0,
+        '+6m-left': 0, '+6m-center': 0, '+6m-right': 0,
+        'unknown': 0
+    };
+    
+    const playerFieldZones = {};
+    
+    currentMatch.jugadors.forEach(j => {
+        if ((j.estadistiques.gols || 0) === 0) return;
+        
+        const playerName = j.nom.trim();
+        
+        playerFieldZones[playerName] = {
+            num: j.numero,
+            name: playerName,
+            totalGols: j.estadistiques.gols || 0,
+            zones: {
+                '2m-left': 0, '2m-center': 0, '2m-right': 0,
+                '5m-left': 0, '5m-center': 0, '5m-right': 0,
+                '+6m-left': 0, '+6m-center': 0, '+6m-right': 0,
+                'unknown': 0
+            }
+        };
+        
+        // ✅ Només les zones del camp d'aquest partit
+        if (j.estadistiques.fieldZones) {
+            Object.keys(j.estadistiques.fieldZones).forEach(zone => {
+                const count = j.estadistiques.fieldZones[zone] || 0;
+                matchFieldZones[zone] = (matchFieldZones[zone] || 0) + count;
+                playerFieldZones[playerName].zones[zone] = count;
+            });
+        }
+    });
+    
+    const totalGols = Object.values(matchFieldZones).reduce((sum, count) => sum + count, 0) - matchFieldZones.unknown;
+    
+    if (totalGols === 0) {
+        container.innerHTML = `
+            <div class="no-data">
+                ⚠️ Aquest partit no té dades de zones del camp.<br>
+                <small style="margin-top: 8px; display: block;">
+                    Els partits nous registrats amb l'app actualitzada mostraran les zones del camp.
+                </small>
+            </div>
+        `;
+        return;
+    }
+    
+    const zoneOrder = [
+        '2m-left', '2m-center', '2m-right',
+        '5m-left', '5m-center', '5m-right',
+        '+6m-left', '+6m-center', '+6m-right'
+    ];
+    
+    const zoneLabels = {
+        '2m-left': '⬅️ Esq 2m',
+        '2m-center': '🎯 Cen 2m',
+        '2m-right': '➡️ Dre 2m',
+        '5m-left': '⬅️ Esq -6m',
+        '5m-center': '🎯 Cen -6m',
+        '5m-right': '➡️ Dre -6m',
+        '+6m-left': '⬅️ Esq +6m',
+        '+6m-center': '🎯 Cen +6m',
+        '+6m-right': '➡️ Dre +6m'
+    };
+    
+    const maxCount = Math.max(...zoneOrder.map(z => matchFieldZones[z] || 0));
+    
+    // Mapa global del partit - zones del camp
+    container.innerHTML = `
+        <!-- Indicador de porteria rival -->
+        <div style="text-align: center; margin: 10px auto 15px auto; max-width: 280px; padding: 8px; background: rgba(239, 68, 68, 0.2); border-radius: 8px; border: 2px solid #ef4444;">
+            <div style="font-size: 20px; margin-bottom: 4px;">🥅</div>
+            <div style="font-size: 11px; font-weight: bold; color: #fca5a5;">PORTERIA RIVAL</div>
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #22d3ee; font-size: 14px; margin-bottom: 10px; text-align: center;">
+                📊 Mapa Global del Partit - Zones del Camp
+            </h3>
+            <div class="field-zone-heatmap">
+                ${zoneOrder.map((zone, index) => {
+                    const count = matchFieldZones[zone] || 0;
+                    const percentage = totalGols > 0 ? ((count / totalGols) * 100).toFixed(1) : 0;
+                    const intensity = maxCount > 0 ? count / maxCount : 0;
+                    const bgColor = getHeatmapColor(intensity);
+                    
+                    const extraStyle = (index === 2 || index === 5) ? 'border-bottom: 2px dashed rgba(255,255,255,0.3);' : '';
+                    
+                    return `
+                        <div class="goal-zone-cell" style="background: ${bgColor}; ${extraStyle}">
+                            <div class="zone-label">${zoneLabels[zone]}</div>
+                            <div class="zone-count">${count}</div>
+                            <div style="font-size: 9px; color: rgba(255,255,255,0.7);">${percentage}%</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            ${matchFieldZones.unknown > 0 ? `
+                <div style="text-align: center; margin-top: 10px; font-size: 11px; color: #bae6fd;">
+                    ❓ Gols sense zona del camp registrada: ${matchFieldZones.unknown}
+                </div>
+            ` : ''}
+            <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #fde047;">
+                Total de gols amb zona del camp: ${totalGols}
+            </div>
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <h3 style="color: #22d3ee; font-size: 14px; margin-bottom: 10px; text-align: center;">
+                👤 Zones del Camp per Jugador
+            </h3>
+            <div id="individualFieldZoneMaps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                ${Object.values(playerFieldZones).map(player => {
+                    const totalWithZone = Object.values(player.zones).reduce((sum, count) => sum + count, 0) - (player.zones.unknown || 0);
+                    const maxPlayerCount = Math.max(...zoneOrder.map(z => player.zones[z] || 0));
+                    
+                    // Trobar zona preferida
+                    const preferredZone = zoneOrder.reduce((max, zone) => 
+                        (player.zones[zone] || 0) > (player.zones[max] || 0) ? zone : max
+                    , zoneOrder[0]);
+                    
+                    const preferredZoneLabel = {
+                        '2m-left': 'Esquerra 2m',
+                        '2m-center': 'Centre 2m',
+                        '2m-right': 'Dreta 2m',
+                        '5m-left': 'Esquerra 5m',
+                        '5m-center': 'Centre 5m',
+                        '5m-right': 'Dreta 5m',
+                        '+6m-left': 'Esquerra +6m',
+                        '+6m-center': 'Centre +6m',
+                        '+6m-right': 'Dreta +6m'
+                    }[preferredZone];
+                    
+                    const zoneLabelsShort = {
+                        '2m-left': '⬅️E',
+                        '2m-center': '🎯',
+                        '2m-right': '➡️D',
+                        '5m-left': '⬅️E',
+                        '5m-center': '🎯',
+                        '5m-right': '➡️D',
+                        '+6m-left': '⬅️E',
+                        '+6m-center': '🎯',
+                        '+6m-right': '➡️D'
+                    };
+                    
+                    return `
+                        <div class="individual-zone-card">
+                            <div class="player-name">${player.num}. ${player.name.split(' ').slice(0, 2).join(' ')}</div>
+                            <div style="font-size: 10px; color: #bae6fd; text-align: center; margin-bottom: 8px;">
+                                ${player.totalGols} gols (${totalWithZone} amb zona)
+                            </div>
+                            <div class="field-zone-heatmap">
+                                ${zoneOrder.map((zone, index) => {
+                                    const count = player.zones[zone] || 0;
+                                    const intensity = maxPlayerCount > 0 ? count / maxPlayerCount : 0;
+                                    const bgColor = getHeatmapColor(intensity);
+                                    const extraStyle = (index === 2 || index === 5) ? 'border-bottom: 2px dashed rgba(255,255,255,0.3);' : '';
+                                    
+                                    return `
+                                        <div class="goal-zone-cell" style="background: ${bgColor}; ${extraStyle}">
+                                            <div class="zone-label">${zoneLabelsShort[zone]}</div>
+                                            <div class="zone-count">${count}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            ${totalWithZone > 0 && player.zones[preferredZone] > 0 ? `
+                                <div style="font-size: 10px; color: #fde047; text-align: center; margin-top: 8px;">
+                                    ⭐ ${preferredZoneLabel} (${player.zones[preferredZone]})
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
 /**
  * Obtenir el temps de finalització d'un quart
  */
@@ -18427,6 +18988,23 @@ function goalZoneMiniRect(zone) {
   return `
     <div class="goal-rect" style="--r:${r}; --c:${c};" aria-label="Zona porteria: ${zone||'mid-center'}" title="${zone||'mid-center'}">
       <span class="ball" role="img" aria-label="gol">⚽</span>
+    </div>
+  `;
+}
+function fieldZoneMiniRect(zone) {
+  const pos = {
+    '2m-left': [1,1],      '2m-center': [1,2],      '2m-right': [1,3],
+    '5m-left': [2,1],      '5m-center': [2,2],      '5m-right': [2,3],
+    '+6m-left': [3,1],     '+6m-center': [3,2],     '+6m-right': [3,3]
+  };
+  const [r, c] = pos[zone] || [2,2];
+  
+  return `
+    <div class="field-rect" style="--r:${r}; --c:${c};" aria-label="Zona camp: ${zone||'5m-center'}" title="${zone||'5m-center'}">
+      <div class="goal-indicator">🥅</div>
+      <div class="pool-grid">
+        <span class="player-marker" role="img" aria-label="posició">🤽‍♂️</span>
+      </div>
     </div>
   `;
 }
