@@ -6549,7 +6549,7 @@ const playersWithValue = currentMatch.jugadors.map(j => {
         golsRebuts: 0
     });
     return { ...j, valor };
-}).sort((a, b) => a.num - b.num);
+}).sort((a, b) => b.valor - a.valor);
 
 const mvp = playersWithValue[0];
 const top3 = playersWithValue.slice(0, 3);
