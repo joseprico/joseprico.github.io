@@ -5469,7 +5469,7 @@ function calculateMVP(player, playingSeconds, conceded = 0) {
 // ============================================
 // 📈 RENDERITZAR TAULA D'ESTADÍSTIQUES
 // ============================================
-let statsCurrentSort = { column: 'mvp', order: 'desc' };
+let statsCurrentSort = { column: 'numero', order: 'asc' };
 
 function updateLiveStats() {
   if (!liveMatchData) {
@@ -5607,8 +5607,7 @@ ${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
         <!-- Temps -->
         <td class="col-time" data-seconds="${p.temps}">${fmt(p.temps)}</td>
 
-        <!-- MVP (ja calculat i coherent amb consola) -->
-        <td>${Number.isFinite(p.mvp) ? p.mvp.toFixed(1) : '0.0'}</td>
+        
       </tr>
     `;
   };
@@ -5633,8 +5632,7 @@ ${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
           <th class="sortable" onclick="sortStatsTable('infraccions2m')" data-tooltip="Infraccions 2m">2m</th>
 		  <th class="sortable" onclick="sortStatsTable('faltesRebudes')" data-tooltip="Faltes rebudes">FR</th>
           <th class="sortable" onclick="sortStatsTable('temps')" data-tooltip="Temps jugat">⏱️</th>
-          <th class="sortable" onclick="sortStatsTable('mvp')" data-tooltip="Valor MVP">MVP</th>
-        </tr>
+          </tr>
       </thead>
       <tbody>
         <tr class="team-header">
@@ -5643,7 +5641,7 @@ ${hi ? ' <span class="mvpstar" title="Millor jugador">⭐</span>' : ''}
 </tr>
         ${cntPlayers.map(p => renderRow(p, bestCNTPlayer && p.numero === bestCNTPlayer.numero)).join('')}
 
-        <tr class="team-separator"><td colspan="15"></td></tr>
+        <tr class="team-separator"><td colspan="14"></td></tr>
         <tr class="team-header rival">
   <td class="team-title-sticky" colspan="2">🔴 ${match.rivalTeam || 'RIVAL'}</td>
   <td class="team-title-fill" colspan="13"></td>
@@ -5803,7 +5801,7 @@ function updateSortIndicators() {
         'contrafaltes': 10, 
         'infraccions2m': 11, 
         'playingTime': 12, 
-        'mvp': 13
+      
     };
     
     const columnIndex = columnMap[statsCurrentSort.column];
@@ -6551,7 +6549,7 @@ const playersWithValue = currentMatch.jugadors.map(j => {
         golsRebuts: 0
     });
     return { ...j, valor };
-}).sort((a, b) => b.valor - a.valor);
+}).sort((a, b) => a.num - b.num);
 
 const mvp = playersWithValue[0];
 const top3 = playersWithValue.slice(0, 3);
@@ -6859,7 +6857,7 @@ function sortSingleMatchTable(column) {
             xutsFallats: stats.xutsFallats || 0,
             penaltyMissed: stats.penaltyMissed || 0,
             eficiencia: eficiencia,
-            valor: valor.toFixed(1)
+           
         };
     });
 
@@ -6948,10 +6946,7 @@ function sortSingleMatchTable(column) {
                valA = parseFloat(a.eficiencia);
                valB = parseFloat(b.eficiencia);
                break;
-           case 'valor':
-               valA = parseFloat(a.valor);
-               valB = parseFloat(b.valor);
-               break;
+           
            default:
                return 0;
        }
@@ -6973,7 +6968,7 @@ function sortSingleMatchTable(column) {
         <th colspan="6" style="background: rgba(34, 197, 94, 0.2); text-align: center;" title="Accions Positives">✅ POSITIVES</th>
         <th colspan="5" style="background: rgba(239, 68, 68, 0.2); text-align: center;" title="Accions Negatives">❌ NEGATIVES</th>
 		<th rowspan="2" onclick="sortSingleMatchTable('eficiencia')" style="cursor: pointer; vertical-align: middle;">Efic%${getSortIndicator('eficiencia')}</th>
-             <th rowspan="2" onclick="sortSingleMatchTable('valor')" style="cursor: pointer; vertical-align: middle;">⭐ Valor${getSortIndicator('valor')}</th>
+        
     </tr>
     <tr style="font-size: 11px;">
         <!-- Tipus de Gols (5 columnes) -->
@@ -7032,7 +7027,7 @@ function sortSingleMatchTable(column) {
                         <td>${p.penaltyMissed}</td>
                         <!-- Efic i Valor -->
                         <td>${p.eficiencia}%</td>
-                        <td><strong>${p.valor}</strong></td>
+                      
                     </tr>
                 `;
             }).join('')}
@@ -7601,11 +7596,11 @@ function displayComparison() {
         xutsFallats: p.xutsFallats
     });
     return { ...p, valor };
-}).sort((a, b) => b.valor - a.valor);
+}).sort((a, b) => a.num - b.num);
 
     cachedPlayersData = players;
-    currentSortColumn = 'valor';
-    currentSortOrder = 'desc';
+    currentSortColumn = 'num';
+    currentSortOrder = 'asc';
 
     renderComparisonTable(players);
 
@@ -7662,10 +7657,10 @@ function displayComparison() {
     mvpContainer.innerHTML = `
         <h2 class="section-title">🏆 Ràn­­quing MVP de la Temporada</h2>
         <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
-            Top 10 jugadors amb millor valoració total acumulada
+            Top 5 jugadors amb millor valoració total acumulada
         </p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-            ${playersWithAvgValue.slice(0, 10).map((player, index) => {
+            ${playersWithAvgValue.slice(0, 5).map((player, index) => {
                 const medals = ['🥇', '🥈', '🥉'];
                 const colors = ['#fbbf24', '#d1d5db', '#d97706'];
                 const borderColors = ['#f59e0b', '#9ca3af', '#ea580c'];
@@ -12557,11 +12552,11 @@ function renderGoalkeeperSavesChart(singleMatch = null) {
     });
 }
 // ✅ NUEVO: Variables globals per ordenació
-let currentSortColumn = 'gols';
-let currentSortOrder = 'desc';
+let currentSortColumn = 'num';
+let currentSortOrder = 'asc';
 let cachedPlayersData = [];
-let singleMatchSortColumn = 'valor';
-let singleMatchSortOrder = 'desc';
+let singleMatchSortColumn = 'num';
+let singleMatchSortOrder = 'asc';
 
 function sortTable(column, tableId = 'comparisonTable') {
     if (currentSortColumn === column) {
@@ -12692,7 +12687,6 @@ function renderComparisonTable(players, clickable = false, tableId = 'comparison
         <th colspan="6" style="background: rgba(239, 68, 68, 0.2); text-align: center;" title="Accions Negatives">❌ NEGATIVES</th>
         <th rowspan="2" onclick="sortTable('eficienciaTir', '${tableId}')" style="cursor: pointer; vertical-align: middle;">🎯 Efic.${getSortIndicator('eficienciaTir')}</th>
         <th rowspan="2" onclick="sortTable('mediaGols', '${tableId}')" style="cursor: pointer; vertical-align: middle;">Media G/P${getSortIndicator('mediaGols')}</th>
-        <th rowspan="2" onclick="sortTable('valor', '${tableId}')" style="cursor: pointer; vertical-align: middle;">⭐ Valor${getSortIndicator('valor')}</th>
     </tr>
     <tr style="font-size: 11px;">
         <!-- Tipus de Gols (5 columnes) -->
@@ -12777,7 +12771,7 @@ function renderComparisonTable(players, clickable = false, tableId = 'comparison
     <td style="color: ${(p.penaltyMissed || 0) > 0 ? '#ef4444' : '#22c55e'}; font-weight: bold;">${p.penaltyMissed || 0}</td>
     <td style="color: ${eficColor}; font-weight: bold;">${efic.toFixed(1)}%</td>
     <td>${mediaGols.toFixed(1)}</td>
-    <td style="color: ${valorColor}; font-weight: bold;">${valor.toFixed(1)}</td>
+    
 </tr>
                 `;
             }).join('')}
@@ -14872,7 +14866,7 @@ function calculatePlayerFullStats(player) {
                 golsRebuts: j.estadistiques.golsRebuts || 0
             });
             return { numero: j.numero, nom: j.nom.trim(), valor };
-        }).sort((a, b) => b.valor - a.valor);
+        }).sort((a, b) => a.num - b.num);
         
         const mvp = playersWithValue[0];
         
