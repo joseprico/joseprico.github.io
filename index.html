@@ -4550,57 +4550,66 @@ function listenForLiveMatch(team = 'juvenil') {
   try {
     showNoLiveBanner();
 
-    // ✅ NOVA ESTRUCTURA: Buscar a matches/cadet_25_26 i matches/juvenil_25_26
-    const teamPaths = {
-      cadet: 'matches/cadet_25_26',
-      juvenil: 'matches/juvenil_25_26'
-    };
-    
-    const otherTeam = team === 'cadet' ? 'juvenil' : 'cadet';
-    
-    // Escoltar l'equip actual
-    const currentTeamRef = window.firebaseRef(window.firebaseDB, teamPaths[team]);
-    const otherTeamRef = window.firebaseRef(window.firebaseDB, teamPaths[otherTeam]);
-    
-    // Listener per l'equip actual
-    const listener1 = window.firebaseOnValue(currentTeamRef, (snapshot) => {
+    const matchesRef = window.firebaseRef(window.firebaseDB, 'matches');
+    const listener = window.firebaseOnValue(matchesRef, (snapshot) => {
       if (!snapshot.exists()) {
-        console.log('📊 No hi ha dades per', team);
+        console.log('📊 No hi ha dades a Firebase');
         showNoLiveBanner();
-        liveMatchActive = false;
-        liveMatchData = null;
+        hideOtherTeamBanner();
         return;
       }
 
       const all = snapshot.val();
       
-      // Buscar el partit més recent
-      let latestMatch = null;
-      let latestTs = -1;
+      let currentTeamMatch = null;
+      let otherTeamMatch = null;
+      let currentTeamLatestTs = -1;
+      let otherTeamLatestTs = -1;
       
+      const otherTeam = team === 'cadet' ? 'juvenil' : 'cadet';
+
       for (const id of Object.keys(all)) {
-        const m = all[id];
-        const lu = toMs(m.lastUpdate || m.updatedAt || m.last_update);
+        // Saltar les carpetes de migració
+        if (id === 'cadet_25_26' || id === 'juvenil_25_26') continue;
         
-        if (lu && lu > latestTs) {
-          latestTs = lu;
-          latestMatch = { ...m, id };
+        const m = all[id];
+        if (!m || typeof m !== 'object' || !m.lastUpdate) continue;
+        
+        const lu = m.lastUpdate;
+        
+        // Partit de l'equip actual
+        if (id.includes(`cnt_${team}_`)) {
+          if (lu > currentTeamLatestTs) {
+            currentTeamLatestTs = lu;
+            currentTeamMatch = { ...m, id };
+          }
+        }
+        
+        // Partit de l'altre equip
+        if (id.includes(`cnt_${otherTeam}_`)) {
+          if (lu > otherTeamLatestTs) {
+            otherTeamLatestTs = lu;
+            otherTeamMatch = { ...m, id };
+          }
         }
       }
 
       const now = Date.now();
 
-      if (latestMatch) {
-        const minutesSinceUpdate = latestTs > 0 ? (now - latestTs)/60000 : Infinity;
+      // Gestionar partit de l'equip actual
+      if (currentTeamMatch) {
+        const minutesSinceUpdate = currentTeamLatestTs > 0 ? (now - currentTeamLatestTs)/60000 : Infinity;
         const isWithin60 = minutesSinceUpdate < 60;
 
+        console.log('🏊 Partit trobat:', currentTeamMatch.id, '| Fa', Math.round(minutesSinceUpdate), 'minuts');
+
         if (isWithin60) {
-          showLiveBanner(latestMatch, minutesSinceUpdate);
+          showLiveBanner(currentTeamMatch, minutesSinceUpdate);
           liveMatchActive = true;
-          liveMatchData = latestMatch;
+          liveMatchData = currentTeamMatch;
 
           try { ensurePeriodEndActions && ensurePeriodEndActions(liveMatchData); } catch(e){}
-          try { updateWithLiveData(latestMatch); } catch(e){ console.error(e); }
+          try { updateWithLiveData(currentTeamMatch); } catch(e){ console.error(e); }
         } else {
           showNoLiveBanner();
           liveMatchActive = false;
@@ -4612,41 +4621,13 @@ function listenForLiveMatch(team = 'juvenil') {
         liveMatchData = null;
       }
 
-    }, (err) => {
-      console.error('❌ Error escoltant Firebase:', err);
-      showNoLiveBanner();
-    });
-
-    // Listener per l'altre equip
-    const listener2 = window.firebaseOnValue(otherTeamRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        hideOtherTeamBanner();
-        return;
-      }
-
-      const all = snapshot.val();
-      
-      let latestMatch = null;
-      let latestTs = -1;
-      
-      for (const id of Object.keys(all)) {
-        const m = all[id];
-        const lu = toMs(m.lastUpdate || m.updatedAt || m.last_update);
-        
-        if (lu && lu > latestTs) {
-          latestTs = lu;
-          latestMatch = { ...m, id };
-        }
-      }
-
-      const now = Date.now();
-
-      if (latestMatch) {
-        const minutesSinceUpdate = latestTs > 0 ? (now - latestTs)/60000 : Infinity;
+      // Gestionar partit de l'altre equip
+      if (otherTeamMatch) {
+        const minutesSinceUpdate = otherTeamLatestTs > 0 ? (now - otherTeamLatestTs)/60000 : Infinity;
         const isWithin60 = minutesSinceUpdate < 60;
 
         if (isWithin60) {
-          const period = getPeriodStatus(latestMatch);
+          const period = getPeriodStatus(otherTeamMatch);
           showOtherTeamBanner(otherTeam, period.finished);
         } else {
           hideOtherTeamBanner();
@@ -4656,12 +4637,12 @@ function listenForLiveMatch(team = 'juvenil') {
       }
 
     }, (err) => {
-      console.error('❌ Error escoltant altre equip:', err);
+      console.error('❌ Error escoltant Firebase:', err);
+      showNoLiveBanner();
       hideOtherTeamBanner();
     });
 
-    (window.firebaseListeners ||= []).push(listener1, listener2);
-    
+    (window.firebaseListeners ||= []).push(listener);
   } catch (e) {
     console.error('❌ Error iniciant listener Firebase:', e);
     showNoLiveBanner();
@@ -19128,7 +19109,17 @@ function goalZoneMini(zone) {
   `;
 }
 
-
+// Iniciar listener automàticament
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (window.firebaseReady) {
+            let team = localStorage.getItem('selectedTeam') || 'juvenil';
+            team = team.replace('_25_26', '');
+            console.log('🔥 Iniciant listener automàtic per:', team);
+            listenForLiveMatch(team);
+        }
+    }, 1500);
+});
 
 </script>
 
@@ -19238,13 +19229,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-  /*  document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });*/
+    });
     </script>
 </body>
 </html>
