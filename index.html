@@ -3669,7 +3669,12 @@ body.live-mode {
             <h2 class="section-title">🎯 Mapa de Calor - Zones de Gol</h2>
             <div id="playerGoalZonesHeatmap"></div>
         </div>
-
+	<!-- 3b. Mapa de Zones de la Piscina (des d'on tira) -->
+<div class="card">
+    <h2 class="section-title">🏊 Mapa de Calor - Zones de Tir</h2>
+    <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">Des d'on marca els gols a la piscina</p>
+    <div id="playerFieldZonesHeatmap"></div>
+</div>
         <!-- 4. Comparativa amb la Mitjana de l'Equip -->
         <div class="card">
             <h2 class="section-title">⚖️ Comparativa: Jugador vs Mitjana Equip</h2>
@@ -14317,7 +14322,12 @@ function showIndividualPlayerDetails(player) {
             <h2 class="section-title">🎯 Zones de Gol</h2>
             <div id="playerGoalZonesHeatmap"></div>
         </div>
-        
+        <!-- AFEGEIX AIXÒ AQUÍ -->
+<div class="card">
+    <h2 class="section-title">🏊 Zones de Tir (Piscina)</h2>
+    <p style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">Des d'on marca els gols</p>
+    <div id="playerFieldZonesHeatmap"></div>
+</div>
         <div class="card">
             <h2 class="section-title">⚖️ Rendiment vs Equip</h2>
             <canvas id="playerVsTeamChart" style="max-height: 300px;"></canvas>
@@ -14785,6 +14795,7 @@ console.log('✅ Codi d\'evolució temporal del jugador carregat correctament');
         renderPlayerSummary(playerData);
         renderPlayerEvolutionChartImproved(playerData, 'mvp');
         renderPlayerGoalZones(playerData);
+		renderPlayerFieldZones(playerData);
         renderPlayerVsTeamChart(playerData);
         renderHomeAwayChart(playerData);
         renderQuarterPerformanceChart(playerData);
@@ -14861,6 +14872,7 @@ function calculatePlayerFullStats(player) {
         matchDetails: [],
         goalsByType: {},
         goalsByZone: {},
+		goalsByFieldZone: {},
         goalsByQuarter: { q1: 0, q2: 0, q3: 0, q4: 0 },
         minutesByQuarter: { q1: 0, q2: 0, q3: 0, q4: 0 },
         homeStats: { matches: 0, goals: 0, minutes: 0 },
@@ -14946,7 +14958,12 @@ function calculatePlayerFullStats(player) {
                 data.goalsByZone[zone] = (data.goalsByZone[zone] || 0) + (stats.goalZones[zone] || 0);
             });
         }
-        
+        // Field zones (des d'on tira)
+if (stats.fieldZones) {
+    Object.keys(stats.fieldZones).forEach(zone => {
+        data.goalsByFieldZone[zone] = (data.goalsByFieldZone[zone] || 0) + (stats.fieldZones[zone] || 0);
+    });
+}
         // Goals by quarter
         if (match.chronologicalActions) {
             match.chronologicalActions
@@ -15225,7 +15242,70 @@ function renderPlayerGoalZones(data) {
     html += '</div>';
     container.innerHTML = html;
 }
-
+// Mapa de zones de tir (piscina)
+function renderPlayerFieldZones(data) {
+    console.log('🏊 renderPlayerFieldZones cridat');
+    console.log('📊 goalsByFieldZone:', data.goalsByFieldZone);
+    
+    const container = document.getElementById('playerFieldZonesHeatmap');
+    console.log('📦 Container:', container);
+    
+    if (!container) {
+        console.error('❌ No es troba el container playerFieldZonesHeatmap');
+        return;
+    }
+    
+    // Si no hi ha dades
+    if (!data.goalsByFieldZone || Object.keys(data.goalsByFieldZone).length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #9ca3af;">No hi ha dades de zones de tir</p>';
+        return;
+    }
+    
+    const zones = [
+        ['2m-left', '2m-center', '2m-right'],
+        ['5m-left', '5m-center', '5m-right'],
+        ['+6m-left', '+6m-center', '+6m-right']
+    ];
+    
+    const zoneLabels = {
+        '2m-left': '2m Esq.',
+        '2m-center': '2m Centre',
+        '2m-right': '2m Dret',
+        '5m-left': '5m Esq.',
+        '5m-center': '5m Centre',
+        '5m-right': '5m Dret',
+        '+6m-left': '+6m Esq.',
+        '+6m-center': '+6m Centre',
+        '+6m-right': '+6m Dret'
+    };
+    
+    const maxGoals = Math.max(...Object.values(data.goalsByFieldZone), 1);
+    
+    let html = `
+        <div style="text-align: center; margin-bottom: 10px; font-size: 12px; color: #67e8f9;">🥅 PORTERIA 🥅</div>
+        <div class="zone-heatmap-container">
+    `;
+    
+    zones.forEach(row => {
+        row.forEach(zone => {
+            const count = data.goalsByFieldZone[zone] || 0;
+            const intensity = count / maxGoals;
+            const bgColor = `rgba(59, 130, 246, ${intensity})`; // Blau per diferenciar
+            
+            html += `
+                <div class="zone-cell" style="background: ${bgColor};">
+                    <div class="zone-label">${zoneLabels[zone] || zone}</div>
+                    <div class="zone-count">${count}</div>
+                </div>
+            `;
+        });
+    });
+    
+    html += '</div>';
+    html += '<div style="text-align: center; margin-top: 10px; font-size: 12px; color: #67e8f9;">🏊 PISCINA 🏊</div>';
+    
+    container.innerHTML = html;
+}
 // Comparativa jugador vs mitjana equip
 function renderPlayerVsTeamChart(data) {
     const ctx = document.getElementById('playerVsTeamChart');
@@ -19158,13 +19238,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });
+    });*/
     </script>
 </body>
 </html>
