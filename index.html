@@ -9703,7 +9703,7 @@ const fieldZoneNames = {
                     icon = '🧤';
                     cssClass = 'goal';
                     detailText = action.saveType === 'atrapa' ? 'Aturada - Atrapa' : 'Aturada - Desvia';
-                } else if (action.type === 'goal') {
+    } else if (action.type === 'goal') {
     icon = '🥅🎯';
     cssClass = 'goal';
     detailText = `Gol ${goalTypeLabels[action.goalType]}`;
@@ -9720,6 +9720,22 @@ const fieldZoneNames = {
     if (zoneInfo.length > 0) {
         detailText += ` <span style="font-size: 11px; opacity: 0.8;">(${zoneInfo.join(' · ')})</span>`;
     }
+    
+    // ✅ CALCULAR MARCADOR FINS AQUEST MOMENT
+    const actionIndex = sortedActions.indexOf(action);
+    const actionsUntilNow = sortedActions.slice(0, actionIndex + 1);
+    let scoreCNT = 0;
+    let scoreRival = 0;
+    actionsUntilNow.forEach(a => {
+        if (a.type === 'goal') {
+            if (a.team === 'rival') {
+                scoreRival++;
+            } else {
+                scoreCNT++;
+            }
+        }
+    });
+    detailText += ` <span style="color: #fde047; font-weight: bold; margin-left: 8px;">${scoreCNT}-${scoreRival}</span>`;
 } else if (action.type === 'exclusion') {
                     if (action.exclusionType === 'penalty') {
                         icon = '🔴🏐';
