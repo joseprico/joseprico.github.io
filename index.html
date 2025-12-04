@@ -17830,14 +17830,30 @@ async function loadNextMatchPill() {
     return;
 }
 
-// ✅ ORDENAR PER DATA per agafar el més proper
-const sortedMatches = [...actawpData.upcoming_matches].sort((a, b) => {
-    const parseDate = (str) => {
-        if (!str) return new Date(9999, 0, 1);
-        const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-        if (!m) return new Date(9999, 0, 1);
-        return new Date(m[3], m[2] - 1, m[1], m[4], m[5]);
-    };
+// ✅ FUNCIÓ PER PARSEJAR DATES
+const parseDate = (str) => {
+    if (!str) return new Date(9999, 0, 1);
+    const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!m) return new Date(9999, 0, 1);
+    return new Date(m[3], m[2] - 1, m[1], m[4], m[5]);
+};
+
+const now = new Date();
+
+// ✅ FILTRAR partits que ja han passat (marge 3h per si està en joc)
+const futureMatches = actawpData.upcoming_matches.filter(m => {
+    const matchDate = parseDate(m.date_time);
+    const matchEndEstimate = new Date(matchDate.getTime() + 3 * 60 * 60 * 1000);
+    return matchEndEstimate > now;
+});
+
+if (futureMatches.length === 0) {
+    container.innerHTML = '<div style="color: #fbbf24;">⏳ Esperant nous partits de la federació</div>';
+    return;
+}
+
+// ✅ ORDENAR per data (més proper primer)
+const sortedMatches = futureMatches.sort((a, b) => {
     return parseDate(a.date_time) - parseDate(b.date_time);
 });
 
