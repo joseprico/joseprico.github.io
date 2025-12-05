@@ -3559,7 +3559,14 @@ body.live-mode {
         </p>
         <div id="globalTimePoolContainer"></div>
     </div>
-    <!-- 1. Tiempo Total por Jugador -->
+	  <!-- 1. Heatmap de Tiempo por Cuarto -->
+    <div class="card">
+        <h2 class="section-title">🔥 Heatmap: Tiempo por Cuarto</h2>
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table class="comparison-table" id="timeHeatmapTable"></table>
+        </div>
+    </div>
+    <!-- 2. Tiempo Total por Jugador -->
     <div class="card">
         <h2 class="section-title">📊 Tiempo Total Jugado por Jugador</h2>
         <p id="timeChartSubtitle" style="font-size: 12px; color: #bae6fd; margin-bottom: 15px;">
@@ -3568,13 +3575,7 @@ body.live-mode {
         <canvas id="totalTimeChart" style="max-height: 400px;"></canvas>
     </div>
 
-    <!-- 2. Heatmap de Tiempo por Cuarto -->
-    <div class="card">
-        <h2 class="section-title">🔥 Heatmap: Tiempo por Cuarto</h2>
-        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <table class="comparison-table" id="timeHeatmapTable"></table>
-        </div>
-    </div>
+  
 
   
     <!-- 4. Distribución de Minutos (Pastel) -->
@@ -11180,12 +11181,12 @@ function renderTimeHeatmapTable() {
                     q1: 0, q2: 0, q3: 0, q4: 0, total: 0
                 };
             }
-            
+             playerTimes[playerName].total += playerTime.totalTime;
             playerTimes[playerName].q1 += playerTime.q1;
             playerTimes[playerName].q2 += playerTime.q2;
             playerTimes[playerName].q3 += playerTime.q3;
             playerTimes[playerName].q4 += playerTime.q4;
-            playerTimes[playerName].total += playerTime.totalTime;
+           
         });
     });
     
@@ -11221,11 +11222,12 @@ function renderTimeHeatmapTable() {
             <tr>
                 <th>Nº</th>
                 <th>Jugador</th>
-                <th>1Q</th>
+                  <th>TOTAL</th>
+				<th>1Q</th>
                 <th>2Q</th>
                 <th>3Q</th>
                 <th>4Q</th>
-                <th>TOTAL</th>
+              
             </tr>
         </thead>
         <tbody>
@@ -11233,29 +11235,24 @@ function renderTimeHeatmapTable() {
                 <tr>
                     <td><div class="player-num" style="width: 30px; height: 30px; font-size: 12px;">${p.num}</div></td>
                     <td><strong>${p.name}</strong></td>
-                    <td style="${getHeatColor(p.q1, maxTime / 4)}">${formatTime(p.q1)}</td>
+					<td style="background: rgba(34, 211, 238, 0.3);"><strong>${formatTime(p.total)}</strong></td>                   
+				   <td style="${getHeatColor(p.q1, maxTime / 4)}">${formatTime(p.q1)}</td>
                     <td style="${getHeatColor(p.q2, maxTime / 4)}">${formatTime(p.q2)}</td>
                     <td style="${getHeatColor(p.q3, maxTime / 4)}">${formatTime(p.q3)}</td>
                     <td style="${getHeatColor(p.q4, maxTime / 4)}">${formatTime(p.q4)}</td>
-                    <td style="background: rgba(34, 211, 238, 0.3);"><strong>${formatTime(p.total)}</strong></td>
+                   
                 </tr>
             `).join('')}
             <tr style="background: rgba(34, 211, 238, 0.2); font-weight: bold; border-top: 2px solid #22d3ee;">
                 <td colspan="2">TOTAL PER QUART</td>
-                <td>${formatTime(quarterTotals.q1)}</td>
+				<td>${formatTime(quarterTotals.total)}</td>               
+			   <td>${formatTime(quarterTotals.q1)}</td>
                 <td>${formatTime(quarterTotals.q2)}</td>
                 <td>${formatTime(quarterTotals.q3)}</td>
                 <td>${formatTime(quarterTotals.q4)}</td>
-                <td>${formatTime(quarterTotals.total)}</td>
+               
             </tr>
-            <tr style="background: rgba(251, 191, 36, 0.2); font-weight: bold;">
-                <td colspan="2">ESPERAT (7 jug × 8 min)</td>
-                <td>56:00</td>
-                <td>56:00</td>
-                <td>56:00</td>
-                <td>56:00</td>
-                <td>224:00</td>
-            </tr>
+          
         </tbody>
     `;
 }
