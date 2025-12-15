@@ -4294,6 +4294,7 @@ body.live-mode {
 
         <div class="card">
     <h2 class="section-title">📊 Comparación de Estadísticas</h2>
+	<h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 14px;">Fes click a qualsevol variable per ordenar la taula per aquesta</h3>
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
         <table class="comparison-table" id="comparisonTable"></table>
     </div>
@@ -6668,10 +6669,14 @@ document.getElementById('matchInfo').insertAdjacentHTML('afterend', `
     // ✅ AFEGIR AQUÍ les zones de gols rebuts pels porters
     
     // Zones de Porteria dels Porters (només per aquest partit)
-    const matchGoalkeeperZones = {
-        1: { num: 1, name: 'MAX VALLS', totalGolsRebuts: 0, zones: {} },
-        13: { num: 13, name: 'ERIC MORA', totalGolsRebuts: 0, zones: {} }
-    };
+// ✅ Obtenir noms reals dels porters del partit actual
+const gk1 = currentMatch.jugadors.find(j => j.numero === 1);
+const gk13 = currentMatch.jugadors.find(j => j.numero === 13);
+
+const matchGoalkeeperZones = {
+    1: { num: 1, name: gk1 ? gk1.nom : 'Porter 1', totalGolsRebuts: 0, zones: {} },
+    13: { num: 13, name: gk13 ? gk13.nom : 'Porter 13', totalGolsRebuts: 0, zones: {} }
+};
     
     // Inicialitzar zones
     [1, 13].forEach(gkNum => {
@@ -14395,7 +14400,7 @@ function renderPlayerEvolutionChartImproved(data, metric = 'all') {
     }
     
     // Preparar labels (dates)
-    const labels = data.evolution.map(match => match.date);
+    const labels = data.evolution.map(match => [match.date, match.rival]);
     const rivals = data.evolution.map(match => match.rival);
     
     // Detectar si és porter
@@ -14549,13 +14554,14 @@ function renderPlayerEvolutionChartImproved(data, metric = 'all') {
                 }
             },
             scales: {
-                x: { 
-                    ticks: { 
-                        color: 'white',
-                        font: { size: 10 },
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
+            x: { 
+    ticks: { 
+        color: 'white',
+        font: { size: 9 },      // AFEGIR
+        maxRotation: 0,          // CANVIAR de 45 a 0
+        minRotation: 0,          // CANVIAR de 45 a 0
+        autoSkip: false          // AFEGIR
+    },
                     grid: { 
                         color: 'rgba(255,255,255,0.1)',
                         drawOnChartArea: true
@@ -15009,6 +15015,7 @@ if (stats.fieldZones) {
         });
         
         data.evolution.push({
+		dateRaw: match.data || '',
             date: match.data ? match.data.split('-').reverse().join('/') : (match.rival || `Partit ${data.totalMatches}`),
             rival: match.rivalTeam || match.rival || 'Desconegut',
             goals: stats.gols || 0,
@@ -15052,10 +15059,10 @@ if (stats.fieldZones) {
     
     // Ordenar evolució per data
     data.evolution.sort((a, b) => {
-        const dateA = parseSpanishDate(a.date);
-        const dateB = parseSpanishDate(b.date);
-        return dateA - dateB;
-    });
+    const dateA = parseSpanishDate(a.dateRaw);  // CANVIAR date → dateRaw
+    const dateB = parseSpanishDate(b.dateRaw);  // CANVIAR date → dateRaw
+    return dateA - dateB;
+});
     console.log('🔍 DEBUG: Dades evolution', data.evolution);
     return data;
 }
