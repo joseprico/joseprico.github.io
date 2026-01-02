@@ -1,11 +1,12 @@
 """
-Parser ACTAWP v5.6 - AMB LOGOS, JORNADES I CORRECCIONS
+Parser ACTAWP v5.7 - AMB FORMA DELS RIVALS
 Estructura correcta segons captures:
 - Pròxims: [Equip1] [Data/Hora/Lloc] [Equip2]
 - Resultats: [Equip1] [MARCADOR] [Equip2]
 - NOVITAT: Extreu logos dels equips en tots els partits i classificació
 - NOVITAT v5.5: Afegeix número de jornada basat en l'ordre d'aparició
 - NOVITAT v5.6: Sistema de correccions manuals per jornades ajornades
+- NOVITAT v5.7: Obté els últims resultats de cada equip de la classificació
 """
 
 import requests
@@ -224,280 +225,202 @@ class ActawpParserV53:
                     try:
                         if value.isdigit():
                             value = int(value)
-                        elif value.replace(',', '').replace('.', '').isdigit():
-                            value = float(value.replace(',', '.'))
                     except:
                         pass
-                    
                     player_data[normalized_field] = value
             
-            if player_data and 'Nombre' in player_data:
+            if player_data:
                 players.append(player_data)
         
         return players
     
     def parse_upcoming_matches(self, html_content):
-        """
-        Parser per PRÒXIMS PARTITS
-        Estructura: [Equip1] [Data/Hora/Lloc] [Equip2]
-        ✅ INCLOU NÚMERO DE JORNADA AMB CORRECCIONS MANUALS
-        """
+        """Parser de pròxims partits amb jornada"""
         soup = BeautifulSoup(html_content, 'html.parser')
         matches = []
-        match_number = 1  # Comptador de jornada automàtic
         
-        table = soup.find('table')
-        if not table:
-            return matches
-        
-        tbody = table.find('tbody')
-        if not tbody:
-            return matches
-        
-        rows = tbody.find_all('tr')
+        rows = soup.find_all('tr')
+        jornada_counter = 1
         
         for row in rows:
             try:
                 cols = row.find_all('td')
-                
                 if len(cols) < 3:
                     continue
                 
-                match_info = {}
+                # Buscar logos
+                team1_logo = ''
+                team2_logo = ''
                 
-                # Columna 0: Equip 1 (local)
-                team1_cell = cols[0]
-                team1_span = team1_cell.find('span', class_='ellipsis')
-                if team1_span:
-                    match_info['team1'] = team1_span.get_text(strip=True)
-                else:
-                    team1_text = team1_cell.get_text(strip=True)
-                    team1_text = re.sub(r'^\d+\s*', '', team1_text)
-                    match_info['team1'] = team1_text
+                img1 = cols[0].find('img')
+                if img1 and img1.get('src'):
+                    team1_logo = img1['src']
                 
-                # Logo equip 1
-                team1_logo = cols[0].find('img')
-                if team1_logo and team1_logo.get('src'):
-                    logo_src = team1_logo['src']
-                    match_info['team1_logo'] = logo_src if logo_src.startswith('http') else 'https://actawp.natacio.cat' + logo_src
-                else:
-                    match_info['team1_logo'] = None
+                img2 = cols[-1].find('img')
+                if img2 and img2.get('src'):
+                    team2_logo = img2['src']
                 
-                # Enllaç
-                link = cols[0].find('a', href=True)
-                if link:
-                    href = link['href']
-                    match_info['url'] = href if href.startswith('http') else 'https://actawp.natacio.cat' + href
-                    match_id_search = re.search(r'/match/(\d+)', href)
-                    if match_id_search:
-                        match_info['match_id'] = match_id_search.group(1)
+                team1 = cols[0].get_text(strip=True)
+                team2 = cols[-1].get_text(strip=True)
                 
-                # Columna 1: Data/Hora/Lloc
-                date_col = cols[1]
-                date_text = date_col.get_text(strip=True)
+                # Info central
+                middle_text = ''
+                for col in cols[1:-1]:
+                    middle_text += col.get_text(separator=' ', strip=True) + ' '
+                middle_text = middle_text.strip()
                 
-                date_match = re.search(r'(\w+,?\s+\d{1,2}/\d{1,2}/\d{4})\s+(\d{1,2}:\d{2})', date_text)
-                if date_match:
-                    match_info['date'] = date_match.group(1).replace(',', '').strip()
-                    match_info['time'] = date_match.group(2)
-                    match_info['date_time'] = f"{match_info['date']} {match_info['time']}"
+                # Extreure data/hora
+                date_match = re.search(r'(\d{2}/\d{2}/\d{4})\s+(\d{2}:\d{2})', middle_text)
                 
-                venue_match = re.search(r'(\d{1,2}:\d{2})\s*-\s*([^$]+)', date_text)
-                if venue_match:
-                    match_info['venue'] = venue_match.group(2).strip()
-                
-                # Columna 2: Equip 2 (visitant)
-                team2_cell = cols[2]
-                team2_span = team2_cell.find('span', class_='ellipsis')
-                if team2_span:
-                    match_info['team2'] = team2_span.get_text(strip=True)
-                else:
-                    team2_text = team2_cell.get_text(strip=True)
-                    team2_text = re.sub(r'^\d+\s*', '', team2_text)
-                    match_info['team2'] = team2_text
-                
-                # Logo equip 2
-                team2_logo = cols[2].find('img')
-                if team2_logo and team2_logo.get('src'):
-                    logo_src = team2_logo['src']
-                    match_info['team2_logo'] = logo_src if logo_src.startswith('http') else 'https://actawp.natacio.cat' + logo_src
-                else:
-                    match_info['team2_logo'] = None
-                
-                # ✅ AFEGIR PARTIT AMB NÚMERO DE JORNADA (amb correccions manuals)
-                if match_info.get('match_id'):
-                    match_id = match_info['match_id']
+                if team1 and team2:
+                    match_data = {
+                        'team1': team1,
+                        'team2': team2,
+                        'team1_logo': team1_logo,
+                        'team2_logo': team2_logo,
+                        'date_time': middle_text,
+                        'jornada': jornada_counter
+                    }
                     
-                    # Comprovar si hi ha correcció manual
-                    team_key = getattr(self, 'current_team_key', None)
-                    jornada_assigned = match_number
+                    if date_match:
+                        match_data['date'] = date_match.group(1)
+                        match_data['time'] = date_match.group(2)
                     
-                    if team_key and team_key in self.jornada_corrections:
-                        if match_id in self.jornada_corrections[team_key]:
-                            jornada_assigned = self.jornada_corrections[team_key][match_id]['jornada_real']
-                            nota = self.jornada_corrections[team_key][match_id].get('nota', '')
-                            print(f"  🔧 Correcció: Match {match_id} → Jornada {jornada_assigned} ({nota})")
+                    matches.append(match_data)
+                    jornada_counter += 1
                     
-                    match_info['jornada'] = jornada_assigned
-                    matches.append(match_info)
-                    match_number += 1
-                
             except Exception as e:
-                print(f"  ⚠️ Error processant pròxim partit: {e}")
                 continue
         
         return matches
     
     def parse_last_results(self, html_content):
-        """
-        Parser per ÚLTIMS RESULTATS
-        Estructura: [Equip1] [MARCADOR] [Equip2]
-        ✅ INCLOU NÚMERO DE JORNADA AMB CORRECCIONS MANUALS
-        """
+        """Parser d'últims resultats amb jornada"""
         soup = BeautifulSoup(html_content, 'html.parser')
-        matches = []
-        match_number = 1
+        results = []
         
-        table = soup.find('table')
-        if not table:
-            return matches
-        
-        tbody = table.find('tbody')
-        if not tbody:
-            return matches
-        
-        rows = tbody.find_all('tr')
+        rows = soup.find_all('tr')
+        jornada_counter = 1
         
         for row in rows:
             try:
                 cols = row.find_all('td')
-                
                 if len(cols) < 3:
                     continue
                 
-                match_info = {}
+                # Buscar logos
+                team1_logo = ''
+                team2_logo = ''
                 
-                team1_span = cols[0].find('span', class_='ellipsis')
-                if team1_span:
-                    match_info['team1'] = team1_span.get_text(strip=True)
+                img1 = cols[0].find('img')
+                if img1 and img1.get('src'):
+                    team1_logo = img1['src']
                 
-                team1_logo = cols[0].find('img')
-                if team1_logo and team1_logo.get('src'):
-                    logo_src = team1_logo['src']
-                    match_info['team1_logo'] = logo_src if logo_src.startswith('http') else 'https://actawp.natacio.cat' + logo_src
-                else:
-                    match_info['team1_logo'] = None
+                img2 = cols[-1].find('img')
+                if img2 and img2.get('src'):
+                    team2_logo = img2['src']
                 
-                link = cols[0].find('a', href=True)
-                if link:
-                    href = link['href']
-                    match_info['url'] = href if href.startswith('http') else 'https://actawp.natacio.cat' + href
-                    match_id_search = re.search(r'/match/(\d+)', href)
-                    if match_id_search:
-                        match_info['match_id'] = match_id_search.group(1)
+                team1 = cols[0].get_text(strip=True)
+                team2 = cols[-1].get_text(strip=True)
                 
-                score_text = cols[1].get_text(strip=True)
-                score_match = re.search(r'(\d+)\s*-\s*(\d+)', score_text)
-                if score_match:
-                    match_info['score_team1'] = int(score_match.group(1))
-                    match_info['score_team2'] = int(score_match.group(2))
-                    match_info['score'] = score_text
-                
-                team2_span = cols[2].find('span', class_='ellipsis')
-                if team2_span:
-                    match_info['team2'] = team2_span.get_text(strip=True)
-                
-                team2_logo = cols[2].find('img')
-                if team2_logo and team2_logo.get('src'):
-                    logo_src = team2_logo['src']
-                    match_info['team2_logo'] = logo_src if logo_src.startswith('http') else 'https://actawp.natacio.cat' + logo_src
-                else:
-                    match_info['team2_logo'] = None
-                
-                # ✅ AFEGIR RESULTAT AMB NÚMERO DE JORNADA (amb correccions manuals)
-                if match_info.get('match_id'):
-                    match_id = match_info['match_id']
+                # Buscar marcador
+                score = ''
+                date = ''
+                for col in cols[1:-1]:
+                    col_text = col.get_text(strip=True)
                     
-                    team_key = getattr(self, 'current_team_key', None)
-                    jornada_assigned = match_number
+                    score_match = re.search(r'(\d+)\s*[-–]\s*(\d+)', col_text)
+                    if score_match:
+                        score = f"{score_match.group(1)}-{score_match.group(2)}"
                     
-                    if team_key and team_key in self.jornada_corrections:
-                        if match_id in self.jornada_corrections[team_key]:
-                            jornada_assigned = self.jornada_corrections[team_key][match_id]['jornada_real']
-                            nota = self.jornada_corrections[team_key][match_id].get('nota', '')
-                            print(f"  🔧 Correcció: Match {match_id} → Jornada {jornada_assigned} ({nota})")
-                    
-                    match_info['jornada'] = jornada_assigned
-                    matches.append(match_info)
-                    match_number += 1
+                    date_match = re.search(r'(\d{2}/\d{2}/\d{4})', col_text)
+                    if date_match:
+                        date = date_match.group(1)
                 
+                if team1 and team2 and score:
+                    results.append({
+                        'team1': team1,
+                        'team2': team2,
+                        'team1_logo': team1_logo,
+                        'team2_logo': team2_logo,
+                        'score': score,
+                        'date': date,
+                        'jornada': jornada_counter
+                    })
+                    jornada_counter += 1
+                    
             except Exception as e:
-                print(f"  ⚠️ Error processant resultat: {e}")
                 continue
         
-        return matches
+        return results
     
     def parse_ranking(self, ranking_url):
-        """Parser per CLASSIFICACIÓ"""
+        """Parser de classificació - ara també extreu l'ID de cada equip"""
         try:
+            print(f"  📊 Obtenint classificació de: {ranking_url}")
             response = self.session.get(ranking_url)
+            
             if response.status_code != 200:
-                print(f"  ⚠️ Error HTTP {response.status_code}")
+                print(f"  ❌ Error HTTP: {response.status_code}")
                 return []
             
-            soup = BeautifulSoup(response.content, 'html.parser')
-            ranking = []
-            
-            table = soup.find('table', class_='table')
-            if not table:
-                table = soup.find('table')
+            soup = BeautifulSoup(response.text, 'html.parser')
+            table = soup.find('table')
             
             if not table:
+                print("  ❌ No s'ha trobat taula de classificació")
                 return []
             
             tbody = table.find('tbody')
             if not tbody:
+                print("  ❌ No s'ha trobat tbody")
                 return []
             
             rows = tbody.find_all('tr')
+            ranking = []
             
             for idx, row in enumerate(rows, 1):
                 try:
                     cols = row.find_all('td')
-                    
                     if len(cols) < 3:
                         continue
                     
-                    equip_col = None
+                    # Buscar columna amb nom d'equip i logo
+                    equip_text = ''
+                    logo_url = ''
                     equip_idx = -1
+                    team_id = ''
                     
                     for i, col in enumerate(cols):
+                        # Buscar link amb ID de l'equip
+                        link = col.find('a', href=True)
+                        if link and '/team/' in link.get('href', ''):
+                            href = link['href']
+                            # Extreure ID: /ca/team/15621223 -> 15621223
+                            id_match = re.search(r'/team/(\d+)', href)
+                            if id_match:
+                                team_id = id_match.group(1)
+                        
                         img = col.find('img')
-                        span = col.find('span', class_='ellipsis')
-                        if img or span:
-                            equip_col = col
+                        if img:
+                            logo_url = img.get('src', '')
+                        
+                        text = col.get_text(strip=True)
+                        if len(text) > 3 and not text.isdigit():
+                            equip_text = text
                             equip_idx = i
                             break
                     
-                    if not equip_col or equip_idx == -1:
+                    if not equip_text or equip_idx < 0:
                         continue
                     
-                    logo_url = None
-                    img = equip_col.find('img')
-                    if img and img.get('src'):
-                        logo_src = img['src']
-                        logo_url = logo_src if logo_src.startswith('http') else 'https://actawp.natacio.cat' + logo_src
-                    
-                    span = equip_col.find('span', class_='ellipsis')
-                    equip_text = span.get_text(strip=True) if span else equip_col.get_text(strip=True)
-                    # Extreure posició (primera columna abans de l'equip)
                     posicio_text = str(idx)
-                    
                     stats_start = equip_idx + 1
                     
                     team_data = {
                         'posicio': posicio_text,
                         'equip': equip_text,
+                        'team_id': team_id,
                         'logo': logo_url,
                         'punts': 0,
                         'partits': 0,
@@ -529,12 +452,80 @@ class ActawpParserV53:
         except Exception as e:
             return []
     
+    def get_rival_last_results(self, team_id, team_name, language='es'):
+        """🆕 Obté els últims resultats d'un equip rival"""
+        try:
+            results_data = self.get_tab_content(team_id, 'last-results', language)
+            if results_data and results_data.get('code') == 0:
+                results = self.parse_last_results(results_data.get('content', ''))
+                return results[:5]  # Només últims 5
+            return []
+        except Exception as e:
+            print(f"    ⚠️ Error obtenint resultats de {team_name}: {e}")
+            return []
+    
+    def get_all_rivals_form(self, ranking, language='es'):
+        """🆕 Obté la forma de tots els rivals de la classificació"""
+        rivals_form = {}
+        
+        print("\n6️⃣ FORMA DELS RIVALS:")
+        
+        for team in ranking:
+            team_name = team.get('equip', '')
+            team_id = team.get('team_id', '')
+            
+            # Saltar el nostre equip
+            if 'TERRASSA' in team_name.upper():
+                continue
+            
+            if not team_id:
+                print(f"    ⚠️ {team_name}: sense ID")
+                continue
+            
+            print(f"    📊 {team_name}...", end=' ')
+            
+            results = self.get_rival_last_results(team_id, team_name, language)
+            
+            if results:
+                # Calcular forma (V/E/D)
+                form = []
+                for r in results:
+                    score = r.get('score', '0-0')
+                    score_parts = score.split('-')
+                    if len(score_parts) == 2:
+                        try:
+                            g1, g2 = int(score_parts[0]), int(score_parts[1])
+                        except:
+                            g1, g2 = 0, 0
+                        # Determinar si l'equip és team1 o team2
+                        is_team1 = team_name.upper() in r.get('team1', '').upper()
+                        if is_team1:
+                            if g1 > g2: form.append('W')
+                            elif g1 < g2: form.append('L')
+                            else: form.append('D')
+                        else:
+                            if g2 > g1: form.append('W')
+                            elif g2 < g1: form.append('L')
+                            else: form.append('D')
+                
+                rivals_form[team_name] = {
+                    'team_id': team_id,
+                    'last_results': results,
+                    'form': form,
+                    'form_string': ''.join(form)
+                }
+                print(f"✅ {len(results)} resultats ({'-'.join(form)})")
+            else:
+                print(f"❌ sense resultats")
+        
+        return rivals_form
+    
     def generate_json(self, team_id, team_key, team_name, coach, language='es', ranking_url=None):
         """Genera JSON amb normalització automàtica"""
         self.current_team_key = team_key
         
         print(f"\n{'='*70}")
-        print(f"🔥 {team_name} - Parser v5.6 (AMB CORRECCIONS)")
+        print(f"🔥 {team_name} - Parser v5.7 (AMB FORMA RIVALS)")
         print(f"{'='*70}")
         
         result = {
@@ -545,7 +536,7 @@ class ActawpParserV53:
                 "team_name": team_name,
                 "coach": coach,
                 "downloaded_at": datetime.now().isoformat(),
-                "parser_version": "5.6_correccions"
+                "parser_version": "5.7_rivals_form"
             }
         }
         
@@ -619,8 +610,12 @@ class ActawpParserV53:
                         break
                 if cnt_position:
                     print(f"  🏆 CN Terrassa: Posició {cnt_position['posicio']} - {cnt_position['punts']} punts")
+            
+            # 🆕 Obtenir forma dels rivals
+            result['rivals_form'] = self.get_all_rivals_form(result['ranking'], language)
         else:
             result['ranking'] = []
+            result['rivals_form'] = {}
         
         from datetime import timezone, timedelta
         tz_madrid = timezone(timedelta(hours=1))
@@ -634,14 +629,15 @@ if __name__ == "__main__":
     
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║   PARSER ACTAWP v5.6 - AMB LOGOS, JORNADES I CORRECCIONS    ║
-║   ✅ Noms nets (sense Ver/Veure)                           ║
-║   ✅ Camps normalitzats (PJ, GT, G, EX...)                 ║
-║   ✅ MARCADORS correctes dels resultats                     ║
-║   ✅ DATES correctes dels pròxims partits                   ║
-║   ⭐ LOGOS dels equips en partits i classificació           ║
-║   🆕 NÚMERO DE JORNADA en cada partit                       ║
-║   🔧 CORRECCIONS MANUALS per partits ajornats               ║
+║   PARSER ACTAWP v5.7 - AMB FORMA DELS RIVALS                 ║
+║   ✅ Noms nets (sense Ver/Veure)                             ║
+║   ✅ Camps normalitzats (PJ, GT, G, EX...)                   ║
+║   ✅ MARCADORS correctes dels resultats                       ║
+║   ✅ DATES correctes dels pròxims partits                     ║
+║   ⭐ LOGOS dels equips en partits i classificació             ║
+║   🆕 NÚMERO DE JORNADA en cada partit                         ║
+║   🔧 CORRECCIONS MANUALS per partits ajornats                 ║
+║   🆕 FORMA DELS RIVALS (últims 5 resultats)                   ║
 ╚══════════════════════════════════════════════════════════════╝
 """)
     
@@ -651,14 +647,14 @@ if __name__ == "__main__":
             'name': 'CN Terrassa Juvenil',
             'coach': 'Jordi Busquets',
             'language': 'es',
-            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317471/ranking/3654570'
+            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317471/ranking/3669887'
         },
         'cadet': {
             'id': '15621224',
             'name': 'CN Terrassa Cadet',
             'coach': 'Didac Cobacho',
             'language': 'ca',
-            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317474/ranking/3654582'
+            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317474/ranking/3669890'
         }
     }
     
@@ -689,19 +685,13 @@ if __name__ == "__main__":
     print("""
 ✅ JSON GENERATS CORRECTAMENT!
 
-📝 Per afegir correccions de jornades ajornades:
-   Edita jornades_correccions.json amb el format:
-   {
-     "cadet": {
-       "143649168": {
-         "jornada_real": 2,
-         "nota": "Partit ajornat del 15/11 al 3/12"
-       }
-     }
-   }
+📊 Nova secció 'rivals_form' amb:
+   - Últims 5 resultats de cada rival
+   - Forma (W/L/D) de cada equip
+   - ID de cada equip per futures consultes
 
 📤 Puja'ls a GitHub:
-   git add actawp_*.json jornades_correccions.json
-   git commit -m "✨ Parser v5.6 amb correccions de jornades"
+   git add actawp_*.json
+   git commit -m "✨ Parser v5.7 amb forma dels rivals"
    git push
 """)
