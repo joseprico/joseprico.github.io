@@ -6033,6 +6033,7 @@ function showTab(tabName) {
     document.getElementById('tiempoTab')?.classList.add('hidden');
     document.getElementById('individualTab')?.classList.add('hidden');
     document.getElementById('federacionTab')?.classList.add('hidden');
+	document.getElementById('rivalsTab')?.classList.add('hidden');
     document.getElementById('actawpTab')?.classList.add('hidden');
     document.getElementById('liveView')?.classList.add('hidden'); // 🔴 Vista EN DIRECTE
     
@@ -19965,6 +19966,7 @@ function toggleRivalDetail(idx) {
 
 // Funció principal per mostrar l'informe
 function showPreMatchReport() {
+
     if (!actawpData || !actawpData.upcoming_matches || actawpData.upcoming_matches.length === 0) {
         alert('No hi ha pròxim partit programat');
         return;
@@ -19978,6 +19980,10 @@ function showPreMatchReport() {
     const matchDate = nextMatch.date || '';
     const matchTime = nextMatch.time || '';
     const jornada = nextMatch.jornada || '';
+	const team1Logo = nextMatch.team1_logo || '';
+const team2Logo = nextMatch.team2_logo || '';
+const cntLogo = isHome ? team1Logo : team2Logo;
+const rivalLogo = isHome ? team2Logo : team1Logo;
     
     // Buscar dades del rival
     let rivalData = null;
@@ -20102,27 +20108,31 @@ function showPreMatchReport() {
                 <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 15px;">Jornada ${jornada} · ${matchDate} · ${matchTime}h</div>
                 
                 <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
-                    <div style="text-align: center;">
-                        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 36px;">🔵</span>
-                        </div>
-                        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? 'CN TERRASSA' : rivalName}</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? cntPosition + 'º - ' + cntPoints + ' pts' : rivalPosition + 'º - ' + rivalPoints + ' pts'}</div>
-                    </div>
-                    
-                    <div style="text-align: center;">
-                        <div style="font-size: 28px; font-weight: 700; color: white;">VS</div>
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${isHome ? '🏠 Casa' : '✈️ Fora'}</div>
-                    </div>
-                    
-                    <div style="text-align: center;">
-                        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 36px;">⚪</span>
-                        </div>
-                        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? rivalName : 'CN TERRASSA'}</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? rivalPosition + 'º - ' + rivalPoints + ' pts' : cntPosition + 'º - ' + cntPoints + ' pts'}</div>
-                    </div>
-                </div>
+    <div style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px;">
+            ${isHome ? 
+                (cntLogo ? '<img src="' + cntLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '<span style="font-size: 36px;">🔵</span>') :
+                (rivalLogo ? '<img src="' + rivalLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '<span style="font-size: 36px;">⚪</span>')}
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? 'CN TERRASSA' : rivalName}</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? cntPosition + 'º - ' + cntPoints + ' pts' : rivalPosition + 'º - ' + rivalPoints + ' pts'}</div>
+    </div>
+    
+    <div style="text-align: center;">
+        <div style="font-size: 28px; font-weight: 700; color: white;">VS</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${isHome ? '🏠 Casa' : '✈️ Fora'}</div>
+    </div>
+    
+    <div style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px;">
+            ${isHome ? 
+                (rivalLogo ? '<img src="' + rivalLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '<span style="font-size: 36px;">⚪</span>') :
+                (cntLogo ? '<img src="' + cntLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '<span style="font-size: 36px;">🔵</span>')}
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? rivalName : 'CN TERRASSA'}</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? rivalPosition + 'º - ' + rivalPoints + ' pts' : cntPosition + 'º - ' + cntPoints + ' pts'}</div>
+    </div>
+</div>
             </div>
             
             <!-- Contingut -->
