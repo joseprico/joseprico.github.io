@@ -3426,6 +3426,9 @@ body.live-mode {
                 Veure tot →
             </button>
         </div>
+			<button onclick="showPreMatchReport()" class="btn" style="background: linear-gradient(135deg, #f97316, #ea580c); padding: 12px 24px; font-size: 14px; margin-bottom: 20px;">
+    📋 Generar Informe Pre-Partit
+</button>
         <div id="next-match-pill" style="text-align: center;">
             <div style="color: #bfdbfe; font-size: 12px;">Carregant...</div>
         </div>
@@ -3436,6 +3439,7 @@ body.live-mode {
         <div style="padding: 15px 15px 0 15px;">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">📊 ANÀLISI DEL RIVAL</div>
         </div>
+	
         <div id="rivals-map" style="width: 100%;"></div>
     </div>
     
@@ -19958,6 +19962,348 @@ function toggleRivalDetail(idx) {
         arrow.style.transform = 'rotate(0deg)';
     }
 }
+
+// Funció principal per mostrar l'informe
+function showPreMatchReport() {
+    if (!actawpData || !actawpData.upcoming_matches || actawpData.upcoming_matches.length === 0) {
+        alert('No hi ha pròxim partit programat');
+        return;
+    }
+    
+    const nextMatch = actawpData.upcoming_matches[0];
+    const homeTeam = nextMatch.team1 || '';
+    const awayTeam = nextMatch.team2 || '';
+    const isHome = homeTeam.toUpperCase().includes('TERRASSA');
+    const rivalName = isHome ? awayTeam : homeTeam;
+    const matchDate = nextMatch.date || '';
+    const matchTime = nextMatch.time || '';
+    const jornada = nextMatch.jornada || '';
+    
+    // Buscar dades del rival
+    let rivalData = null;
+    if (actawpData.rivals_form) {
+        for (const [name, data] of Object.entries(actawpData.rivals_form)) {
+            if (name.toUpperCase().includes(rivalName.toUpperCase().substring(0, 8)) ||
+                rivalName.toUpperCase().includes(name.toUpperCase().substring(0, 8))) {
+                rivalData = data;
+                break;
+            }
+        }
+    }
+    
+    // Buscar posició a la classificació
+    let rivalPosition = '-';
+    let rivalPoints = 0;
+    let cntPosition = '-';
+    let cntPoints = 0;
+    if (actawpData.ranking) {
+        actawpData.ranking.forEach((team, idx) => {
+            if (team.equip && team.equip.toUpperCase().includes(rivalName.toUpperCase().substring(0, 8))) {
+                rivalPosition = team.posicio || (idx + 1);
+                rivalPoints = team.punts || 0;
+            }
+            if (team.equip && team.equip.toUpperCase().includes('TERRASSA')) {
+                cntPosition = team.posicio || (idx + 1);
+                cntPoints = team.punts || 0;
+            }
+        });
+    }
+    
+    // Historial vs CNT
+    let vsWins = 0, vsDraws = 0, vsLosses = 0, vsGF = 0, vsGC = 0;
+    let vsMatches = [];
+    if (actawpData.last_results) {
+        actawpData.last_results.forEach(r => {
+            const t1 = (r.team1 || '').toUpperCase();
+            const t2 = (r.team2 || '').toUpperCase();
+            const rivalUpper = rivalName.toUpperCase();
+            
+            if (t1.includes(rivalUpper.substring(0, 8)) || t2.includes(rivalUpper.substring(0, 8))) {
+                const parts = (r.score || '0-0').split('-');
+                const g1 = parseInt(parts[0]) || 0;
+                const g2 = parseInt(parts[1]) || 0;
+                
+                const cntIsTeam1 = t1.includes('TERRASSA');
+                const gCNT = cntIsTeam1 ? g1 : g2;
+                const gRival = cntIsTeam1 ? g2 : g1;
+                
+                vsGF += gCNT;
+                vsGC += gRival;
+                
+                if (gCNT > gRival) vsWins++;
+                else if (gCNT < gRival) vsLosses++;
+                else vsDraws++;
+                
+                vsMatches.push({ gCNT, gRival, home: cntIsTeam1, date: r.date });
+            }
+        });
+    }
+    
+    // Stats del rival
+    const stats = rivalData?.stats || {};
+    const form = rivalData?.form || [];
+    const topScorers = rivalData?.top_scorers || [];
+    
+    // Calcular tendència
+    const getTrendInfo = (trend) => {
+        switch(trend) {
+            case 'hot': return { icon: '🔥', text: 'En ratxa', color: '#ef4444' };
+            case 'up': return { icon: '📈', text: 'Pujant', color: '#f97316' };
+            case 'down': return { icon: '📉', text: 'Baixant', color: '#22c55e' };
+            case 'cold': return { icon: '❄️', text: 'En baixa', color: '#22c55e' };
+            default: return { icon: '➡️', text: 'Estable', color: '#fbbf24' };
+        }
+    };
+    
+    const trend = getTrendInfo(stats.trend);
+    
+    // Forma icons
+    const formIcons = form.slice(0, 5).map(r => {
+        if (r === 'W') return '<span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: #22c55e; color: white; border-radius: 50%; font-weight: bold; margin: 2px;">V</span>';
+        if (r === 'L') return '<span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: #ef4444; color: white; border-radius: 50%; font-weight: bold; margin: 2px;">D</span>';
+        return '<span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: #fbbf24; color: white; border-radius: 50%; font-weight: bold; margin: 2px;">E</span>';
+    }).join('');
+    
+    // Punts forts i febles
+    const avgGf = stats.avg_gf || 0;
+    const avgGc = stats.avg_gc || 0;
+    
+    let puntsForts = [];
+    let puntsFebles = [];
+    
+    if (avgGf >= 15) puntsForts.push('Atac molt potent (' + avgGf + ' gols/p)');
+    else if (avgGf >= 12) puntsForts.push('Bon atac (' + avgGf + ' gols/p)');
+    else if (avgGf < 10) puntsFebles.push('Atac limitat (' + avgGf + ' gols/p)');
+    
+    if (avgGc <= 8) puntsForts.push('Defensa sòlida (' + avgGc + ' gols rebuts/p)');
+    else if (avgGc >= 12) puntsFebles.push('Defensa feble (' + avgGc + ' gols rebuts/p)');
+    
+    if (form.slice(0, 3).filter(f => f === 'W').length >= 2) puntsForts.push('En bon moment de forma');
+    if (form.slice(0, 3).filter(f => f === 'L').length >= 2) puntsFebles.push('Moment de forma dolent');
+    
+    if (topScorers.length > 0 && topScorers[0].goals >= 15) puntsForts.push('Golejador estrella: ' + topScorers[0].name);
+    
+    const totalExclusions = topScorers.reduce((sum, p) => sum + (p.exclusions || 0), 0);
+    if (totalExclusions >= 20) puntsFebles.push('Equip amb moltes exclusions');
+    
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.id = 'pre-match-report-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; overflow-y: auto; padding: 20px;';
+    
+    modal.innerHTML = `
+        <div style="max-width: 800px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center; position: relative;">
+                <button onclick="closePreMatchReport()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer;">✕</button>
+                
+                <div style="font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 5px;">📋 INFORME PRE-PARTIT</div>
+                <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 15px;">Jornada ${jornada} · ${matchDate} · ${matchTime}h</div>
+                
+                <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
+                    <div style="text-align: center;">
+                        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 36px;">🔵</span>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? 'CN TERRASSA' : rivalName}</div>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? cntPosition + 'º - ' + cntPoints + ' pts' : rivalPosition + 'º - ' + rivalPoints + ' pts'}</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="font-size: 28px; font-weight: 700; color: white;">VS</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${isHome ? '🏠 Casa' : '✈️ Fora'}</div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 36px;">⚪</span>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: white;">${isHome ? rivalName : 'CN TERRASSA'}</div>
+                        <div style="font-size: 13px; color: rgba(255,255,255,0.7);">${isHome ? rivalPosition + 'º - ' + rivalPoints + ' pts' : cntPosition + 'º - ' + cntPoints + ' pts'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contingut -->
+            <div style="padding: 25px;">
+                
+                <!-- Historial -->
+                <div style="background: #334155; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 15px;">🆚 HISTORIAL CONTRA ${rivalName.toUpperCase()}</div>
+                    
+                    ${vsMatches.length === 0 ? `
+                        <div style="text-align: center; color: #94a3b8; padding: 20px;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">🆕</div>
+                            <div>Primer enfrontament de la temporada</div>
+                        </div>
+                    ` : `
+                        <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 20px;">
+                            <div>
+                                <div style="font-size: 36px; font-weight: 700; color: #22c55e;">${vsWins}</div>
+                                <div style="font-size: 12px; color: #94a3b8;">Victòries</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 36px; font-weight: 700; color: #fbbf24;">${vsDraws}</div>
+                                <div style="font-size: 12px; color: #94a3b8;">Empats</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 36px; font-weight: 700; color: #ef4444;">${vsLosses}</div>
+                                <div style="font-size: 12px; color: #94a3b8;">Derrotes</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 36px; font-weight: 700; color: white;">${vsGF}-${vsGC}</div>
+                                <div style="font-size: 12px; color: #94a3b8;">Gols</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                            ${vsMatches.map(m => `
+                                <div style="background: ${m.gCNT > m.gRival ? '#22c55e' : m.gCNT < m.gRival ? '#ef4444' : '#fbbf24'}; padding: 8px 16px; border-radius: 20px; font-weight: 600; color: white;">
+                                    ${m.home ? '🏠' : '✈️'} CNT ${m.gCNT} - ${m.gRival}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+                
+                <!-- Forma i Stats del Rival -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    
+                    <!-- Forma -->
+                    <div style="background: #334155; border-radius: 16px; padding: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 15px;">📈 FORMA DEL RIVAL</div>
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            ${formIcons || '<span style="color: #64748b;">Sense dades</span>'}
+                        </div>
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">${trend.icon}</span>
+                            <span style="font-size: 16px; font-weight: 600; color: ${trend.color};">${trend.text}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="background: #334155; border-radius: 16px; padding: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 15px;">📊 ESTADÍSTIQUES</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: #22c55e; padding: 15px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: white;">${avgGf}</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Gols/Partit</div>
+                            </div>
+                            <div style="background: #ef4444; padding: 15px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 24px; font-weight: 700; color: white;">${avgGc}</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Rebuts/Partit</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Jugadors Perillosos -->
+                <div style="background: #334155; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 15px;">⚠️ JUGADORS A VIGILAR</div>
+                    ${topScorers.length > 0 ? `
+                        <div style="display: grid; gap: 10px;">
+                            ${topScorers.slice(0, 3).map((p, i) => {
+                                const danger = (p.goals || 0) >= 10 ? '🔴' : (p.goals || 0) >= 5 ? '🟡' : '🟢';
+                                return `
+                                    <div style="display: flex; align-items: center; background: #1e293b; padding: 15px; border-radius: 12px;">
+                                        <div style="font-size: 24px; margin-right: 15px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 600; color: white; font-size: 15px;">${p.name || 'Desconegut'}</div>
+                                            <div style="font-size: 12px; color: #94a3b8;">${p.games || 0} partits · ${p.exclusions || 0} exclusions</div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-size: 10px; color: #94a3b8;">Perillositat</div>
+                                            <div style="font-size: 20px;">${danger}</div>
+                                        </div>
+                                        <div style="background: #f97316; padding: 10px 15px; border-radius: 10px; margin-left: 15px; text-align: center;">
+                                            <div style="font-size: 20px; font-weight: 700; color: white;">${p.goals || 0}</div>
+                                            <div style="font-size: 10px; color: rgba(255,255,255,0.8);">gols</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    ` : '<div style="color: #64748b; text-align: center;">Sense dades de jugadors</div>'}
+                </div>
+                
+                <!-- Punts Forts i Febles -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    
+                    <!-- Punts Forts -->
+                    <div style="background: linear-gradient(135deg, #dc2626, #ef4444); border-radius: 16px; padding: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 15px;">💪 PUNTS FORTS</div>
+                        ${puntsForts.length > 0 ? `
+                            <ul style="margin: 0; padding-left: 20px; color: white;">
+                                ${puntsForts.map(p => '<li style="margin-bottom: 8px;">' + p + '</li>').join('')}
+                            </ul>
+                        ` : '<div style="color: rgba(255,255,255,0.7);">Cap punt fort destacat</div>'}
+                    </div>
+                    
+                    <!-- Punts Febles -->
+                    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); border-radius: 16px; padding: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 15px;">🎯 PUNTS FEBLES</div>
+                        ${puntsFebles.length > 0 ? `
+                            <ul style="margin: 0; padding-left: 20px; color: white;">
+                                ${puntsFebles.map(p => '<li style="margin-bottom: 8px;">' + p + '</li>').join('')}
+                            </ul>
+                        ` : '<div style="color: rgba(255,255,255,0.7);">Cap punt feble destacat</div>'}
+                    </div>
+                </div>
+                
+                <!-- Últims Resultats del Rival -->
+                <div style="background: #334155; border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #94a3b8; margin-bottom: 15px;">📅 ÚLTIMS PARTITS DEL RIVAL</div>
+                    ${rivalData && rivalData.last_results && rivalData.last_results.length > 0 ? `
+                        <div style="display: grid; gap: 8px;">
+                            ${rivalData.last_results.slice(0, 5).map(r => {
+                                const parts = (r.score || '0-0').split('-');
+                                const g1 = parseInt(parts[0]) || 0;
+                                const g2 = parseInt(parts[1]) || 0;
+                                const rivalIsTeam1 = (r.team1 || '').toUpperCase().includes(rivalName.toUpperCase().substring(0, 6));
+                                const won = rivalIsTeam1 ? g1 > g2 : g2 > g1;
+                                const lost = rivalIsTeam1 ? g1 < g2 : g2 < g1;
+                                const bgColor = won ? '#22c55e' : lost ? '#ef4444' : '#fbbf24';
+                                
+                                return `
+                                    <div style="display: flex; align-items: center; background: #1e293b; padding: 12px; border-radius: 10px;">
+                                        <div style="width: 8px; height: 40px; background: ${bgColor}; border-radius: 4px; margin-right: 12px;"></div>
+                                        <div style="flex: 1; color: #94a3b8; font-size: 13px;">${r.team1 || '-'}</div>
+                                        <div style="font-weight: 700; color: white; padding: 0 15px;">${r.score || '-'}</div>
+                                        <div style="flex: 1; text-align: right; color: #94a3b8; font-size: 13px;">${r.team2 || '-'}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    ` : '<div style="color: #64748b; text-align: center;">Sense dades</div>'}
+                </div>
+                
+            </div>
+            
+            <!-- Footer -->
+            <div style="background: #0f172a; padding: 20px; text-align: center; border-top: 1px solid #334155;">
+                <div style="color: #64748b; font-size: 12px;">CN Terrassa · Temporada 25/26 · Generat automàticament</div>
+            </div>
+            
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Tancar modal
+function closePreMatchReport() {
+    const modal = document.getElementById('pre-match-report-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Tancar amb ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreMatchReport();
+    }
+});
 </script>
 
   
