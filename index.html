@@ -16458,29 +16458,43 @@ async function checkLastUpdate() {
 }
 
 function displayUpcomingMatches() {
+    console.log('📅 displayUpcomingMatches() - INICI');
+    console.log('📅 actawpData:', actawpData);
+    console.log('📅 actawpData.upcoming_matches:', actawpData?.upcoming_matches);
+    
     const matches = actawpData.upcoming_matches || [];
-// ✅ ORDENAR PER DATA (més proper primer)
-const sortedMatches = [...matches].sort((a, b) => {
-    const dateA = parseActawpDate(a.date_time);
-    const dateB = parseActawpDate(b.date_time);
-    return dateA - dateB;
-});   
-   function parseActawpDate(dateTimeStr) {
-    if (!dateTimeStr) return new Date(9999, 0, 1);
-    const match = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
-    if (!match) return new Date(9999, 0, 1);
-    const [_, day, month, year, hour, minute] = match;
-    return new Date(year, month - 1, day, hour, minute);
-}
-   const container = document.getElementById('actawp-upcoming-matches');
+    console.log('📅 matches.length:', matches.length);
+    
+    // ✅ FUNCIÓ PRIMER
+    function parseActawpDate(dateTimeStr) {
+        if (!dateTimeStr) return new Date(9999, 0, 1);
+        const match = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+        if (!match) return new Date(9999, 0, 1);
+        const [_, day, month, year, hour, minute] = match;
+        return new Date(year, month - 1, day, hour, minute);
+    }
+    
+    const sortedMatches = [...matches].sort((a, b) => {
+        const dateA = parseActawpDate(a.date_time);
+        const dateB = parseActawpDate(b.date_time);
+        return dateA - dateB;
+    });
+    
+    console.log('📅 sortedMatches:', sortedMatches);
+    
+    const container = document.getElementById('actawp-upcoming-matches');
+    console.log('📅 container:', container);
     
     if (matches.length === 0) {
+        console.log('📅 No hi ha partits!');
         container.innerHTML = '<p style="color: #bae6fd;">No hi ha pròxims partits programats</p>';
         return;
     }
     
+    console.log('📅 Generant HTML per', matches.length, 'partits...');
+    
     let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
-	// Botó per descarregar tots els partits
+    // Botó per descarregar tots els partits
     html += `
         <div style="text-align: center; margin-bottom: 15px;">
             <button onclick="window.downloadAllUpcomingMatches()" style="padding: 10px 20px; background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 2px solid #a855f7; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: inherit; font-weight: bold;">
@@ -16586,6 +16600,7 @@ const sortedMatches = [...matches].sort((a, b) => {
         const awayTeam = match.away_team || match.team2 || '?';
         const venue = match.venue || '';
         const url = match.url || '#';
+		const isHome = homeTeam.toUpperCase().includes('TERRASSA');
         
         // LOGOS
         const homeLogo = match.home_team_logo || match.team1_logo || null;
@@ -16666,7 +16681,7 @@ const sortedMatches = [...matches].sort((a, b) => {
         }
     }
         // Determinar si CN Terrassa juga a casa o fora
-        const isHome = homeTeam.toUpperCase().includes('TERRASSA');
+        
         const locationIcon = isHome ? '🏠' : '✈️';
         const locationText = isHome ? 'Local' : 'Visitant';
         
@@ -20422,13 +20437,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });
+    });*/
     </script>
 </body>
 </html>
