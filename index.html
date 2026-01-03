@@ -3384,6 +3384,7 @@ body.live-mode {
     ⏸️ Cap partit en temps real
   </button>
   <button class="tab active" onclick="showTab('list')">🏠 Inici</button>
+  <button class="tab" onclick="showTab('temporadaTab')">📅 Temporada</button>
   <button class="tab" onclick="showTab('comparison')">📊 Estadístiques</button>
   <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
   <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
@@ -3426,9 +3427,7 @@ body.live-mode {
                 Veure tot →
             </button>
         </div>
-			<button onclick="showPreMatchReport()" class="btn" style="background: linear-gradient(135deg, #f97316, #ea580c); padding: 12px 24px; font-size: 14px; margin-bottom: 20px;">
-    📋 Generar Informe Pre-Partit
-</button>
+		
         <div id="next-match-pill" style="text-align: center;">
             <div style="color: #bfdbfe; font-size: 12px;">Carregant...</div>
         </div>
@@ -3458,7 +3457,6 @@ body.live-mode {
     </div>
 </div>
 
-
 <div style="margin-bottom: 20px;">
         <button class="btn" onclick="window.print()" style="background: #8b5cf6; padding: 12px 20px;">
             🖨️ Imprimir / Exportar PDF
@@ -3471,7 +3469,28 @@ body.live-mode {
             </div>
 	</div>
 
-
+<!-- 📅 PESTANYA TEMPORADA -->
+<div id="temporadaTab" class="hidden">
+    <div class="card" style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+            📅 Temporada 25/26
+            <span id="temporada-stats-badge" style="font-size: 12px; background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-weight: normal;"></span>
+        </h2>
+        
+        <!-- Filtres -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button onclick="filterTemporada('tots')" id="filter-tots" class="btn" style="background: #3b82f6; padding: 8px 16px; font-size: 12px;">📋 Tots</button>
+            <button onclick="filterTemporada('jugats')" id="filter-jugats" class="btn" style="background: #334155; padding: 8px 16px; font-size: 12px;">✅ Jugats</button>
+            <button onclick="filterTemporada('proxims')" id="filter-proxims" class="btn" style="background: #334155; padding: 8px 16px; font-size: 12px;">📅 Pròxims</button>
+        </div>
+    </div>
+    
+    <!-- Resum temporada -->
+    <div id="temporada-resum" class="card" style="margin-bottom: 20px; padding: 15px;"></div>
+    
+    <!-- Llista de partits -->
+    <div id="temporada-partits" class="card" style="padding: 15px;"></div>
+</div>
 <!-- TAB: TIEMPO DE JUEGO -->
 <div id="tiempoTab" class="hidden">
  <!--
@@ -3904,9 +3923,9 @@ body.live-mode {
 
 <!-- CLASSIFICACIÓ FASE 2 -->
 <div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-    <h3 class="section-title">🏆 Classificació Fase 2</h3>
+    <h3 class="section-title">🏆 Classificació Fase 3</h3>
     <p style="color: #bae6fd; margin-bottom: 15px; font-size: 14px;">
-        Classificació oficial de la segona fase de la lliga
+        Classificació oficial de la tercera fase de la lliga
     </p>
     <div id="actawp-ranking-container">
         <p style="text-align: center; color: #bae6fd;">Carregant classificació...</p>
@@ -4578,6 +4597,368 @@ const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811';
             </div>
         `;
     }
+}
+// 📊 ÚLTIMS 3 RESULTATS (mini per l'inici)
+function loadUltimsResultatsMini() {
+    console.log('🔄 loadUltimsResultatsMini() - INICI');
+    
+    const container = document.getElementById('ultims-resultats-mini');
+    console.log('🔄 Container:', container);
+    console.log('🔄 actawpData:', actawpData);
+    console.log('🔄 last_results:', actawpData?.last_results);
+    
+    if (!container) {
+        console.log('❌ Container no trobat!');
+        return;
+    }
+    
+    if (!actawpData || !actawpData.last_results) {
+        container.innerHTML = '<div style="color: #64748b; text-align: center;">No hi ha dades</div>';
+        return;
+    }
+    
+    const results = actawpData.last_results.slice(0, 3);
+    console.log('🔄 Results:', results);
+    
+    if (results.length === 0) {
+        container.innerHTML = '<div style="color: #64748b; text-align: center;">No hi ha resultats</div>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            ${results.map(r => {
+                const t1 = r.team1 || '';
+                const t2 = r.team2 || '';
+                const score = r.score || '0-0';
+                const parts = score.split('-');
+                const g1 = parseInt(parts[0]) || 0;
+                const g2 = parseInt(parts[1]) || 0;
+                
+                const cntIsTeam1 = t1.toUpperCase().includes('TERRASSA');
+                const gCNT = cntIsTeam1 ? g1 : g2;
+                const gRival = cntIsTeam1 ? g2 : g1;
+                const rival = cntIsTeam1 ? t2 : t1;
+                const isHome = cntIsTeam1;
+                
+                let bgColor = '#fbbf24';
+                let icon = '➖';
+                
+                if (gCNT > gRival) {
+                    bgColor = '#22c55e';
+                    icon = '✅';
+                } else if (gCNT < gRival) {
+                    bgColor = '#ef4444';
+                    icon = '❌';
+                }
+                
+                // Escurçar nom rival
+                const shortRival = rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim().substring(0, 12);
+                
+                return `
+                    <div style="flex: 1; min-width: 120px; background: ${bgColor}20; border-left: 3px solid ${bgColor}; border-radius: 8px; padding: 10px;">
+                        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                            <span style="font-size: 14px;">${icon}</span>
+                            <span style="font-size: 11px; color: #94a3b8;">J${r.jornada || '?'}</span>
+                            <span style="font-size: 11px; color: #94a3b8;">${isHome ? '🏠' : '✈️'}</span>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: ${bgColor};">${gCNT} - ${gRival}</div>
+                        <div style="font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${shortRival}</div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+    
+    console.log('✅ loadUltimsResultatsMini() - COMPLETAT');
+}
+// 📅 PESTANYA TEMPORADA
+let currentTemporadaFilter = 'tots';
+
+function loadTemporadaTab() {
+    loadTemporadaResum();
+    loadTemporadaPartits();
+}
+
+function loadTemporadaResum() {
+    const container = document.getElementById('temporada-resum');
+    const badge = document.getElementById('temporada-stats-badge');
+    if (!container || !actawpData) return;
+    
+    const jugats = actawpData.last_results?.length || 0;
+    const proxims = actawpData.upcoming_matches?.length || 0;
+    const total = jugats + proxims;
+    
+    // Calcular stats
+    let wins = 0, draws = 0, losses = 0, gf = 0, gc = 0;
+    
+    if (actawpData.last_results) {
+        actawpData.last_results.forEach(r => {
+            const parts = (r.score || '0-0').split('-');
+            const g1 = parseInt(parts[0]) || 0;
+            const g2 = parseInt(parts[1]) || 0;
+            const cntIsTeam1 = (r.team1 || '').toUpperCase().includes('TERRASSA');
+            const gCNT = cntIsTeam1 ? g1 : g2;
+            const gRival = cntIsTeam1 ? g2 : g1;
+            
+            gf += gCNT;
+            gc += gRival;
+            
+            if (gCNT > gRival) wins++;
+            else if (gCNT < gRival) losses++;
+            else draws++;
+        });
+    }
+    
+    badge.textContent = `${jugats} jugats · ${proxims} pendents`;
+    
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; text-align: center;">
+            <div style="background: #22c55e20; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #22c55e;">${wins}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Victòries</div>
+            </div>
+            <div style="background: #fbbf2420; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #fbbf24;">${draws}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Empats</div>
+            </div>
+            <div style="background: #ef444420; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #ef4444;">${losses}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Derrotes</div>
+            </div>
+            <div style="background: #3b82f620; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #3b82f6;">${gf}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Gols favor</div>
+            </div>
+            <div style="background: #8b5cf620; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #8b5cf6;">${gc}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Gols contra</div>
+            </div>
+            <div style="background: #06b6d420; padding: 15px; border-radius: 12px;">
+                <div style="font-size: 28px; font-weight: 700; color: #06b6d4;">${gf - gc}</div>
+                <div style="font-size: 11px; color: #94a3b8;">Diferència</div>
+            </div>
+        </div>
+    `;
+}
+
+function loadTemporadaPartits() {
+    const container = document.getElementById('temporada-partits');
+    if (!container) return;
+    
+    let partits = [];
+    
+    // Afegir partits jugats des de allMatches (els nostres)
+    if (allMatches && allMatches.length > 0) {
+        allMatches.forEach((match, idx) => {
+            partits.push({
+                tipus: 'jugat',
+                idx: idx,
+                rival: match.rivalTeam || 'Rival',
+                scoreCNT: match.scoreCNT,
+                scoreRival: match.scoreRival,
+                date: match.data,
+                isHome: match.matchLocation === 'home' || !match.matchLocation,
+                jornada: match.jornada || null
+            });
+        });
+    }
+    
+    // Afegir pròxims partits des de actawpData
+    if (actawpData && actawpData.upcoming_matches) {
+        actawpData.upcoming_matches.forEach(r => {
+            const t1 = r.team1 || '';
+            const t2 = r.team2 || '';
+            const cntIsTeam1 = t1.toUpperCase().includes('TERRASSA');
+            partits.push({
+                tipus: 'proxim',
+                rival: cntIsTeam1 ? t2 : t1,
+                date: r.date || '',
+                time: r.time || '',
+                isHome: cntIsTeam1,
+                jornada: r.jornada || null,
+                logo1: r.team1_logo,
+                logo2: r.team2_logo
+            });
+        });
+    }
+    
+    // Funció per parsejar dates
+    const parseDate = (dateStr) => {
+        if (!dateStr) return new Date(0);
+        
+        // Format ISO: 2025-12-25T12:00:00.000Z
+        if (dateStr.includes('T')) {
+            return new Date(dateStr);
+        }
+        
+        // Format DD/MM/YYYY
+        if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+        }
+        
+        return new Date(dateStr);
+    };
+    
+    // Funció per determinar la fase
+    const getPhase = (dateStr) => {
+        const date = parseDate(dateStr);
+        const phase1End = new Date(2025, 10, 1); // 1 Nov 2025
+        const phase2End = new Date(2025, 11, 31); // 31 Des 2025
+        
+        if (date < phase1End) {
+            return 1;
+        } else if (date <= phase2End) {
+            return 2;
+        } else {
+            return 3;
+        }
+    };
+    
+    // Ordenar per data
+    partits.sort((a, b) => {
+        const dateA = parseDate(a.date);
+        const dateB = parseDate(b.date);
+        return dateA - dateB;
+    });
+    
+    // Filtrar
+    if (currentTemporadaFilter === 'jugats') {
+        partits = partits.filter(p => p.tipus === 'jugat');
+    } else if (currentTemporadaFilter === 'proxims') {
+        partits = partits.filter(p => p.tipus === 'proxim');
+    }
+    
+    if (partits.length === 0) {
+        container.innerHTML = '<div style="color: #64748b; text-align: center; padding: 20px;">No hi ha partits</div>';
+        return;
+    }
+    
+    // Generar HTML amb separadors de fases
+    let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+    let currentPhase = 0;
+    
+    const phaseInfo = {
+        1: { name: '🏆 Primera Fase', color: '#3b82f6', dates: 'Fins 1 Nov 2025' },
+        2: { name: '🥈 Segona Fase', color: '#f97316', dates: '1 Nov - 31 Des 2025' },
+        3: { name: '🥇 Tercera Fase', color: '#22c55e', dates: 'Des de 2026' }
+    };
+    
+    partits.forEach(p => {
+        const phase = getPhase(p.date);
+        
+        // Afegir separador si canviem de fase
+        if (phase !== currentPhase) {
+            currentPhase = phase;
+            const info = phaseInfo[phase];
+            html += `
+                <div style="background: linear-gradient(135deg, ${info.color}40, ${info.color}20); border: 2px solid ${info.color}; border-radius: 12px; padding: 15px; margin: 15px 0; text-align: center;">
+                    <div style="font-size: 18px; font-weight: 700; color: ${info.color};">${info.name}</div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">${info.dates}</div>
+                </div>
+            `;
+        }
+        
+        if (p.tipus === 'jugat') {
+            const date = new Date(p.date);
+            const dateStr = date.toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            let bgColor = '#fbbf24';
+            let icon = '➖';
+            if (p.scoreCNT > p.scoreRival) { 
+                bgColor = '#22c55e'; 
+                icon = '✅'; 
+            } else if (p.scoreCNT < p.scoreRival) { 
+                bgColor = '#ef4444'; 
+                icon = '❌'; 
+            }
+            
+            html += `
+                <div onclick="viewMatchFromTemporada(${p.idx})" style="cursor: pointer;">
+                    <div style="display: flex; align-items: center; background: #1e3a5c; border-left: 4px solid ${bgColor}; border-radius: 8px; padding: 12px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)';" onmouseout="this.style.transform='scale(1)';">
+                        <div style="width: 50px; text-align: center;">
+                            <div style="font-size: 20px;">${icon}</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">${dateStr} ${p.isHome ? '🏠' : '✈️'}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 14px; color: white; font-weight: 600;">CNT</span>
+                                <span style="font-size: 18px; font-weight: 700; color: white;">${p.scoreCNT} - ${p.scoreRival}</span>
+                                <span style="font-size: 14px; color: #94a3b8;">${p.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim()}</span>
+                            </div>
+                        </div>
+                        <div style="width: 50px; text-align: center;">
+                            <div style="font-size: 10px; color: #3b82f6;">Veure →</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Parsejar data per pròxims partits (format DD/MM/YYYY)
+            const dateStr = p.date || '';
+            
+            html += `
+                <div style="display: flex; align-items: center; background: #1e3a5c; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 12px;">
+                    <div style="width: 50px; text-align: center;">
+                        <div style="font-size: 20px;">📅</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">${dateStr} ${p.time}h ${p.isHome ? '🏠' : '✈️'}</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 14px; color: white; font-weight: 600;">CNT</span>
+                            <span style="font-size: 14px; color: #64748b;">vs</span>
+                            <span style="font-size: 14px; color: #94a3b8;">${p.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim()}</span>
+                        </div>
+                    </div>
+                    <div style="width: 50px; text-align: center;">
+                        <div style="font-size: 10px; color: #64748b;">Pendent</div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function viewMatchFromTemporada(idx) {
+    console.log('🎯 viewMatchFromTemporada - idx:', idx);
+    
+    if (!allMatches || idx < 0 || idx >= allMatches.length) {
+        console.error('❌ Index invàlid:', idx);
+        return;
+    }
+    
+    // Seleccionar el partit directament
+    currentMatch = allMatches[idx];
+    
+    // IMPORTANT: Primer canviar a la pestanya "list" perquè singleMatchView sigui visible
+    showTab('list');
+    
+    // Després mostrar vista del partit
+    document.getElementById('matchesView')?.classList.add('hidden');
+    document.getElementById('singleMatchView')?.classList.remove('hidden');
+    
+    // Mostrar dades
+    displayMatchData();
+    
+    // Scroll a dalt
+    window.scrollTo(0, 0);
+}
+
+function filterTemporada(filter) {
+    currentTemporadaFilter = filter;
+    
+    // Actualitzar botons
+    document.getElementById('filter-tots').style.background = filter === 'tots' ? '#3b82f6' : '#334155';
+    document.getElementById('filter-jugats').style.background = filter === 'jugats' ? '#3b82f6' : '#334155';
+    document.getElementById('filter-proxims').style.background = filter === 'proxims' ? '#3b82f6' : '#334155';
+    
+    loadTemporadaPartits();
 }
 // ============================================
 // 🔥 ESCOLTAR FIREBASE PER PARTITS EN DIRECTE
@@ -6028,6 +6409,7 @@ function showTab(tabName) {
     
     // Ocultar TOTS els tabs/vistes
     document.getElementById('listTab')?.classList.add('hidden');
+	document.getElementById('temporadaTab')?.classList.add('hidden');
     document.getElementById('comparisonTab')?.classList.add('hidden');
     document.getElementById('titularTab')?.classList.add('hidden');
     document.getElementById('tiempoTab')?.classList.add('hidden');
@@ -6055,7 +6437,8 @@ function showTab(tabName) {
         setTimeout(() => {
             loadFrontPagePills();
         }, 100);
-        
+    
+   
     } else if (tabName === 'comparison') {
         document.getElementById('comparisonTab')?.classList.remove('hidden');
         
@@ -6064,7 +6447,11 @@ function showTab(tabName) {
         setTimeout(() => {
             renderTitularityHeatmapChart();
         }, 100);
-        
+     } else if (tabName === 'temporadaTab') {
+    document.getElementById('temporadaTab')?.classList.remove('hidden');
+	setTimeout(() => {
+    loadTemporadaTab();
+	}    , 100);
     } else if (tabName === 'tiempo') {
         document.getElementById('tiempoTab')?.classList.remove('hidden');
         setTimeout(() => {
@@ -6086,6 +6473,7 @@ function showTab(tabName) {
         setTimeout(() => {
             if (actawpData) {
                 displayActawpData();
+				loadUltimsResultatsMini();
             }
         }, 100);
     }
@@ -17565,26 +17953,36 @@ const rivalLogoHtml = rivalLogo ? `<img src="${rivalLogo}" style="width: 24px; h
             // - score_team1 = Gols de team1
             // - score_team2 = Gols de team2
             
-            let isHome, rival, ourScore, theirScore;
-            if (isOurTeam(team1)) {
-                // Som team1
-                isHome = true;
-                rival = team2;
-                ourScore = match.score_team1;
-                theirScore = match.score_team2;
-            } else if (isOurTeam(team2)) {
-                // Som team2
-                isHome = false;
-                rival = team1;
-                ourScore = match.score_team2;
-                theirScore = match.score_team1;
-            } else {
-                console.warn('⚠️ No trobem el nostre equip!', {team1, team2});
-                isHome = false;
-                rival = team2 || team1 || 'Rival desconegut';
-                ourScore = match.score_team1;
-                theirScore = match.score_team2;
-            }
+ // Parsejar el score (format "13-14")
+let score1 = null, score2 = null;
+if (match.score) {
+    const parts = match.score.split('-');
+    if (parts.length === 2) {
+        score1 = parseInt(parts[0]) || 0;
+        score2 = parseInt(parts[1]) || 0;
+    }
+}
+
+let isHome, rival, ourScore, theirScore;
+if (isOurTeam(team1)) {
+    // Som team1
+    isHome = true;
+    rival = team2;
+    ourScore = score1;
+    theirScore = score2;
+} else if (isOurTeam(team2)) {
+    // Som team2
+    isHome = false;
+    rival = team1;
+    ourScore = score2;
+    theirScore = score1;
+} else {
+    console.warn('⚠️ No trobem el nostre equip!', {team1, team2});
+    isHome = false;
+    rival = team2 || team1 || 'Rival desconegut';
+    ourScore = score1;
+    theirScore = score2;
+}
             
             console.log(`  → isHome: ${isHome}, rival: "${rival}"`);
             console.log(`  → Marcador: ${ourScore} - ${theirScore}`);
@@ -18200,29 +18598,22 @@ async function loadNextMatchPill() {
         ` : ''}
     `;
 }
-// 📊 HISTORIAL VS RIVAL
+// 📊 ANÀLISI DEL RIVAL - VERSIÓ COMPLETA
 async function loadRivalHistory() {
     const container = document.getElementById('rivals-map-pill');
-    
-    if (!container) {
-        console.log('❌ Container rivals-map-pill no trobat');
-        return;
-    }
-    
     const mapDiv = document.getElementById('rivals-map');
-    if (!mapDiv) {
-        console.log('❌ Container rivals-map no trobat');
-        return;
-    }
+    
+    if (!container || !mapDiv) return;
     
     // Buscar el proper rival
     let nextRival = null;
     let isHome = false;
+    let nextMatch = null;
     
     if (actawpData && actawpData.upcoming_matches && actawpData.upcoming_matches.length > 0) {
-        const match = actawpData.upcoming_matches[0];
-        const homeTeam = match.team1 || '';
-        const awayTeam = match.team2 || '';
+        nextMatch = actawpData.upcoming_matches[0];
+        const homeTeam = nextMatch.team1 || '';
+        const awayTeam = nextMatch.team2 || '';
         isHome = homeTeam.toUpperCase().includes('TERRASSA');
         nextRival = isHome ? awayTeam : homeTeam;
     }
@@ -18232,71 +18623,82 @@ async function loadRivalHistory() {
         return;
     }
     
-    console.log('📊 Analitzant rival:', nextRival);
+    // Logos
+    const cntLogo = isHome ? (nextMatch.team1_logo || '') : (nextMatch.team2_logo || '');
+    const rivalLogo = isHome ? (nextMatch.team2_logo || '') : (nextMatch.team1_logo || '');
     
-    // Normalitzar nom del rival
+    // Normalitzar nom
     const normalizeTeamName = (name) => {
         return name.toUpperCase()
             .replace(/C\.N\./g, '').replace(/CN/g, '')
             .replace(/C\.E\./g, '').replace(/CE/g, '')
             .replace(/U\.E\./g, '').replace(/UE/g, '')
             .replace(/[''`´]/g, '')
-            .replace(/D\s*/g, '')
             .replace(/\s+/g, ' ')
             .trim();
     };
     
     const normalizedRival = normalizeTeamName(nextRival);
     
-    // 1️⃣ BUSCAR HISTORIAL LOCAL
-    let historial = {
-        victories: 0,
-        defeats: 0,
-        draws: 0,
-        goalsFor: 0,
-        goalsAgainst: 0,
-        matches: []
-    };
-    
-    if (typeof matchFiles !== 'undefined' && matchFiles.length > 0) {
-        for (const match of matchFiles) {
-            if (match.data && match.data.rivalTeam) {
-                const matchRival = normalizeTeamName(match.data.rivalTeam);
-                
-                if (matchRival.includes(normalizedRival) || normalizedRival.includes(matchRival)) {
-                    const scoreCNT = match.data.scoreCNT || 0;
-                    const scoreRival = match.data.scoreRival || 0;
-                    const matchDate = match.data.data ? new Date(match.data.data).toLocaleDateString('ca-ES') : '?';
-                    const location = match.data.matchLocation === 'home' ? '🏠' : '✈️';
-                    
-                    historial.goalsFor += scoreCNT;
-                    historial.goalsAgainst += scoreRival;
-                    
-                    if (scoreCNT > scoreRival) historial.victories++;
-                    else if (scoreCNT < scoreRival) historial.defeats++;
-                    else historial.draws++;
-                    
-                    historial.matches.push({
-                        date: matchDate,
-                        scoreCNT: scoreCNT,
-                        scoreRival: scoreRival,
-                        location: location,
-                        result: scoreCNT > scoreRival ? 'W' : (scoreCNT < scoreRival ? 'L' : 'D')
-                    });
-                }
+    // Buscar posició a la classificació
+    let rivalPosition = '-';
+    let rivalPoints = 0;
+    let cntPosition = '-';
+    let cntPoints = 0;
+    if (actawpData.ranking) {
+        actawpData.ranking.forEach((team, idx) => {
+            const teamName = team.equip || '';
+            if (normalizeTeamName(teamName).includes(normalizedRival.substring(0, 8)) ||
+                normalizedRival.includes(normalizeTeamName(teamName).substring(0, 8))) {
+                rivalPosition = team.posicio || (idx + 1);
+                rivalPoints = team.punts || 0;
             }
-        }
+            if (teamName.toUpperCase().includes('TERRASSA')) {
+                cntPosition = team.posicio || (idx + 1);
+                cntPoints = team.punts || 0;
+            }
+        });
     }
     
-    // 2️⃣ BUSCAR FORMA DEL RIVAL i JUGADORS CLAU
-    let rivalForm = [];
+    // Historial vs CNT
+    let vsWins = 0, vsDraws = 0, vsLosses = 0, vsGF = 0, vsGC = 0;
+    let vsMatches = [];
+    if (actawpData.last_results) {
+        actawpData.last_results.forEach(r => {
+            const t1 = (r.team1 || '').toUpperCase();
+            const t2 = (r.team2 || '').toUpperCase();
+            
+            if (t1.includes(normalizedRival.substring(0, 8)) || t2.includes(normalizedRival.substring(0, 8)) ||
+                normalizedRival.includes(t1.substring(0, 8)) || normalizedRival.includes(t2.substring(0, 8))) {
+                
+                const parts = (r.score || '0-0').split('-');
+                const g1 = parseInt(parts[0]) || 0;
+                const g2 = parseInt(parts[1]) || 0;
+                
+                const cntIsTeam1 = t1.includes('TERRASSA');
+                const gCNT = cntIsTeam1 ? g1 : g2;
+                const gRival = cntIsTeam1 ? g2 : g1;
+                
+                vsGF += gCNT;
+                vsGC += gRival;
+                
+                if (gCNT > gRival) vsWins++;
+                else if (gCNT < gRival) vsLosses++;
+                else vsDraws++;
+                
+                vsMatches.push({ gCNT, gRival, home: cntIsTeam1 });
+            }
+        });
+    }
+    
+    // Buscar dades del rival
     let rivalFormData = null;
     let topScorers = [];
     
-    if (actawpData && actawpData.rivals_form) {
+    if (actawpData.rivals_form) {
         for (const [teamName, data] of Object.entries(actawpData.rivals_form)) {
-            const normalizedTeam = normalizeTeamName(teamName);
-            if (normalizedTeam.includes(normalizedRival) || normalizedRival.includes(normalizedTeam)) {
+            if (normalizeTeamName(teamName).includes(normalizedRival.substring(0, 8)) ||
+                normalizedRival.includes(normalizeTeamName(teamName).substring(0, 8))) {
                 rivalFormData = data;
                 topScorers = data.top_scorers || [];
                 break;
@@ -18304,123 +18706,159 @@ async function loadRivalHistory() {
         }
     }
     
-    if (rivalFormData && rivalFormData.last_results) {
-        rivalForm = rivalFormData.last_results.map(r => ({
-            team1: r.team1,
-            team2: r.team2,
-            score: r.score,
-            date: r.date
-        }));
-    }
+    const stats = rivalFormData?.stats || {};
+    const formArray = rivalFormData?.form || [];
+    const avgGf = stats.avg_gf || 0;
+    const avgGc = stats.avg_gc || 0;
     
-    const formArray = rivalFormData ? rivalFormData.form || [] : [];
-    const totalMatches = historial.victories + historial.defeats + historial.draws;
-    
+    // Forma icons
     const formIcons = formArray.slice(0, 5).map(r => {
-        if (r === 'W') return '<span style="color: #22c55e;">✅</span>';
-        if (r === 'L') return '<span style="color: #ef4444;">❌</span>';
-        return '<span style="color: #fbbf24;">➖</span>';
+        if (r === 'W') return '<span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; background: #22c55e; color: white; border-radius: 50%; font-size: 11px; font-weight: bold;">V</span>';
+        if (r === 'L') return '<span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; background: #ef4444; color: white; border-radius: 50%; font-size: 11px; font-weight: bold;">D</span>';
+        return '<span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; background: #fbbf24; color: white; border-radius: 50%; font-size: 11px; font-weight: bold;">E</span>';
     }).join(' ');
     
-    const winsCount = formArray.filter(r => r === 'W').length;
-    const lossesCount = formArray.filter(r => r === 'L').length;
+    // Punts forts i febles
+    let puntsForts = [];
+    let puntsFebles = [];
     
-    // 3️⃣ GENERAR HTML
+    if (avgGf >= 15) puntsForts.push('Atac potent (' + avgGf + ' g/p)');
+    else if (avgGf < 10) puntsFebles.push('Atac limitat (' + avgGf + ' g/p)');
+    
+    if (avgGc <= 8) puntsForts.push('Defensa sòlida (' + avgGc + ' g/p)');
+    else if (avgGc >= 12) puntsFebles.push('Defensa feble (' + avgGc + ' g/p)');
+    
+    if (formArray.slice(0, 3).filter(f => f === 'W').length >= 2) puntsForts.push('En bon moment');
+    if (formArray.slice(0, 3).filter(f => f === 'L').length >= 2) puntsFebles.push('Mal moment de forma');
+    
+    // Generar HTML
     mapDiv.style.height = 'auto';
-    mapDiv.style.minHeight = '200px';
     mapDiv.innerHTML = `
         <div style="padding: 15px;">
+            
+            <!-- Header amb logos -->
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px;">
+                <div style="text-align: center;">
+                    <div style="width: 50px; height: 50px; background: white; border-radius: 50%; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 3px;">
+                        ${cntLogo ? '<img src="' + cntLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '🔵'}
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">${cntPosition}º</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: 700; color: white;">VS</div>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.7);">${isHome ? '🏠 Casa' : '✈️ Fora'}</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div style="width: 50px; height: 50px; background: white; border-radius: 50%; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 3px;">
+                        ${rivalLogo ? '<img src="' + rivalLogo + '" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : '⚪'}
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8);">${rivalPosition}º</div>
+                </div>
+            </div>
+            
             <div style="text-align: center; margin-bottom: 15px;">
-                <div style="font-size: 16px; font-weight: 700; color: white;">${nextRival}</div>
-                <div style="font-size: 12px; color: #94a3b8;">Pròxim rival ${isHome ? '(a casa)' : '(fora)'}</div>
+                <div style="font-size: 15px; font-weight: 700; color: white;">${nextRival}</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Jornada ${nextMatch.jornada || '?'} · ${nextMatch.date || ''} · ${nextMatch.time || ''}h</div>
             </div>
             
-            ${totalMatches > 0 ? `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">📊 Historial aquesta temporada</div>
-                <div style="display: flex; justify-content: space-around; text-align: center;">
-                    <div>
-                        <div style="font-size: 20px; font-weight: 700; color: #22c55e;">${historial.victories}</div>
-                        <div style="font-size: 10px; color: #94a3b8;">Victòries</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 20px; font-weight: 700; color: #fbbf24;">${historial.draws}</div>
-                        <div style="font-size: 10px; color: #94a3b8;">Empats</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 20px; font-weight: 700; color: #ef4444;">${historial.defeats}</div>
-                        <div style="font-size: 10px; color: #94a3b8;">Derrotes</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #94a3b8;">
-                    ⚽ Gols: <span style="color: white;">${historial.goalsFor}</span> - <span style="color: white;">${historial.goalsAgainst}</span>
-                </div>
-                ${historial.matches.length > 0 ? `
-                <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    ${historial.matches.map(m => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px;">
-                            <span style="color: #94a3b8;">${m.location} ${m.date}</span>
-                            <span style="font-weight: 600; color: ${m.result === 'W' ? '#22c55e' : m.result === 'L' ? '#ef4444' : '#fbbf24'};">
-                                CNT ${m.scoreCNT} - ${m.scoreRival}
-                            </span>
+            <!-- Historial vs CNT -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">🆚 Historial vs CNT</div>
+                ${vsMatches.length === 0 ? `
+                    <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 12px;">🆕 Primer enfrontament</div>
+                ` : `
+                    <div style="display: flex; justify-content: space-around; text-align: center;">
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: #22c55e;">${vsWins}</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Vict.</div>
                         </div>
-                    `).join('')}
-                </div>
-                ` : ''}
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: #fbbf24;">${vsDraws}</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Emp.</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: #ef4444;">${vsLosses}</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Derr.</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 20px; font-weight: 700; color: white;">${vsGF}-${vsGC}</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Gols</div>
+                        </div>
+                    </div>
+                `}
             </div>
-            ` : `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 12px; text-align: center;">
-                <div style="font-size: 12px; color: #94a3b8;">🆕 Primer enfrontament de la temporada</div>
-            </div>
-            `}
             
-            ${rivalForm.length > 0 ? `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">📈 Forma actual del rival</div>
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 18px; letter-spacing: 4px;">${formIcons}</div>
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
-                        Últims ${formArray.length}: ${winsCount}V ${lossesCount}D
-                    </div>
+            <!-- Stats i Forma -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 5px;">⚽ ATAC</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #22c55e;">${avgGf}</div>
+                    <div style="font-size: 9px; color: #94a3b8;">gols/partit</div>
                 </div>
-                <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    ${rivalForm.slice(0, 5).map(m => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 11px;">
-                            <span style="color: #94a3b8; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.team1}</span>
-                            <span style="font-weight: 600; color: white; padding: 0 8px;">${m.score}</span>
-                            <span style="color: #94a3b8; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right;">${m.team2}</span>
-                        </div>
-                    `).join('')}
+                <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 5px;">🛡️ DEFENSA</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #ef4444;">${avgGc}</div>
+                    <div style="font-size: 9px; color: #94a3b8;">rebuts/partit</div>
                 </div>
             </div>
-            ` : `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; margin-bottom: 12px; text-align: center;">
-                <div style="font-size: 12px; color: #94a3b8;">📈 Forma del rival no disponible</div>
-            </div>
-            `}
             
-            ${topScorers.length > 0 ? `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px;">
-                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase;">⭐ Jugadors clau</div>
-                ${topScorers.map((p, i) => `
-                    <div style="display: flex; align-items: center; padding: 6px 0; ${i < topScorers.length - 1 ? 'border-bottom: 1px solid rgba(255,255,255,0.1);' : ''}">
-                        <span style="font-size: 16px; margin-right: 10px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
-                        <div style="flex: 1;">
-                            <div style="font-size: 13px; font-weight: 600; color: white;">${p.name}</div>
-                            <div style="font-size: 11px; color: #94a3b8;">${p.games} partits jugats</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 16px; font-weight: 700; color: #fbbf24;">${p.goals}</div>
-                            <div style="font-size: 10px; color: #94a3b8;">gols</div>
-                        </div>
-                    </div>
-                `).join('')}
+            <!-- Forma -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-bottom: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">📈 FORMA ACTUAL</div>
+                <div>${formIcons || '<span style="color: #64748b;">Sense dades</span>'}</div>
             </div>
-            ` : ''}
+            
+            <!-- Jugadors a vigilar -->
+${topScorers.length > 0 ? `
+    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-bottom: 12px;">
+        <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">⚠️ Jugadors a vigilar</div>
+        ${topScorers.slice(0, 5).map((p, i) => {
+            const danger = (p.goals || 0) >= 10 ? '🔴' : (p.goals || 0) >= 5 ? '🟡' : '🟢';
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🏅';
+            const avgGoals = p.avg_goals || (p.games > 0 ? (p.goals / p.games).toFixed(1) : '0');
+            return `
+                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <span style="font-size: 12px; color: white; font-weight: 600;">${medal} ${p.name || 'Desconegut'}</span>
+                        <span style="font-size: 14px;">${danger}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
+                        <span>⚽ <strong style="color: #fbbf24;">${p.goals || 0}</strong> gols</span>
+                        <span>🎯 <strong style="color: #22c55e;">${p.penalty_goals || 0}</strong> penals</span>
+                        <span>🟥 <strong style="color: #ef4444;">${p.exclusions || 0}</strong> excl.</span>
+                        <span>🎮 <strong style="color: white;">${p.games || 0}</strong> PJ</span>
+                    </div>
+                    <div style="font-size: 9px; color: #64748b; margin-top: 3px;">
+                        Mitjana: ${avgGoals} gols/partit
+                    </div>
+                </div>
+            `;
+        }).join('')}
+    </div>
+` : ''}
+            
+            <!-- Punts forts i febles -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 10px; color: #fca5a5; margin-bottom: 5px;">💪 Punts forts</div>
+                    ${puntsForts.length > 0 ? 
+                        puntsForts.map(p => '<div style="font-size: 10px; color: white; margin-bottom: 2px;">• ' + p + '</div>').join('') :
+                        '<div style="font-size: 10px; color: rgba(255,255,255,0.5);">Cap destacat</div>'
+                    }
+                </div>
+                <div style="background: rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 10px; color: #86efac; margin-bottom: 5px;">🎯 Punts febles</div>
+                    ${puntsFebles.length > 0 ? 
+                        puntsFebles.map(p => '<div style="font-size: 10px; color: white; margin-bottom: 2px;">• ' + p + '</div>').join('') :
+                        '<div style="font-size: 10px; color: rgba(255,255,255,0.5);">Cap destacat</div>'
+                    }
+                </div>
+            </div>
+            
         </div>
     `;
-    
-    console.log('✅ Historial del rival carregat');
 }
 function loadLastResultsMini() {
     const container = document.getElementById('last-results-mini');
@@ -20437,13 +20875,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
-    });
+    });*/
     </script>
 </body>
 </html>
