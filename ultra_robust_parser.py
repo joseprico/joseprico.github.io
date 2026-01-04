@@ -1,5 +1,6 @@
 """
-Parser ACTAWP v6.1 - DADES AMPLIADES DELS RIVALS
+Parser ACTAWP v6.2 - FIX URLs PARTITS
+- FIX v6.2: Afegeix URL dels partits per al botó "Detalls"
 - FIX: Neteja "Ver"/"Veure" dels noms d'equips
 - FIX: Extreu correctament noms de la classificació
 - FIX v5.9: Estadístiques classificació correctes (punts, partits, etc.)
@@ -245,7 +246,7 @@ class ActawpParserV58:
         return players
     
     def parse_upcoming_matches(self, html_content):
-        """Parser de pròxims partits amb jornada - AMB NETEJA DE NOMS"""
+        """Parser de pròxims partits amb jornada - AMB NETEJA DE NOMS I URLs"""
         soup = BeautifulSoup(html_content, 'html.parser')
         matches = []
         
@@ -270,6 +271,13 @@ class ActawpParserV58:
                 if img2 and img2.get('src'):
                     team2_logo = img2['src']
                 
+                # 🆕 v6.2 - Extreure URL del partit
+                match_url = ''
+                link = cols[0].find('a', href=True)
+                if link:
+                    href = link['href']
+                    match_url = href if href.startswith('http') else 'https://actawp.natacio.cat' + href
+                
                 # 🔧 Netejar noms d'equips
                 team1 = self.clean_team_name(cols[0].get_text(strip=True))
                 team2 = self.clean_team_name(cols[-1].get_text(strip=True))
@@ -290,7 +298,8 @@ class ActawpParserV58:
                         'team1_logo': team1_logo,
                         'team2_logo': team2_logo,
                         'date_time': middle_text,
-                        'jornada': jornada_counter
+                        'jornada': jornada_counter,
+                        'url': match_url  # 🆕 v6.2
                     }
                     
                     if date_match:
@@ -306,7 +315,7 @@ class ActawpParserV58:
         return matches
     
     def parse_last_results(self, html_content):
-        """Parser d'últims resultats amb jornada - AMB NETEJA DE NOMS"""
+        """Parser d'últims resultats amb jornada - AMB NETEJA DE NOMS I URLs"""
         soup = BeautifulSoup(html_content, 'html.parser')
         results = []
         
@@ -330,6 +339,13 @@ class ActawpParserV58:
                 img2 = cols[-1].find('img')
                 if img2 and img2.get('src'):
                     team2_logo = img2['src']
+                
+                # 🆕 v6.2 - Extreure URL del partit
+                match_url = ''
+                link = cols[0].find('a', href=True)
+                if link:
+                    href = link['href']
+                    match_url = href if href.startswith('http') else 'https://actawp.natacio.cat' + href
                 
                 # 🔧 Netejar noms d'equips
                 team1 = self.clean_team_name(cols[0].get_text(strip=True))
@@ -357,7 +373,8 @@ class ActawpParserV58:
                         'team2_logo': team2_logo,
                         'score': score,
                         'date': date,
-                        'jornada': jornada_counter
+                        'jornada': jornada_counter,
+                        'url': match_url  # 🆕 v6.2
                     })
                     jornada_counter += 1
                     
@@ -677,7 +694,7 @@ class ActawpParserV58:
         self.current_team_key = team_key
         
         print(f"\n{'='*70}")
-        print(f"🔥 {team_name} - Parser v6.1 (DADES AMPLIADES)")
+        print(f"🔥 {team_name} - Parser v6.2 (FIX URLs PARTITS)")
         print(f"{'='*70}")
         
         result = {
@@ -688,7 +705,7 @@ class ActawpParserV58:
                 "team_name": team_name,
                 "coach": coach,
                 "downloaded_at": datetime.now().isoformat(),
-                "parser_version": "6.1_extended_stats"
+                "parser_version": "6.2_fix_urls"
             }
         }
         
@@ -735,6 +752,7 @@ class ActawpParserV58:
             if result['upcoming_matches']:
                 first = result['upcoming_matches'][0]
                 print(f"  📅 Pròxim: J{first.get('jornada', '?')} - {first.get('team1', '?')} vs {first.get('team2', '?')} - {first.get('date', '?')}")
+                print(f"  🔗 URL: {first.get('url', 'SENSE URL!')}")
         else:
             result['upcoming_matches'] = []
         
@@ -747,6 +765,7 @@ class ActawpParserV58:
                 first = result['last_results'][0]
                 score = first.get('score', '?')
                 print(f"  📊 Últim: J{first.get('jornada', '?')} - {first.get('team1', '?')} {score} {first.get('team2', '?')}")
+                print(f"  🔗 URL: {first.get('url', 'SENSE URL!')}")
         else:
             result['last_results'] = []
         
@@ -781,7 +800,8 @@ if __name__ == "__main__":
     
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║   PARSER ACTAWP v6.1 - DADES AMPLIADES RIVALS                ║
+║   PARSER ACTAWP v6.2 - FIX URLs PARTITS                      ║
+║   🆕 URLs per al botó "Detalls" dels partits                 ║
 ║   ✅ Noms nets (sense Ver/Veure)                             ║
 ║   ✅ Camps normalitzats (PJ, GT, G, EX...)                   ║
 ║   ✅ MARCADORS correctes dels resultats                       ║
@@ -837,15 +857,12 @@ if __name__ == "__main__":
     print("""
 ✅ JSON GENERATS CORRECTAMENT!
 
-🆕 Novetats v6.1:
-   - TOP 5 JUGADORS de cada rival (abans 3)
-   - Exclusions i gols de penal per jugador
-   - Mitjana gols/partit per jugador
-   - Stats d'equip: GF, GC, mitjanes atac/defensa
-   - Tendència: 🔥 En ratxa, 📈 Pujant, ➡️ Estable, 📉 Baixant
+🆕 Novetats v6.2:
+   - URLs dels partits per al botó "Detalls"
+   - El botó ja no anirà a index.html sinó a la pàgina del partit
 
 📤 Puja'ls a GitHub:
    git add actawp_*.json ultra_robust_parser.py
-   git commit -m "⭐ Parser v6.1 - Dades ampliades rivals"
+   git commit -m "🔗 Parser v6.2 - Fix URLs partits"
    git push
 """)
