@@ -1,5 +1,6 @@
 """
-Parser ACTAWP v6.2 - FIX URLs PARTITS
+Parser ACTAWP v6.3 - DATES DEL CALENDARI
+- 🆕 v6.3: Obté dates dels partits del calendari de la 3a fase
 - FIX v6.2: Afegeix URL dels partits per al botó "Detalls"
 - FIX: Neteja "Ver"/"Veure" dels noms d'equips
 - FIX: Extreu correctament noms de la classificació
@@ -21,6 +22,7 @@ class ActawpParserV58:
     def __init__(self):
         self.session = requests.Session()
         self.jornada_corrections = self.load_jornada_corrections()
+        self.calendar_dates = {}  # 🆕 v6.3 - Dates del calendari
     
     def load_jornada_corrections(self):
         """Carrega correccions manuals de jornades"""
@@ -45,6 +47,91 @@ class ActawpParserV58:
         name = re.sub(r'^Ver', '', name, flags=re.IGNORECASE)
         
         return name.strip()
+    
+    def normalize_team_for_calendar(self, name):
+        """🆕 v6.3 - Normalitza nom d'equip per comparar amb calendari"""
+        if not name:
+            return ''
+        return name.upper().replace('C.N.', '').replace('C.E.', '').replace('U.E.', '').replace('CN ', '').replace('CE ', '').replace('UE ', '').strip()
+    
+    def parse_calendar(self, calendar_url):
+        """🆕 v6.3 - Parseja el calendari per obtenir dates de tots els partits de la 3a fase"""
+        try:
+            print(f"  📅 Obtenint calendari de: {calendar_url}")
+            response = self.session.get(calendar_url)
+            
+            if response.status_code != 200:
+                print(f"  ❌ Error HTTP: {response.status_code}")
+                return {}
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            matches_dates = {}
+            
+            # Buscar totes les taules de partits
+            tables = soup.find_all('table')
+            
+            for table in tables:
+                rows = table.find_all('tr')
+                for row in rows:
+                    try:
+                        # Buscar els noms dels equips (estan en links amb /match/)
+                        links = row.find_all('a', href=True)
+                        teams_found = []
+                        
+                        for link in links:
+                            href = link.get('href', '')
+                            if '/match/' in href:
+                                # Buscar el text de l'equip
+                                text = link.get_text(strip=True)
+                                text = self.clean_team_name(text)
+                                if text and len(text) > 3:
+                                    teams_found.append(text)
+                        
+                        if len(teams_found) >= 2:
+                            team1 = teams_found[0]
+                            team2 = teams_found[1]
+                            
+                            # Buscar data (format: Dis, 10/01/2026 12:50)
+                            row_text = row.get_text()
+                            date_match = re.search(r'(\d{2}/\d{2}/\d{4})', row_text)
+                            
+                            if date_match:
+                                date = date_match.group(1)
+                                
+                                # Normalitzar noms per crear clau
+                                n1 = self.normalize_team_for_calendar(team1)
+                                n2 = self.normalize_team_for_calendar(team2)
+                                
+                                # Guardar amb ambdues direccions
+                                key1 = f"{n1}|{n2}"
+                                key2 = f"{n2}|{n1}"
+                                matches_dates[key1] = date
+                                matches_dates[key2] = date
+                                
+                    except Exception as e:
+                        continue
+            
+            print(f"  ✅ {len(matches_dates)//2} partits amb dates trobats")
+            return matches_dates
+            
+        except Exception as e:
+            print(f"  ⚠️ Error parsejant calendari: {e}")
+            return {}
+    
+    def add_dates_to_results(self, results):
+        """🆕 v6.3 - Afegeix dates del calendari als resultats"""
+        if not self.calendar_dates or not results:
+            return results
+        
+        for r in results:
+            t1 = self.normalize_team_for_calendar(r.get('team1', ''))
+            t2 = self.normalize_team_for_calendar(r.get('team2', ''))
+            key = f"{t1}|{t2}"
+            
+            if key in self.calendar_dates:
+                r['date'] = self.calendar_dates[key]
+        
+        return results
     
     def get_csrf_token(self, team_id, language='es'):
         """Obté el token CSRF"""
@@ -541,6 +628,8 @@ class ActawpParserV58:
             results_data = self.get_tab_content(team_id, 'last-results', language)
             if results_data and results_data.get('code') == 0:
                 results = self.parse_last_results(results_data.get('content', ''))
+                # 🆕 v6.3 - Afegir dates del calendari
+                results = self.add_dates_to_results(results)
                 return results[:5]  # Només últims 5
             return []
         except Exception as e:
@@ -588,7 +677,7 @@ class ActawpParserV58:
         """Obté la forma de tots els rivals de la classificació"""
         rivals_form = {}
         
-        print("\n6️⃣ FORMA DELS RIVALS:")
+        print("\n7️⃣ FORMA DELS RIVALS:")
         
         for team in ranking:
             team_name = team.get('equip', '')
@@ -689,12 +778,12 @@ class ActawpParserV58:
         
         return rivals_form
     
-    def generate_json(self, team_id, team_key, team_name, coach, language='es', ranking_url=None):
+    def generate_json(self, team_id, team_key, team_name, coach, language='es', ranking_url=None, calendar_url=None):
         """Genera JSON amb normalització automàtica"""
         self.current_team_key = team_key
         
         print(f"\n{'='*70}")
-        print(f"🔥 {team_name} - Parser v6.2 (FIX URLs PARTITS)")
+        print(f"🔥 {team_name} - Parser v6.3 (DATES CALENDARI)")
         print(f"{'='*70}")
         
         result = {
@@ -705,11 +794,18 @@ class ActawpParserV58:
                 "team_name": team_name,
                 "coach": coach,
                 "downloaded_at": datetime.now().isoformat(),
-                "parser_version": "6.2_fix_urls"
+                "parser_version": "6.3_calendar_dates"
             }
         }
         
-        print("\n1️⃣ JUGADORS:")
+        # 🆕 v6.3 - Parsejar calendari primer per tenir les dates
+        if calendar_url:
+            print("\n1️⃣ CALENDARI (dates partits 3a fase):")
+            self.calendar_dates = self.parse_calendar(calendar_url)
+        else:
+            self.calendar_dates = {}
+        
+        print("\n2️⃣ JUGADORS:")
         players_data = self.get_tab_content(team_id, 'players', language)
         if players_data and players_data.get('code') == 0:
             result['players'] = self.parse_players(players_data.get('content', ''))
@@ -721,7 +817,7 @@ class ActawpParserV58:
         else:
             result['players'] = []
         
-        print("\n2️⃣ ESTADÍSTIQUES:")
+        print("\n3️⃣ ESTADÍSTIQUES:")
         stats_data = self.get_tab_content(team_id, 'stats', language)
         team_stats = {}
         if stats_data and stats_data.get('code') == 0:
@@ -744,7 +840,7 @@ class ActawpParserV58:
         result['team_stats'] = team_stats
         print(f"  ✅ {len(team_stats)} estadístiques")
         
-        print("\n3️⃣ PRÒXIMS PARTITS:")
+        print("\n4️⃣ PRÒXIMS PARTITS:")
         upcoming_data = self.get_tab_content(team_id, 'upcoming-matches', language)
         if upcoming_data and upcoming_data.get('code') == 0:
             result['upcoming_matches'] = self.parse_upcoming_matches(upcoming_data.get('content', ''))
@@ -756,21 +852,25 @@ class ActawpParserV58:
         else:
             result['upcoming_matches'] = []
         
-        print("\n4️⃣ ÚLTIMS RESULTATS:")
+        print("\n5️⃣ ÚLTIMS RESULTATS:")
         results_data = self.get_tab_content(team_id, 'last-results', language)
         if results_data and results_data.get('code') == 0:
             result['last_results'] = self.parse_last_results(results_data.get('content', ''))
+            # 🆕 v6.3 - Afegir dates del calendari
+            result['last_results'] = self.add_dates_to_results(result['last_results'])
             print(f"  ✅ {len(result['last_results'])} resultats")
             if result['last_results']:
                 first = result['last_results'][0]
                 score = first.get('score', '?')
+                date = first.get('date', 'SENSE DATA')
                 print(f"  📊 Últim: J{first.get('jornada', '?')} - {first.get('team1', '?')} {score} {first.get('team2', '?')}")
+                print(f"  📅 Data: {date}")
                 print(f"  🔗 URL: {first.get('url', 'SENSE URL!')}")
         else:
             result['last_results'] = []
         
         if ranking_url:
-            print("\n5️⃣ CLASSIFICACIÓ:")
+            print("\n6️⃣ CLASSIFICACIÓ:")
             result['ranking'] = self.parse_ranking(ranking_url)
             print(f"  ✅ {len(result['ranking'])} equips")
             if result['ranking']:
@@ -800,12 +900,13 @@ if __name__ == "__main__":
     
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║   PARSER ACTAWP v6.2 - FIX URLs PARTITS                      ║
-║   🆕 URLs per al botó "Detalls" dels partits                 ║
+║   PARSER ACTAWP v6.3 - DATES DEL CALENDARI                   ║
+║   🆕 Dates dels partits de la 3a fase                        ║
+║   🆕 Filtrar resultats per fase (2026 = 3a fase)             ║
+║   ✅ URLs per al botó "Detalls" dels partits                 ║
 ║   ✅ Noms nets (sense Ver/Veure)                             ║
 ║   ✅ Camps normalitzats (PJ, GT, G, EX...)                   ║
 ║   ✅ MARCADORS correctes dels resultats                       ║
-║   ✅ DATES correctes dels pròxims partits                     ║
 ║   ⭐ LOGOS dels equips en partits i classificació             ║
 ║   🆕 FORMA DELS RIVALS (últims 5 resultats)                   ║
 ║   ⭐ TOP 5 GOLEJADORS amb exclusions i penals                 ║
@@ -819,14 +920,16 @@ if __name__ == "__main__":
             'name': 'CN Terrassa Juvenil',
             'coach': 'Jordi Busquets',
             'language': 'es',
-            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317471/ranking/3669887'
+            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317471/ranking/3669887',
+            'calendar_url': 'https://actawp.natacio.cat/ca/tournament/1317471/calendar/3669887/all'
         },
         'cadet': {
             'id': '15621224',
             'name': 'CN Terrassa Cadet',
             'coach': 'Didac Cobacho',
             'language': 'ca',
-            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317474/ranking/3669890'
+            'ranking_url': 'https://actawp.natacio.cat/ca/tournament/1317474/ranking/3669890',
+            'calendar_url': 'https://actawp.natacio.cat/ca/tournament/1317474/calendar/3669890/all'
         }
     }
     
@@ -838,7 +941,8 @@ if __name__ == "__main__":
                 team_info['name'],
                 team_info['coach'],
                 team_info['language'],
-                team_info.get('ranking_url')
+                team_info.get('ranking_url'),
+                team_info.get('calendar_url')
             )
             
             filename = f"actawp_{team_key}_data.json"
@@ -857,12 +961,13 @@ if __name__ == "__main__":
     print("""
 ✅ JSON GENERATS CORRECTAMENT!
 
-🆕 Novetats v6.2:
-   - URLs dels partits per al botó "Detalls"
-   - El botó ja no anirà a index.html sinó a la pàgina del partit
+🆕 Novetats v6.3:
+   - Dates dels partits obtingudes del calendari de la 3a fase
+   - Els resultats dels rivals ara tenen el camp "date" amb la data real
+   - Pots filtrar per fase (partits del 2026 = 3a fase)
 
 📤 Puja'ls a GitHub:
    git add actawp_*.json ultra_robust_parser.py
-   git commit -m "🔗 Parser v6.2 - Fix URLs partits"
+   git commit -m "📅 Parser v6.3 - Dates del calendari 3a fase"
    git push
 """)
