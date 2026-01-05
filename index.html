@@ -4778,7 +4778,8 @@ function loadTemporadaPartits() {
                 isHome: cntIsTeam1,
                 jornada: r.jornada || null,
                 logo1: r.team1_logo,
-                logo2: r.team2_logo
+                logo2: r.team2_logo,
+				url: r.url || ''
             });
         });
     }
@@ -4926,39 +4927,62 @@ function loadTemporadaPartits() {
                 </div>
             `;
         } else {
-            // Pròxims partits
+            // Pròxims partits - AMB BOTONS DETALLS I COM ARRIBAR
+            const rivalName = p.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim();
+            const mapsUrl = `https://www.google.com/maps/dir/Terrassa,+Barcelona,+Spain/${encodeURIComponent(p.isHome ? 'CN Terrassa, Terrassa' : p.rival)}`;
+            
             html += `
-                <div style="background: rgba(34, 211, 238, 0.1); border-left: 4px solid #22d3ee; border-radius: 8px; padding: 12px;">
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- Data -->
-                        <div style="font-size: 11px; color: #94a3b8;">
-                            📅 ${p.date} ${p.time ? `• ⏰ ${p.time}` : ''}
-                        </div>
-                        
-                        <!-- Equips -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                            <div style="flex: 1; min-width: 0;">
-                                ${p.isHome ? `
-                                    <div style="font-size: 14px; font-weight: bold; color: #bae6fd;">CN Terrassa</div>
-                                    <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">vs ${p.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim()}</div>
-                                ` : `
-                                    <div style="font-size: 14px; font-weight: bold; color: #bae6fd;">${p.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim()}</div>
-                                    <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">vs CN Terrassa</div>
-                                `}
-                                <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
-                                    ${p.isHome ? '🏠 Local' : '✈️ Visitant'}
-                                </div>
+                <div style="background: rgba(34, 211, 238, 0.1); border-left: 4px solid #22d3ee; border-radius: 8px; padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <!-- Info partit -->
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">
+                                📅 ${p.date} ${p.time ? `• ⏰ ${p.time}` : ''} ${p.jornada ? `• J${p.jornada}` : ''}
                             </div>
                             
-                            <!-- Icona -->
-                            <div style="text-align: center; flex-shrink: 0;">
-                                <div style="font-size: 32px; color: #22d3ee;">
-                                    ${p.isHome ? '🏠' : '✈️'}
+                            ${p.isHome ? `
+                                <div style="font-size: 16px; font-weight: bold; color: #bae6fd; display: flex; align-items: center;">
+                                    ${p.logo1 ? `<img src="${p.logo1}" style="width: 24px; height: 24px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; margin-right: 8px;" onerror="this.style.display='none';">` : ''}
+                                    <span>CN Terrassa</span>
                                 </div>
-                                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
-                                    Pendent
+                                <div style="font-size: 14px; color: #94a3b8; margin-top: 2px; display: flex; align-items: center;">
+                                    <span style="margin-right: 8px;">vs</span>
+                                    ${p.logo2 ? `<img src="${p.logo2}" style="width: 24px; height: 24px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; margin-right: 8px;" onerror="this.style.display='none';">` : ''}
+                                    <span>${rivalName}</span>
                                 </div>
+                            ` : `
+                                <div style="font-size: 16px; font-weight: bold; color: #bae6fd; display: flex; align-items: center;">
+                                    ${p.logo1 ? `<img src="${p.logo1}" style="width: 24px; height: 24px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; margin-right: 8px;" onerror="this.style.display='none';">` : ''}
+                                    <span>${rivalName}</span>
+                                </div>
+                                <div style="font-size: 14px; color: #94a3b8; margin-top: 2px; display: flex; align-items: center;">
+                                    <span style="margin-right: 8px;">vs</span>
+                                    ${p.logo2 ? `<img src="${p.logo2}" style="width: 24px; height: 24px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; margin-right: 8px;" onerror="this.style.display='none';">` : ''}
+                                    <span>CN Terrassa</span>
+                                </div>
+                            `}
+                        </div>
+                        
+                        <!-- Icona Local/Visitant -->
+                        <div style="text-align: center; min-width: 80px;">
+                            <div style="font-size: 32px; color: #22d3ee;">
+                                ${p.isHome ? '🏠' : '✈️'}
                             </div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                                ${p.isHome ? 'Local' : 'Visitant'}
+                            </div>
+                        </div>
+                        
+                        <!-- Botons -->
+                        <div style="min-width: 100px; text-align: right; display: flex; flex-direction: column; gap: 8px;">
+                            ${p.url ? `
+                                <a href="${p.url}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px; text-align: center;">
+                                    ℹ️ Detalls
+                                </a>
+                            ` : ''}
+                            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 8px 16px; background: rgba(34, 211, 238, 0.2); color: #22d3ee; border-radius: 6px; text-decoration: none; font-size: 13px; text-align: center;">
+                                🚗 Com arribar
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -17042,6 +17066,7 @@ function displayUpcomingMatches() {
         // Debug
         if (index === 0) {
             console.log('DEBUG Propers partits - Logos:', { homeLogo, awayLogo, match });
+    console.log('DEBUG Propers partits - URL:', url, 'match.url:', match.url);
         }
         
         const homeLogoHtml = homeLogo 
@@ -17866,7 +17891,7 @@ html += `
 `;
         upcomingMatches.forEach((match, index) => {
             console.log('\n📅 Processant pròxim:', match);
-            
+            console.log('URL del partit:', match.url);
             const team1 = match.team1 || '';
             const team2 = match.team2 || '';
             
@@ -20920,13 +20945,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
+   /* document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
     });
-    </script>
+    </script>/*
 </body>
 </html>
