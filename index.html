@@ -18880,6 +18880,60 @@ async function loadRivalHistory() {
                 <div>${formIcons || '<span style="color: #64748b;">Sense dades</span>'}</div>
             </div>
             
+	<!-- Últims resultats del rival -->
+            ${(function() {
+                if (!rivalFormData || !rivalFormData.last_results || rivalFormData.last_results.length === 0) return '';
+                
+                let resultsHtml = '<div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-bottom: 12px;">';
+                resultsHtml += '<div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">📊 Últims resultats</div>';
+                
+                rivalFormData.last_results.slice(0, 5).forEach(r => {
+                    const t1 = r.team1 || '';
+                    const t2 = r.team2 || '';
+                    const score = r.score || '0-0';
+                    const parts = score.split('-');
+                    const g1 = parseInt(parts[0]) || 0;
+                    const g2 = parseInt(parts[1]) || 0;
+                    
+                    const rivalIsTeam1 = normalizeTeamName(t1).includes(normalizedRival.substring(0, 6)) || 
+                                        normalizedRival.includes(normalizeTeamName(t1).substring(0, 6));
+                    const gRival = rivalIsTeam1 ? g1 : g2;
+                    const gOponent = rivalIsTeam1 ? g2 : g1;
+                    const oponent = rivalIsTeam1 ? t2 : t1;
+                    const oponentLogo = rivalIsTeam1 ? (r.team2_logo || '') : (r.team1_logo || '');
+                    
+                    let resultIcon, bgColor;
+                    if (gRival > gOponent) {
+                        resultIcon = '✅';
+                        bgColor = 'rgba(34, 197, 94, 0.2)';
+                    } else if (gRival < gOponent) {
+                        resultIcon = '❌';
+                        bgColor = 'rgba(239, 68, 68, 0.2)';
+                    } else {
+                        resultIcon = '➖';
+                        bgColor = 'rgba(251, 191, 36, 0.2)';
+                    }
+                    
+                    const oponentShort = oponent.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim();
+                    const isHome = rivalIsTeam1;
+                    const logoHtml = oponentLogo ? '<img src="' + oponentLogo + '" style="width: 16px; height: 16px; border-radius: 3px; background: white;">' : '';
+                    const oponentDisplay = oponentShort.length > 12 ? oponentShort.substring(0, 12) + '...' : oponentShort;
+                    
+                    resultsHtml += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: ' + bgColor + '; border-radius: 6px; margin-bottom: 4px;">';
+                    resultsHtml += '<div style="display: flex; align-items: center; gap: 6px;">';
+                    resultsHtml += '<span style="font-size: 12px;">' + resultIcon + '</span>';
+                    resultsHtml += '<span style="font-size: 10px; color: #64748b;">' + (isHome ? '🏠' : '✈️') + '</span>';
+                    resultsHtml += logoHtml;
+                    resultsHtml += '<span style="font-size: 11px; color: white;">' + oponentDisplay + '</span>';
+                    resultsHtml += '</div>';
+                    resultsHtml += '<span style="font-size: 12px; font-weight: bold; color: white;">' + gRival + ' - ' + gOponent + '</span>';
+                    resultsHtml += '</div>';
+                });
+                
+                resultsHtml += '</div>';
+                return resultsHtml;
+            })()}
+			
             <!-- Jugadors a vigilar -->
 ${topScorers.length > 0 ? `
     <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-bottom: 12px;">
@@ -20431,7 +20485,7 @@ function loadRivalsDetailed() {
                         
                         <!-- Jugadors clau -->
                         <div>
-                            <div style="font-weight: 600; margin-bottom: 10px; color: #334155;">⭐ Jugadors Clau</div>
+                            <div style="font-weight: 600; margin-bottom: 10px; color: white;">⭐ Jugadors Clau</div>
                             ${topScorers.length > 0 ? `
                                 <div style="font-size: 12px;">
                                     ${topScorers.map((p, i) => {
@@ -20450,20 +20504,61 @@ function loadRivalsDetailed() {
                         </div>
                     </div>
                     
-                    <!-- Últims resultats -->
+                     <!-- Últims resultats -->
                     <div style="margin-top: 15px;">
-                        <div style="font-weight: 600; margin-bottom: 10px; color: #334155;">📅 Últims Resultats</div>
-                        ${results.length > 0 ? `
-                            <div style="display: grid; gap: 5px; font-size: 12px;">
-                                ${results.slice(0, 5).map(r => `
-                                    <div style="display: flex; justify-content: space-between; padding: 8px; background: #334155; border-radius: 6px;">
-                                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.team1 || '-'}</span>
-                                        <span style="font-weight: 600; padding: 0 10px;">${r.score || '-'}</span>
-                                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right;">${r.team2 || '-'}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : '<div style="color: #94a3b8; font-size: 12px;">Sense resultats</div>'}
+                        <div style="font-weight: 700; margin-bottom: 10px; color: white;">📅 Últims Resultats</div>
+                        ${(function() {
+                            if (!results || results.length === 0) return '<div style="color: #94a3b8; font-size: 12px;">Sense resultats</div>';
+                            
+                            const normalizeTeamName = (n) => n.toUpperCase().replace(/C\.N\.|C\.E\.|U\.E\.|CN|CE|UE/g, '').trim();
+                            const normalizedName = normalizeTeamName(name);
+                            
+                            let html = '';
+                            results.slice(0, 5).forEach(r => {
+                                const t1 = r.team1 || '';
+                                const t2 = r.team2 || '';
+                                const score = r.score || '0-0';
+                                const parts = score.split('-');
+                                const g1 = parseInt(parts[0]) || 0;
+                                const g2 = parseInt(parts[1]) || 0;
+                                
+                                const rivalIsTeam1 = normalizeTeamName(t1).includes(normalizedName.substring(0, 6)) || 
+                                                    normalizedName.includes(normalizeTeamName(t1).substring(0, 6));
+                                const gRival = rivalIsTeam1 ? g1 : g2;
+                                const gOponent = rivalIsTeam1 ? g2 : g1;
+                                const oponent = rivalIsTeam1 ? t2 : t1;
+                                const oponentLogo = rivalIsTeam1 ? (r.team2_logo || '') : (r.team1_logo || '');
+                                
+                                let resultIcon, bgColor;
+                                if (gRival > gOponent) {
+                                    resultIcon = '✅';
+                                    bgColor = 'rgba(34, 197, 94, 0.2)';
+                                } else if (gRival < gOponent) {
+                                    resultIcon = '❌';
+                                    bgColor = 'rgba(239, 68, 68, 0.2)';
+                                } else {
+                                    resultIcon = '➖';
+                                    bgColor = 'rgba(251, 191, 36, 0.2)';
+                                }
+                                
+                                const oponentShort = oponent.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim();
+                                const isHome = rivalIsTeam1;
+                                const logoHtml = oponentLogo ? '<img src="' + oponentLogo + '" style="width: 16px; height: 16px; border-radius: 3px; background: white;">' : '';
+                                const oponentDisplay = oponentShort.length > 15 ? oponentShort.substring(0, 15) + '...' : oponentShort;
+                                
+                                html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: ' + bgColor + '; border-radius: 6px; margin-bottom: 4px;">';
+                                html += '<div style="display: flex; align-items: center; gap: 6px;">';
+                                html += '<span style="font-size: 12px;">' + resultIcon + '</span>';
+                                html += '<span style="font-size: 10px; color: #64748b;">' + (isHome ? '🏠' : '✈️') + '</span>';
+                                html += logoHtml;
+                                html += '<span style="font-size: 11px; color: white;">' + oponentDisplay + '</span>';
+                                html += '</div>';
+                                html += '<span style="font-size: 12px; font-weight: bold; color: white;">' + gRival + ' - ' + gOponent + '</span>';
+                                html += '</div>';
+                            });
+                            
+                            return html;
+                        })()}
                     </div>
                 </div>
             </div>
@@ -20945,13 +21040,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-   /* document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("keydown", event => {
       if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
           event.key === "F12") {
         event.preventDefault();
       }
     });
-    </script>/*
+    </script>
 </body>
 </html>
