@@ -3484,7 +3484,32 @@ body.live-mode {
             <button onclick="filterTemporada('proxims')" id="filter-proxims" class="btn" style="background: #334155; padding: 8px 16px; font-size: 12px;">📅 Pròxims</button>
         </div>
     </div>
-    
+    <!-- Timeline + Calendari Visual -->
+    <div class="card" style="margin-bottom: 20px; padding: 15px;">
+        <h3 style="margin-bottom: 15px; font-size: 16px;">📅 Calendari de la Temporada</h3>
+        
+        <!-- Timeline horitzontal -->
+        <div id="timeline-container" style="margin-bottom: 20px; overflow-x: auto; padding: 10px 0;">
+            <div id="timeline-matches" style="display: flex; align-items: center; gap: 5px; min-width: max-content; padding: 10px;"></div>
+        </div>
+        
+        <!-- Navegació del mes -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px;">
+            <button onclick="changeCalendarMonth(-1)" class="btn" style="padding: 8px 15px; background: #334155;">◀</button>
+            <span id="calendar-month-title" style="font-size: 18px; font-weight: 700; color: #22d3ee; min-width: 150px; text-align: center;"></span>
+            <button onclick="changeCalendarMonth(1)" class="btn" style="padding: 8px 15px; background: #334155;">▶</button>
+        </div>
+        
+        <!-- Calendari mensual -->
+        <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center;"></div>
+        
+        <!-- Llegenda -->
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px; font-size: 12px; color: #94a3b8;">
+            <span>🟢 Victòria</span>
+            <span>🔴 Derrota</span>
+            <span>⚪ Pendent</span>
+        </div>
+    </div>
     <!-- Resum temporada -->
     <div id="temporada-resum" class="card" style="margin-bottom: 20px; padding: 15px;"></div>
     
@@ -3814,14 +3839,7 @@ body.live-mode {
         </div>
     </div>
 
-    <!-- Secció 2: Top Golejadors -->
-    <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">⭐ Top Golejadors de la Lliga (Dades de la federació) Nota: Poden no coincidir amb les dades de l'aplicació</h3>
-        <div id="league-top-scorers">
-            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
-        </div>
-    </div>
-
+ 
     <!-- Secció 3: Comparativa -->
     <div class="card" style="margin-bottom: 20px;">
         <h3 style="margin-bottom: 15px; font-size: 16px;">📈 Comparativa d'Equips</h3>
@@ -3837,6 +3855,15 @@ body.live-mode {
             <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
         </div>
     </div>
+	
+	   <!-- Secció 5: Top Golejadors -->
+    <div class="card" style="margin-bottom: 20px;">
+        <h3 style="margin-bottom: 15px; font-size: 16px;">⭐ Top Golejadors de la Lliga (Dades de la federació) Nota: Poden no coincidir amb les dades de l'aplicació</h3>
+        <div id="league-top-scorers">
+            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
+        </div>
+    </div>
+	
 </div>
 <!-- TAB: WEB FEDERACIÓ -->
 <div id="federacionTab" class="hidden">
@@ -4678,6 +4705,7 @@ let currentTemporadaFilter = 'tots';
 function loadTemporadaTab() {
     loadTemporadaResum();
     loadTemporadaPartits();
+	loadCalendarData();
 }
 
 function loadTemporadaResum() {
@@ -4741,7 +4769,307 @@ function loadTemporadaResum() {
         </div>
     `;
 }
+// ============================================
+// 📅 CALENDARI VISUAL DE TEMPORADA
+// ============================================
 
+let calendarCurrentMonth = new Date().getMonth();
+let calendarCurrentYear = new Date().getFullYear();
+let allSeasonMatches = [];
+
+function loadCalendarData() {
+    allSeasonMatches = [];
+    
+    // Afegir partits jugats
+    if (allMatches && allMatches.length > 0) {
+        allMatches.forEach((match, idx) => {
+            const dateStr = match.data || '';
+            let matchDate = null;
+            if (dateStr) {
+                if (dateStr.includes('T')) {
+                    matchDate = new Date(dateStr);
+                } else if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts.length === 3) {
+                        matchDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                }
+            }
+            
+            let result = 'pending';
+            if (match.scoreCNT !== undefined && match.scoreRival !== undefined) {
+                if (match.scoreCNT > match.scoreRival) result = 'win';
+                else if (match.scoreCNT < match.scoreRival) result = 'loss';
+                else result = 'draw';
+            }
+            
+         allSeasonMatches.push({
+    date: matchDate,
+    dateStr: dateStr,
+    rival: match.rivalTeam || 'Rival',
+    scoreCNT: match.scoreCNT,
+    scoreRival: match.scoreRival,
+    isHome: match.matchLocation === 'home',
+    result: result,
+    jornada: match.jornada || (idx + 1),
+    matchIdx: idx,
+    type: 'played'
+});
+        });
+    }
+    
+    // Afegir pròxims partits
+    if (actawpData && actawpData.upcoming_matches) {
+        actawpData.upcoming_matches.forEach((match, idx) => {
+            const dateStr = match.date || '';
+            let matchDate = null;
+            if (dateStr) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    matchDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            
+            const t1 = match.team1 || '';
+            const isHome = t1.toUpperCase().includes('TERRASSA');
+            const rival = isHome ? (match.team2 || 'Rival') : (match.team1 || 'Rival');
+            
+            allSeasonMatches.push({
+                date: matchDate,
+                dateStr: dateStr,
+                rival: rival,
+                time: match.time || '',
+                isHome: isHome,
+                result: 'pending',
+                jornada: match.jornada || (allMatches.length + idx + 1),
+                type: 'upcoming'
+            });
+        });
+    }
+    
+    // Ordenar per data
+    allSeasonMatches.sort((a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return a.date - b.date;
+    });
+    
+    renderTimeline();
+    renderCalendar();
+}
+
+function renderTimeline() {
+    const container = document.getElementById('timeline-matches');
+    if (!container) return;
+    
+    const monthNames = ['GEN', 'FEB', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DES'];
+    
+    let nextMatchIdx = -1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Trobar pròxim partit
+    for (let i = 0; i < allSeasonMatches.length; i++) {
+        if (allSeasonMatches[i].type === 'upcoming' && allSeasonMatches[i].date && allSeasonMatches[i].date >= today) {
+            nextMatchIdx = i;
+            break;
+        }
+    }
+    
+    let html = '';
+    let currentMonth = -1;
+    
+    allSeasonMatches.forEach((match, idx) => {
+        // Separador de mes
+        if (match.date) {
+            const matchMonth = match.date.getMonth();
+            if (matchMonth !== currentMonth) {
+                currentMonth = matchMonth;
+                if (idx > 0) {
+                    html += '<div style="width: 2px; height: 60px; background: #475569; margin: 0 5px;"></div>';
+                }
+                html += '<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 40px; padding: 5px; background: #1e3a5c; border-radius: 6px; margin-right: 5px;">';
+                html += '<div style="font-size: 11px; font-weight: 700; color: #22d3ee;">' + monthNames[matchMonth] + '</div>';
+                html += '</div>';
+            }
+        }
+        
+        let color, bgColor, icon;
+        switch (match.result) {
+            case 'win':
+                color = '#22c55e';
+                bgColor = 'rgba(34, 197, 94, 0.2)';
+                icon = '🟢';
+                break;
+            case 'loss':
+                color = '#ef4444';
+                bgColor = 'rgba(239, 68, 68, 0.2)';
+                icon = '🔴';
+                break;
+            case 'draw':
+                color = '#fbbf24';
+                bgColor = 'rgba(251, 191, 36, 0.2)';
+                icon = '🟡';
+                break;
+            default:
+                color = '#94a3b8';
+                bgColor = 'rgba(148, 163, 184, 0.2)';
+                icon = '⚪';
+        }
+        
+        const isNext = idx === nextMatchIdx;
+        const borderStyle = isNext ? 'border: 3px solid #22d3ee; box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);' : '';
+        const rivalShort = match.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim();
+        const rivalDisplay = rivalShort.length > 10 ? rivalShort.substring(0, 9) + '.' : rivalShort;
+        const homeAway = match.isHome ? '🏠' : '✈️';
+        
+        html += '<div onclick="showMatchDetails(' + idx + ')" style="cursor: pointer; text-align: center; min-width: 70px; padding: 8px 6px; background: ' + bgColor + '; border-radius: 8px; ' + borderStyle + '">';
+        html += '<div style="font-size: 12px; margin-bottom: 2px;">' + homeAway + '</div>';
+        html += '<div style="font-size: 20px; margin-bottom: 2px;">' + icon + '</div>';
+        html += '<div style="font-size: 10px; color: white; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65px;">' + rivalDisplay + '</div>';
+        if (match.type === 'played') {
+            html += '<div style="font-size: 11px; color: ' + color + '; font-weight: bold;">' + match.scoreCNT + '-' + match.scoreRival + '</div>';
+        } else {
+            html += '<div style="font-size: 9px; color: #64748b;">Pendent</div>';
+        }
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+    
+    // Scroll al pròxim partit
+    if (nextMatchIdx > 0) {
+        setTimeout(() => {
+            const containerEl = document.getElementById('timeline-container');
+            if (containerEl) {
+                containerEl.scrollLeft = Math.max(0, (nextMatchIdx * 80) - 150);
+            }
+        }, 100);
+    }
+}
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const title = document.getElementById('calendar-month-title');
+    if (!grid || !title) return;
+    
+    const monthNames = ['Gener', 'Febrer', 'Març', 'Abril', 'Maig', 'Juny', 'Juliol', 'Agost', 'Setembre', 'Octubre', 'Novembre', 'Desembre'];
+    const dayNames = ['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'];
+    
+    title.textContent = monthNames[calendarCurrentMonth] + ' ' + calendarCurrentYear;
+    
+    // Primer dia del mes
+    const firstDay = new Date(calendarCurrentYear, calendarCurrentMonth, 1);
+    let startDay = firstDay.getDay() - 1;
+    if (startDay < 0) startDay = 6;
+    
+    // Dies del mes
+    const daysInMonth = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0).getDate();
+    
+    // Partits d'aquest mes
+    const monthMatches = {};
+    allSeasonMatches.forEach((match, idx) => {
+        if (match.date && match.date.getMonth() === calendarCurrentMonth && match.date.getFullYear() === calendarCurrentYear) {
+            const day = match.date.getDate();
+            monthMatches[day] = { ...match, idx: idx };
+        }
+    });
+    
+    let html = '';
+    
+    // Headers dels dies
+    dayNames.forEach(day => {
+        html += '<div style="padding: 8px; font-weight: 600; color: #64748b; font-size: 12px;">' + day + '</div>';
+    });
+    
+    // Espais buits abans del primer dia
+    for (let i = 0; i < startDay; i++) {
+        html += '<div></div>';
+    }
+    
+    // Dies del mes
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const match = monthMatches[day];
+        const isToday = day === today.getDate() && calendarCurrentMonth === today.getMonth() && calendarCurrentYear === today.getFullYear();
+        
+        let bgColor = 'transparent';
+        let icon = '';
+        let extraInfo = '';
+        let cursor = 'default';
+        let onclick = '';
+        
+        if (match) {
+            cursor = 'pointer';
+            onclick = 'onclick="showMatchDetails(' + match.idx + ')"';
+            
+            switch (match.result) {
+                case 'win':
+                    bgColor = 'rgba(34, 197, 94, 0.3)';
+                    icon = '🟢';
+                    break;
+                case 'loss':
+                    bgColor = 'rgba(239, 68, 68, 0.3)';
+                    icon = '🔴';
+                    break;
+                case 'draw':
+                    bgColor = 'rgba(251, 191, 36, 0.3)';
+                    icon = '🟡';
+                    break;
+                default:
+                    bgColor = 'rgba(34, 211, 238, 0.3)';
+                    icon = '⚪';
+            }
+            
+            const rivalShort = match.rival.replace(/C\.N\.|C\.E\.|U\.E\./g, '').trim().substring(0, 8);
+const homeAwayIcon = match.isHome ? '🏠' : '✈️';
+extraInfo = '<div style="font-size: 8px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + homeAwayIcon + ' ' + rivalShort + '</div>';
+            if (match.type === 'played') {
+                extraInfo += '<div style="font-size: 9px; font-weight: bold; color: white;">' + match.scoreCNT + '-' + match.scoreRival + '</div>';
+            } else if (match.time) {
+                extraInfo += '<div style="font-size: 9px; color: #22d3ee;">' + match.time + '</div>';
+            }
+        }
+        
+        const todayBorder = isToday ? 'border: 2px solid #22d3ee;' : '';
+        
+        html += '<div ' + onclick + ' style="padding: 5px; min-height: 60px; background: ' + bgColor + '; border-radius: 8px; cursor: ' + cursor + '; ' + todayBorder + '">';
+        html += '<div style="font-size: 12px; color: white;">' + day + ' ' + icon + '</div>';
+        html += extraInfo;
+        html += '</div>';
+    }
+    
+    grid.innerHTML = html;
+}
+
+function changeCalendarMonth(delta) {
+    calendarCurrentMonth += delta;
+    if (calendarCurrentMonth > 11) {
+        calendarCurrentMonth = 0;
+        calendarCurrentYear++;
+    } else if (calendarCurrentMonth < 0) {
+        calendarCurrentMonth = 11;
+        calendarCurrentYear--;
+    }
+    renderCalendar();
+}
+
+function showMatchDetails(idx) {
+    const match = allSeasonMatches[idx];
+    if (!match) return;
+    
+    // Si és un partit jugat, obrir el detall
+    if (match.type === 'played') {
+        viewMatchFromTemporada(match.matchIdx);
+        return;
+    }
+    
+    // Si és un partit pendent, mostrar info
+    let message = '📅 Pròxim partit\n\n';
+    message += (match.isHome ? '🏠 Casa' : '✈️ Fora') + ' vs ' + match.rival + '\n';
+    message += '📆 ' + match.dateStr + (match.time ? '\n⏰ ' + match.time : '');
+    
+    alert(message);
+}
 function loadTemporadaPartits() {
     const container = document.getElementById('temporada-partits');
     if (!container) return;
@@ -5028,6 +5356,7 @@ function filterTemporada(filter) {
     document.getElementById('filter-proxims').style.background = filter === 'proxims' ? '#3b82f6' : '#334155';
     
     loadTemporadaPartits();
+	loadCalendarData();
 }
 // ============================================
 // 🔥 ESCOLTAR FIREBASE PER PARTITS EN DIRECTE
