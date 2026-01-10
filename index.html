@@ -19059,38 +19059,7 @@ async function loadRivalHistory() {
         });
     }
     
-    // Historial vs CNT
-    let vsWins = 0, vsDraws = 0, vsLosses = 0, vsGF = 0, vsGC = 0;
-    let vsMatches = [];
-    if (actawpData.last_results) {
-        actawpData.last_results.forEach(r => {
-            const t1 = (r.team1 || '').toUpperCase();
-            const t2 = (r.team2 || '').toUpperCase();
-            
-            if (t1.includes(normalizedRival.substring(0, 8)) || t2.includes(normalizedRival.substring(0, 8)) ||
-                normalizedRival.includes(t1.substring(0, 8)) || normalizedRival.includes(t2.substring(0, 8))) {
-                
-                const parts = (r.score || '0-0').split('-');
-                const g1 = parseInt(parts[0]) || 0;
-                const g2 = parseInt(parts[1]) || 0;
-                
-                const cntIsTeam1 = t1.includes('TERRASSA');
-                const gCNT = cntIsTeam1 ? g1 : g2;
-                const gRival = cntIsTeam1 ? g2 : g1;
-                
-                vsGF += gCNT;
-                vsGC += gRival;
-                
-                if (gCNT > gRival) vsWins++;
-                else if (gCNT < gRival) vsLosses++;
-                else vsDraws++;
-                
-                vsMatches.push({ gCNT, gRival, home: cntIsTeam1 });
-            }
-        });
-    }
-    
-    // Buscar dades del rival
+  // Buscar dades del rival PRIMER
     let rivalFormData = null;
     let topScorers = [];
     
@@ -19104,6 +19073,55 @@ async function loadRivalHistory() {
             }
         }
     }
+
+    // Historial vs CNT - buscar a DUES fonts
+    let vsWins = 0, vsDraws = 0, vsLosses = 0, vsGF = 0, vsGC = 0;
+    let vsMatches = [];
+    let processedMatches = new Set();
+    
+    const processResult = (r) => {
+        const t1 = (r.team1 || '').toUpperCase();
+        const t2 = (r.team2 || '').toUpperCase();
+        
+        const rivalInMatch = t1.includes(normalizedRival.substring(0, 8)) || t2.includes(normalizedRival.substring(0, 8)) ||
+                            normalizedRival.includes(t1.substring(0, 8)) || normalizedRival.includes(t2.substring(0, 8));
+        const terrassaInMatch = t1.includes('TERRASSA') || t2.includes('TERRASSA');
+        
+        if (rivalInMatch && terrassaInMatch) {
+            const matchKey = `${t1}-${t2}-${r.score || ''}`;
+            if (processedMatches.has(matchKey)) return;
+            processedMatches.add(matchKey);
+            
+            const parts = (r.score || '0-0').replace(/\s/g, '').split('-');
+            const g1 = parseInt(parts[0]) || 0;
+            const g2 = parseInt(parts[1]) || 0;
+            
+            const cntIsTeam1 = t1.includes('TERRASSA');
+            const gCNT = cntIsTeam1 ? g1 : g2;
+            const gRival = cntIsTeam1 ? g2 : g1;
+            
+            vsGF += gCNT;
+            vsGC += gRival;
+            
+            if (gCNT > gRival) vsWins++;
+            else if (gCNT < gRival) vsLosses++;
+            else vsDraws++;
+            
+            vsMatches.push({ gCNT, gRival, home: cntIsTeam1 });
+        }
+    };
+    
+    // 1. Buscar als nostres resultats
+    if (actawpData.last_results) {
+        actawpData.last_results.forEach(processResult);
+    }
+    
+    // 2. Buscar als resultats del rival
+    if (rivalFormData && rivalFormData.last_results) {
+        rivalFormData.last_results.forEach(processResult);
+    }
+    
+ 
     
     const stats = rivalFormData?.stats || {};
     const formArray = rivalFormData?.form || [];
@@ -19162,31 +19180,10 @@ async function loadRivalHistory() {
                 <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Jornada ${nextMatch.jornada || '?'} · ${nextMatch.date || ''} · ${nextMatch.time || ''}h</div>
             </div>
             
-            <!-- Historial vs CNT -->
+             <!-- Historial vs CNT -->
             <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
                 <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px;">🆚 Historial vs CNT</div>
-                ${vsMatches.length === 0 ? `
-                    <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 12px;">🆕 Primer enfrontament</div>
-                ` : `
-                    <div style="display: flex; justify-content: space-around; text-align: center;">
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: #22c55e;">${vsWins}</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Vict.</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: #fbbf24;">${vsDraws}</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Emp.</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: #ef4444;">${vsLosses}</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Derr.</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 20px; font-weight: 700; color: white;">${vsGF}-${vsGC}</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Gols</div>
-                        </div>
-                    </div>
-                `}
+                ${getHistorialVsCNT(nextRival)}
             </div>
             
             <!-- Stats i Forma -->
