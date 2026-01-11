@@ -13600,38 +13600,30 @@ function renderComparisonTable(players, clickable = false, tableId = 'comparison
     </tr>
 </thead>
         <tbody>
-            ${players.map(p => {
+          ${players.map(p => {
                 const totalBlocks = (p.blocks || 0) + (p.blocatges || 0);
                 const totalXuts = p.gols + (p.xutsFallats || 0);
                 const efic = totalXuts > 0 ? (p.gols / totalXuts * 100) : 0;
                 const eficColor = efic >= 50 ? '#22c55e' : efic >= 30 ? '#fbbf24' : '#ef4444';
                 const mediaGols = p.partidos > 0 ? (p.gols / p.partidos) : 0;
                 
-                // Calcular gols rebuts pel porter
-        const isGoalkeeper = j.numero === 1 || j.numero === 13 || (j.posicio && String(j.posicio).toLowerCase() === 'porter');
-        let golsRebuts = 0;
-        if (isGoalkeeper) {
-            golsRebuts = currentMatch.scoreRival || 0;
-        }
-        
-        const valor = calculatePlayerValue({
-    gols: stats.gols,
-    goalTypes: stats.goalTypes,
-    assistencies: stats.assistencies,
-    infraccions2m: stats.infraccions2m || 0,
-    contrafaltes: stats.contrafaltes || 0,
-    robatoris: stats.robatoris,
-    blocatges: totalBlocks,
-    parades: stats.parades,
-    paradeTypes: stats.paradeTypes || {},
-    faltesRebudes: stats.faltesRebudes || 0,
-    exclusions: stats.exclusions,
-    exclusionTypes: stats.exclusionTypes || { normal: 0, penalty: 0 },
-    penaltyMissed: stats.penaltyMissed,
-    perdues: stats.perdues,
-    xutsFallats: stats.xutsFallats,
-    golsRebuts: golsRebuts
-});
+                const valor = calculatePlayerValue({
+                    gols: p.gols,
+                    goalTypes: p.goalTypes,
+                    assistencies: p.assistencies,
+                    infraccions2m: p.infraccions2m || 0,
+                    contrafaltes: p.contrafaltes || 0,
+                    robatoris: p.robatoris,
+                    blocatges: totalBlocks,
+                    parades: p.parades,
+                    paradeTypes: p.paradeTypes || {},
+                    faltesRebudes: p.faltesRebudes || 0,
+                    exclusions: p.exclusions,
+                    exclusionTypes: p.exclusionTypes || { normal: 0, penalty: 0 },
+                    penaltyMissed: p.penaltyMissed,
+                    perdues: p.perdues,
+                    xutsFallats: p.xutsFallats
+                });
                 
                 const valorColor = valor >= 10 ? '#22c55e' : valor >= 5 ? '#fbbf24' : '#ef4444';
                 
