@@ -14935,6 +14935,10 @@ window.addEventListener('DOMContentLoaded', () => {
         loadAllMatches(selectedTeam);
     }
 });
+// Avís partit a casa Juvenil
+if (!selectedTeam || selectedTeam === 'juvenil') {
+    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 1000);
+}
 // ============================================
 // FUNCIONS PER ESTADÍSTIQUES INDIVIDUALS
 // ============================================
