@@ -14899,6 +14899,10 @@ function selectTeam(team) {
     
     // Carregar dades
     loadAllMatches(team);
+	 // Avís partit a casa Juvenil
+    if (team === 'juvenil') {
+        setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 500);
+    }
 }
 
 async function changeTeam() {
