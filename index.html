@@ -3416,6 +3416,9 @@ body.live-mode {
             🟢 Actualitzat
         </span>
     </div>
+	<!-- 🏆 ÚLTIMS PARTITS JUGATS -->
+<div id="ultims-partits-resum" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;"></div>
+	
  <!-- ⭐ PASTILLES: Pròxim Partit + Anàlisi Rival -->
 <div id="pastilles-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
     
@@ -14186,6 +14189,90 @@ function renderFieldZoneStats() {
         console.error('❌ No s\'ha trobat #goalZonesAnalysisCard');
     }
 }
+// ============================================
+// 🏆 ÚLTIMS PARTITS JUGATS (CADET + JUVENIL)
+// ============================================
+async function renderUltimsPartits() {
+    const baseUrls = {
+        cadet: 'https://joseprico.github.io/cnt_cadet_25-26/',
+        juvenil: 'https://joseprico.github.io/CNT_juvenil_25_26/'
+    };
+
+    let html = '';
+
+    for (const [team, baseUrl] of Object.entries(baseUrls)) {
+        try {
+            // Carregar index.json per saber quins fitxers hi ha
+            const indexResp = await fetch(`${baseUrl}index.json?t=${Date.now()}`);
+            const indexData = await indexResp.json();
+            const files = indexData.files || [];
+            
+            if (files.length === 0) continue;
+
+            // Agafar l'últim fitxer (últim partit)
+            const lastFile = files[files.length - 1];
+            const matchResp = await fetch(`${baseUrl}${lastFile}?t=${Date.now()}`);
+            const match = await matchResp.json();
+
+            const date = new Date(match.data);
+            const dateStr = date.toLocaleDateString('ca-ES', {weekday: 'short', day: 'numeric', month: 'short'});
+            const rival = match.rivalTeam || 'Rival';
+            const locationIcon = (match.matchLocation === 'home' || !match.matchLocation) ? '🏠' : '✈️';
+
+            // Resultat
+            let resultat, colorResultat;
+            if (match.scoreCNT > match.scoreRival) {
+                resultat = 'VICTÒRIA';
+                colorResultat = '#10b981';
+            } else if (match.scoreCNT < match.scoreRival) {
+                resultat = 'DERROTA';
+                colorResultat = '#ef4444';
+            } else {
+                resultat = 'EMPAT';
+                colorResultat = '#f59e0b';
+            }
+
+            // Colors segons equip
+            const isJuvenil = team === 'juvenil';
+            const gradient = isJuvenil
+                ? 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)'
+                : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+            const emoji = isJuvenil ? '🟦' : '⬛';
+            const teamName = isJuvenil ? 'JUVENIL' : 'CADET';
+
+            html += `
+            <div onclick="obrirUltimPartit('${team}')" style="cursor: pointer; background: ${gradient}; border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: 700; opacity: 0.8;">${emoji} ÚLTIM ${teamName}</span>
+                    <span style="font-size: 11px; opacity: 0.6;">${dateStr}</span>
+                </div>
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${locationIcon} vs ${rival}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">${match.scoreCNT} - ${match.scoreRival}</span>
+                    <span style="font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: ${colorResultat}; color: white;">${resultat}</span>
+                </div>
+            </div>`;
+        } catch (e) {
+            console.error(`❌ Error carregant últim partit ${team}:`, e);
+        }
+    }
+
+    const container = document.getElementById('ultims-partits-resum');
+    if (container) container.innerHTML = html;
+}
+function obrirUltimPartit(team) {
+    const currentTeam = localStorage.getItem('selectedTeam') || 'juvenil';
+    if (currentTeam === team) {
+        // Ja estem a l'equip correcte, obrir directament l'últim partit
+        viewMatch(0);
+    } else {
+        // Canviar d'equip i després obrir l'últim partit
+        selectTeam(team);
+        setTimeout(() => { viewMatch(0); }, 1500);
+    }
+}
 function renderSwimRacesStats() {
     if (allMatches.length === 0) return '';
     
@@ -14899,10 +14986,11 @@ function selectTeam(team) {
     
     // Carregar dades
     loadAllMatches(team);
+	 renderUltimsPartits();
 	 // Avís partit a casa Juvenil
    // if (team === 'juvenil') {
-    //    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 500);
-    //}
+     //   setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 500);
+   // }
 }
 
 async function changeTeam() {
@@ -14933,11 +15021,12 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26`;
         
         loadAllMatches(selectedTeam);
+		renderUltimsPartits();
     }
 });
 // Avís partit a casa Juvenil
 //if (!selectedTeam || selectedTeam === 'juvenil') {
-//    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 1000);
+  //  setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 1000);
 //}
 // ============================================
 // FUNCIONS PER ESTADÍSTIQUES INDIVIDUALS
