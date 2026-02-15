@@ -14900,9 +14900,9 @@ function selectTeam(team) {
     // Carregar dades
     loadAllMatches(team);
 	 // Avís partit a casa Juvenil
-    if (team === 'juvenil') {
-        setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 500);
-    }
+   // if (team === 'juvenil') {
+    //    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 500);
+    //}
 }
 
 async function changeTeam() {
@@ -14936,9 +14936,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 // Avís partit a casa Juvenil
-if (!selectedTeam || selectedTeam === 'juvenil') {
-    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 1000);
-}
+//if (!selectedTeam || selectedTeam === 'juvenil') {
+//    setTimeout(() => { alert('⚠️ ATENCIÓ: El proper partit del Juvenil es juga a CASA!'); }, 1000);
+//}
 // ============================================
 // FUNCIONS PER ESTADÍSTIQUES INDIVIDUALS
 // ============================================
