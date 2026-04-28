@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temporada 25/26 · Juvenil · CN Terrassa Waterpolo</title>
+<meta name="description" content="Anuari de la temporada 2025-26 de l'equip juvenil de waterpolo del CN Terrassa.">
+<link rel="icon" type="image/png" href="cnt-stats-192.png">
+<style>
+  :root {
+    --bg-0: #050b1a;
+    --bg-1: #0c1e3a;
+    --bg-2: #1e3a5a;
+    --accent: #0891b2;
+    --accent-2: #22d3ee;
+    --accent-glow: rgba(34, 211, 238, 0.35);
+    --gold: #fbbf24;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #94a3b8;
+    --ink-4: #64748b;
+    --line: rgba(148, 163, 184, 0.18);
+    --card: rgba(15, 30, 56, 0.7);
+    --card-hi: rgba(8, 145, 178, 0.12);
+    --win: #22c55e;
+    --loss: #ef4444;
+    --draw: #f59e0b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--bg-0);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--accent-2); color: var(--bg-0); }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ────────── Hero ────────── */
+  .hero {
+    position: relative;
+    padding: 90px 0 110px;
+    background:
+      radial-gradient(circle at 80% 10%, rgba(34, 211, 238, 0.18), transparent 55%),
+      radial-gradient(circle at 10% 90%, rgba(8, 145, 178, 0.20), transparent 50%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 70%, var(--bg-0));
+    pointer-events: none;
+  }
+  .hero .wrap { position: relative; z-index: 2; }
+  .hero .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    font-size: 11px;
+    color: var(--accent-2);
+    font-weight: 700;
+    margin-bottom: 22px;
+  }
+  .hero .eyebrow::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 14px var(--accent-glow);
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(56px, 11vw, 144px);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    font-weight: 900;
+    background: linear-gradient(180deg, #fff 0%, #7dd3fc 80%, #0891b2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero h1 .slash { color: var(--accent-2); -webkit-text-fill-color: var(--accent-2); }
+  .hero .badge-row {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .hero .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 145, 178, 0.15);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--ink-2);
+    backdrop-filter: blur(6px);
+  }
+  .hero .pill strong { color: var(--ink); font-weight: 700; }
+  .hero .pill.live::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-glow); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 8px transparent; }
+  }
+
+  .hero .scroll-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--ink-3);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    z-index: 3;
+  }
+
+  /* ────────── Section ────────── */
+  section.bloc {
+    padding: 80px 0;
+    position: relative;
+  }
+  .bloc-head {
+    margin-bottom: 40px;
+  }
+  .bloc-head .label {
+    display: inline-block;
+    color: var(--accent-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .bloc-head h2 {
+    margin: 0;
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+  }
+  .bloc-head .lede {
+    margin-top: 14px;
+    color: var(--ink-3);
+    font-size: 17px;
+    max-width: 600px;
+  }
+
+  /* ────────── Pulse cards ────────── */
+  .pulse {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .stat-card {
+    position: relative;
+    background:
+      linear-gradient(140deg, rgba(8, 145, 178, 0.18), rgba(15, 30, 56, 0.5)),
+      var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 26px 24px;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+    pointer-events: none;
+  }
+  .stat-card .label {
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+  .stat-card .value {
+    font-size: clamp(44px, 6vw, 64px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .delta {
+    margin-top: 10px;
+    color: var(--accent-2);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .stat-card .delta.dim { color: var(--ink-3); font-weight: 400; }
+
+  /* ────────── Form trail ────────── */
+  .form-trail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
+  }
+  .form-chip {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+  }
+  .form-chip.W { background: var(--win); }
+  .form-chip.L { background: var(--loss); }
+  .form-chip.D { background: var(--draw); }
+  .form-chip[title] { cursor: help; }
+  .form-legend {
+    margin-top: 14px;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+
+  /* ────────── Standings ────────── */
+  .standings-wrap {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  table.standings {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.standings thead th {
+    background: rgba(8, 145, 178, 0.12);
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 14px 10px;
+    text-align: right;
+  }
+  table.standings thead th:nth-child(1),
+  table.standings thead th:nth-child(2) { text-align: left; }
+  table.standings tbody td {
+    padding: 14px 10px;
+    border-top: 1px solid var(--line);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+  table.standings tbody td:nth-child(1) {
+    text-align: left;
+    color: var(--ink-3);
+    font-weight: 700;
+    width: 36px;
+  }
+  table.standings tbody td:nth-child(2) {
+    text-align: left;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  table.standings tr.us {
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.1), transparent 60%);
+  }
+  table.standings tr.us td {
+    color: var(--accent-2);
+    font-weight: 700;
+  }
+  table.standings tr.us td:nth-child(1)::before {
+    content: '▶ ';
+    color: var(--accent-2);
+  }
+
+  /* ────────── Match cards ────────── */
+  .matches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+  .match {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .match::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+  }
+  .match.W::after { background: var(--win); }
+  .match.L::after { background: var(--loss); }
+  .match.D::after { background: var(--draw); }
+  .match:hover {
+    transform: translateY(-2px);
+    border-color: rgba(34, 211, 238, 0.3);
+  }
+  .match .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .match .home-tag {
+    background: rgba(34, 211, 238, 0.12);
+    color: var(--accent-2);
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+  }
+  .match .home-tag.away {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--ink-3);
+  }
+  .match .rival {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.2;
+  }
+  .match .scoreline {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .match .score {
+    font-size: 38px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .match .score.W { color: var(--win); }
+  .match .score.L { color: var(--loss); }
+  .match .score.D { color: var(--draw); }
+  .match .quarters {
+    color: var(--ink-3);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 12px;
+  }
+  .match .top {
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .match .top .star { color: var(--gold); margin-right: 6px; }
+
+  /* ────────── Player cards ────────── */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+  }
+  .player-card {
+    background:
+      linear-gradient(160deg, rgba(8, 145, 178, 0.2), rgba(15, 30, 56, 0.4)),
+      var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .player-card.gold {
+    border-color: rgba(251, 191, 36, 0.4);
+    background:
+      linear-gradient(160deg, rgba(251, 191, 36, 0.18), rgba(15, 30, 56, 0.4)),
+      var(--card);
+  }
+  .player-card .crown {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--gold);
+  }
+  .player-card .pos {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--ink-3);
+    margin-bottom: 14px;
+  }
+  .player-card .name {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.15;
+    min-height: 2.4em;
+    margin-bottom: 14px;
+  }
+  .player-card .big {
+    font-size: 50px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--accent-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .player-card.gold .big { color: var(--gold); }
+  .player-card .unit {
+    margin-top: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+  }
+  .player-card .submetrics {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .player-card .submetrics b { color: var(--ink); font-weight: 700; }
+
+  /* roster table (juvenil) */
+  .roster-wrap {
+    margin-top: 28px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  table.roster {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.roster thead th {
+    background: rgba(8, 145, 178, 0.12);
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 14px 10px;
+    text-align: right;
+  }
+  table.roster thead th:nth-child(1),
+  table.roster thead th:nth-child(2) { text-align: left; }
+  table.roster tbody td {
+    padding: 12px 10px;
+    border-top: 1px solid var(--line);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+  table.roster tbody td:nth-child(1) {
+    text-align: left;
+    color: var(--accent-2);
+    font-weight: 700;
+    width: 36px;
+  }
+  table.roster tbody td:nth-child(2) {
+    text-align: left;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ────────── Highlights ────────── */
+  .highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .highlight {
+    position: relative;
+    padding: 28px 24px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .highlight::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+    pointer-events: none;
+  }
+  .highlight .tag {
+    display: inline-block;
+    color: var(--accent-2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .highlight .head {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .highlight .body {
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+
+  /* ────────── Footer ────────── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 50px 0 70px;
+    text-align: center;
+    color: var(--ink-4);
+    font-size: 13px;
+    background: var(--bg-0);
+  }
+  footer .brand {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  footer a { color: var(--accent-2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ────────── States ────────── */
+  .loading, .error {
+    text-align: center;
+    color: var(--ink-3);
+    padding: 28px;
+    font-style: italic;
+    font-size: 14px;
+  }
+  .error { color: var(--loss); }
+
+  @media print {
+    body { background: white; color: black; }
+    .hero, .stat-card, .match, .standings-wrap, .player-card, .highlight, .roster-wrap {
+      background: white !important; color: black !important;
+      border-color: #ccc !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ HERO ════════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">CN Terrassa · Juvenil</div>
+    <h1>Temporada<br>25<span class="slash">/</span>26</h1>
+    <div class="badge-row">
+      <span class="pill"><strong>Entrenador:</strong> Jordi Busquets</span>
+      <span class="pill" id="pillJornada">Jornada —</span>
+      <span class="pill" id="pillUpdated">Actualitzat —</span>
+    </div>
+  </div>
+  <div class="scroll-hint">↓ Desplaça per veure la temporada</div>
+</section>
+
+<!-- ════════════════ PULSE ════════════════ -->
+<section class="bloc">
+  <div class="wrap">
+    <div class="bloc-head">
+      <div class="label">El pols de la temporada</div>
+      <h2>Així va l'equip</h2>
+      <p class="lede">Els números clau, en directe des de l'acta oficial de la federació.</p>
+    </div>
+    <div id="pulseGrid" class="pulse">
+      <div class="loading">Carregant dades…</div>
+    </div>
+    <div id="formTrail"></div>
+  </div>
+</section>
+
+<!-- ════════════════ STANDINGS ════════════════ -->
+<section class="bloc">
+  <div class="wrap">
+    <div class="bloc-head">
+      <div class="label">La lliga</div>
+      <h2>Classificació</h2>
+      <p class="lede">Posició setmanal a la classificació de la divisió juvenil.</p>
+    </div>
+    <div id="standingsBox">
+      <div class="loading">Carregant classificació…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ MATCHES ════════════════ -->
+<section class="bloc">
+  <div class="wrap">
+    <div class="bloc-head">
+      <div class="label">Cada partit</div>
+      <h2>Calendari</h2>
+      <p class="lede">Tots els partits jugats aquesta temporada, amb el resultat per quart i el millor anotador.</p>
+    </div>
+    <div id="matchesGrid" class="matches">
+      <div class="loading">Carregant partits…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ PLAYERS ════════════════ -->
+<section class="bloc">
+  <div class="wrap">
+    <div class="bloc-head">
+      <div class="label">La plantilla</div>
+      <h2>Els protagonistes</h2>
+      <p class="lede">Top 4 golejadors i tot el detall de la plantilla en una sola taula.</p>
+    </div>
+    <div id="playersGrid" class="players-grid">
+      <div class="loading">Carregant plantilla…</div>
+    </div>
+    <div id="rosterBox"></div>
+  </div>
+</section>
+
+<!-- ════════════════ HIGHLIGHTS ════════════════ -->
+<section class="bloc">
+  <div class="wrap">
+    <div class="bloc-head">
+      <div class="label">Records</div>
+      <h2>Moments clau</h2>
+      <p class="lede">Les fites de la temporada calculades automàticament a partir de les actes.</p>
+    </div>
+    <div id="highlightsBox" class="highlights">
+      <div class="loading">Calculant rècords…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="brand">CN Terrassa · Waterpolo Juvenil</div>
+    <div>Temporada 2025–26 · Dades de la web pública del club i ACTAWP/FCN</div>
+    <div style="margin-top: 14px;">
+      <a href="index.html">Tornar a l'app d'estadístiques</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+// ─────────── Config ───────────
+const TEAM_KEY = 'juvenil';
+const REPO_BASE = 'https://joseprico.github.io/CNT_juvenil_25_26/';
+const ACTAWP_FILE = 'actawp_juvenil_data.json';
+
+// ─────────── Helpers ───────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso.split('T')[0] || iso;
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
+  return `${day} ${months[d.getMonth()]}. ${d.getFullYear()}`;
+}
+function fmtDateShort(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso.split('T')[0] || iso;
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${mon}`;
+}
+function safeNum(x) { return Number.isFinite(+x) ? +x : 0; }
+function pct(num, den) { return den > 0 ? Math.round((num / den) * 100) : 0; }
+function startCase(s) {
+  if (!s) return '';
+  return s.toString().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+function el(tag, opts = {}, children = []) {
+  const e = document.createElement(tag);
+  if (opts.class) e.className = opts.class;
+  if (opts.text != null) e.textContent = opts.text;
+  if (opts.html != null) e.innerHTML = opts.html;
+  if (opts.attrs) for (const k in opts.attrs) e.setAttribute(k, opts.attrs[k]);
+  for (const c of children) if (c) e.appendChild(c);
+  return e;
+}
+
+// ─────────── Data loader ───────────
+async function fetchJSON(url) {
+  const r = await fetch(url, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return r.json();
+}
+
+async function loadAll() {
+  const [indexJson, actawp] = await Promise.all([
+    fetchJSON(REPO_BASE + 'index.json'),
+    fetchJSON(REPO_BASE + ACTAWP_FILE),
+  ]);
+  const matches = await Promise.all(
+    indexJson.files.map(f =>
+      fetchJSON(REPO_BASE + f).then(m => ({ file: f, ...m })).catch(() => null)
+    )
+  );
+  const valid = matches.filter(m => m && m.scoreCNT != null);
+  valid.sort((a, b) => new Date(a.data) - new Date(b.data));
+  return { indexJson, actawp, matches: valid };
+}
+
+// ─────────── Renderers ───────────
+function renderHeaderMeta(actawp, matches) {
+  const ts = actawp?.metadata?.downloaded_at;
+  if (ts) {
+    document.getElementById('pillUpdated').innerHTML =
+      '<strong>Actualitzat:</strong> ' + fmtDate(ts);
+  }
+  const totalJor = (actawp?.last_results?.length || 0) + (actawp?.upcoming_matches?.length || 0);
+  const playedJor = actawp?.team_stats?.['Partits jugats'] ?? matches.length;
+  document.getElementById('pillJornada').innerHTML =
+    `<strong>Jornada:</strong> ${playedJor}${totalJor ? ' / ' + totalJor : ''}`;
+}
+
+function renderPulse(actawp, matches) {
+  const t = actawp?.team_stats || {};
+  const pj = safeNum(t['Partits jugats']) || matches.length;
+  const pg = safeNum(t['Partits guanyats']);
+  const pp = safeNum(t['Partits perduts']);
+  const pe = safeNum(t['Partits empatats']);
+  const gf = safeNum(t['En favor']);
+  const gc = safeNum(t['En contra']);
+  const punts = safeNum(t['Punts']);
+  const ranking = actawp?.ranking || [];
+  const ourRow = ranking.find(r => (r.equip || '').toUpperCase().includes('TERRASSA'));
+  const pos = ourRow?.posicio || '—';
+
+  const cells = [
+    { label: 'Posició', value: pos, delta: ranking.length ? `de ${ranking.length} equips` : '', dim: true },
+    { label: 'Punts', value: punts, delta: pj ? `${(punts / Math.max(pj, 1)).toFixed(2)} per partit` : '', dim: true },
+    { label: 'Partits guanyats', value: pg, delta: pj ? `${pct(pg, pj)}% de ${pj}` : '' },
+    { label: 'Diferència de gols', value: (gf - gc >= 0 ? '+' : '') + (gf - gc), delta: `${gf} a favor · ${gc} en contra`, dim: true },
+  ];
+
+  const grid = document.getElementById('pulseGrid');
+  grid.innerHTML = '';
+  for (const c of cells) {
+    grid.appendChild(el('div', { class: 'stat-card' }, [
+      el('div', { class: 'label', text: c.label }),
+      el('div', { class: 'value', text: c.value }),
+      c.delta ? el('div', { class: 'delta' + (c.dim ? ' dim' : ''), text: c.delta }) : null,
+    ]));
+  }
+
+  // Form trail
+  const trail = document.getElementById('formTrail');
+  trail.innerHTML = '';
+  if (matches.length) {
+    const wrap = el('div');
+    wrap.appendChild(el('div', { class: 'form-trail' },
+      matches.map(m => {
+        const cnt = safeNum(m.scoreCNT), riv = safeNum(m.scoreRival);
+        const result = cnt > riv ? 'W' : (cnt < riv ? 'L' : 'D');
+        const chip = el('div', {
+          class: 'form-chip ' + result,
+          text: result,
+          attrs: { title: `${startCase(m.rivalTeam)} · ${cnt}–${riv} (${fmtDateShort(m.data)})` }
+        });
+        return chip;
+      })
+    ));
+    wrap.appendChild(el('div', {
+      class: 'form-legend',
+      text: `Forma de l'equip · ${matches.length} partits cronològicament del primer al darrer`
+    }));
+    trail.appendChild(wrap);
+  }
+}
+
+function renderStandings(actawp) {
+  const box = document.getElementById('standingsBox');
+  const ranking = actawp?.ranking || [];
+  if (!ranking.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha classificació disponible.</div>';
+    return;
+  }
+  const wrap = el('div', { class: 'standings-wrap' });
+  const table = el('table', { class: 'standings' });
+  const thead = el('thead');
+  const trh = el('tr');
+  ['#', 'Equip', 'PJ', 'G', 'E', 'P', 'GF', 'GC', '+/−', 'Pts'].forEach(h =>
+    trh.appendChild(el('th', { text: h })));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tbody = el('tbody');
+  for (const r of ranking) {
+    const tr = el('tr');
+    if ((r.equip || '').toUpperCase().includes('TERRASSA')) tr.className = 'us';
+    [
+      r.posicio,
+      startCase(r.equip),
+      r.partits, r.guanyats, r.empatats, r.perduts,
+      r.gols_favor, r.gols_contra, r.diferencia,
+      r.punts
+    ].forEach(v => tr.appendChild(el('td', { text: v ?? '—' })));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  box.innerHTML = '';
+  box.appendChild(wrap);
+}
+
+function topScorerOfMatch(match) {
+  const players = match.jugadors || [];
+  let best = null;
+  for (const p of players) {
+    const g = safeNum(p?.estadistiques?.gols);
+    if (g > 0 && (!best || g > best.g)) {
+      best = { name: p.nom, num: p.numero, g };
+    }
+  }
+  return best;
+}
+
+function renderMatches(matches) {
+  const box = document.getElementById('matchesGrid');
+  box.innerHTML = '';
+  if (!matches.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha partits enregistrats.</div>';
+    return;
+  }
+  // Display newest first for the modern feel
+  const reversed = [...matches].reverse();
+  for (const m of reversed) {
+    const home = m.matchLocation === 'home';
+    const cnt = safeNum(m.scoreCNT);
+    const riv = safeNum(m.scoreRival);
+    const result = cnt > riv ? 'W' : (cnt < riv ? 'L' : 'D');
+    const top = topScorerOfMatch(m);
+    const ps = m.periodScores || {};
+    const quarters = ['q1', 'q2', 'q3', 'q4']
+      .map(q => ps[q] ? `${ps[q].cnt ?? 0}–${ps[q].rival ?? 0}` : null)
+      .filter(Boolean)
+      .join(' · ');
+
+    const card = el('div', { class: 'match ' + result });
+    card.appendChild(el('div', { class: 'head' }, [
+      el('span', { text: fmtDateShort(m.data) }),
+      el('span', { class: 'home-tag' + (home ? '' : ' away'), text: home ? 'Local' : 'Visitant' }),
+    ]));
+    card.appendChild(el('div', { class: 'rival', text: startCase(m.rivalTeam || '—') }));
+    const sl = el('div', { class: 'scoreline' });
+    sl.appendChild(el('div', { class: 'score ' + result, text: `${cnt}–${riv}` }));
+    card.appendChild(sl);
+    if (quarters) card.appendChild(el('div', { class: 'quarters', text: quarters }));
+    if (top) {
+      card.appendChild(el('div', { class: 'top' }, [
+        el('span', { class: 'star', text: '★' }),
+        document.createTextNode(`${startCase(top.name)} · ${top.g} gol${top.g === 1 ? '' : 's'}`),
+      ]));
+    }
+    box.appendChild(card);
+  }
+}
+
+function renderPlayers(actawp) {
+  const players = (actawp?.players || [])
+    .filter(p => safeNum(p.PJ) > 0 || safeNum(p.GT) > 0)
+    .map(p => ({
+      name: p.Nombre,
+      pj: safeNum(p.PJ),
+      gt: safeNum(p.GT),
+      g: safeNum(p.G),
+      gp: safeNum(p.GP),
+      ex: safeNum(p.EX),
+      ta: safeNum(p.TA),
+      tr: safeNum(p.TR),
+      pf: safeNum(p.PF),
+    }));
+
+  const top = [...players].sort((a, b) => b.gt - a.gt).slice(0, 4);
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = '';
+  if (!top.length) {
+    grid.innerHTML = '<div class="loading">Encara no hi ha dades.</div>';
+  } else {
+    const titles = ['Pichichi', '#2 golejador', '#3 golejador', '#4 golejador'];
+    top.forEach((p, i) => {
+      const card = el('div', { class: 'player-card' + (i === 0 ? ' gold' : '') });
+      if (i === 0) card.appendChild(el('div', { class: 'crown', text: '♛' }));
+      card.appendChild(el('div', { class: 'pos', text: titles[i] }));
+      card.appendChild(el('div', { class: 'name', text: startCase(p.name) }));
+      card.appendChild(el('div', { class: 'big', text: p.gt }));
+      card.appendChild(el('div', { class: 'unit', text: 'gols totals' }));
+      card.appendChild(el('div', { class: 'submetrics' }, [
+        el('span', { html: `<b>${p.pj}</b> partits` }),
+        el('span', { html: `<b>${p.ex}</b> excl.` }),
+      ]));
+      grid.appendChild(card);
+    });
+  }
+
+  // Roster
+  const rosterBox = document.getElementById('rosterBox');
+  rosterBox.innerHTML = '';
+  if (!players.length) return;
+  const sorted = [...players].sort((a, b) => b.gt - a.gt || b.pj - a.pj);
+  const wrap = el('div', { class: 'roster-wrap' });
+  const tbl = el('table', { class: 'roster' });
+  const thead = el('thead');
+  const trh = el('tr');
+  ['#', 'Jugador', 'PJ', 'GT', 'Penals', 'EX', 'PF'].forEach(h =>
+    trh.appendChild(el('th', { text: h })));
+  thead.appendChild(trh);
+  tbl.appendChild(thead);
+  const tbody = el('tbody');
+  sorted.forEach((p, i) => {
+    const tr = el('tr');
+    [i + 1, startCase(p.name), p.pj, p.gt, p.gp, p.ex, p.pf]
+      .forEach(v => tr.appendChild(el('td', { text: v })));
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  wrap.appendChild(tbl);
+  rosterBox.appendChild(wrap);
+}
+
+function renderHighlights(matches) {
+  const box = document.getElementById('highlightsBox');
+  box.innerHTML = '';
+  if (!matches.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha rècords.</div>';
+    return;
+  }
+
+  let bestWin = null, worstLoss = null, mostGoals = null,
+      bestStreak = 0, currentStreak = 0,
+      bestStreakRange = null, currentRange = null,
+      bestIndividual = null, mostExclusionsMatch = null;
+
+  matches.forEach(m => {
+    const cnt = safeNum(m.scoreCNT);
+    const riv = safeNum(m.scoreRival);
+    const diff = cnt - riv;
+
+    if (diff > 0) {
+      if (!bestWin || diff > bestWin.diff) bestWin = { ...m, diff };
+      currentStreak++;
+      if (!currentRange) currentRange = { start: m.data, end: m.data };
+      else currentRange.end = m.data;
+      if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+        bestStreakRange = { ...currentRange };
+      }
+    } else {
+      currentStreak = 0;
+      currentRange = null;
+      if (diff < 0) {
+        const margin = Math.abs(diff);
+        if (!worstLoss || margin > worstLoss.margin) worstLoss = { ...m, margin };
+      }
+    }
+
+    const total = cnt + riv;
+    if (!mostGoals || total > mostGoals.total) mostGoals = { ...m, total };
+
+    (m.jugadors || []).forEach(p => {
+      const g = safeNum(p?.estadistiques?.gols);
+      if (g > 0 && (!bestIndividual || g > bestIndividual.g)) {
+        bestIndividual = { name: p.nom, g, rival: m.rivalTeam, date: m.data };
+      }
+    });
+
+    const totalEx = (m.jugadors || []).reduce(
+      (a, p) => a + safeNum(p?.estadistiques?.exclusions), 0
+    );
+    if (!mostExclusionsMatch || totalEx > mostExclusionsMatch.ex) {
+      mostExclusionsMatch = { ...m, ex: totalEx };
+    }
+  });
+
+  const items = [];
+  if (bestWin) items.push({
+    tag: 'Victòria més contundent',
+    head: `${safeNum(bestWin.scoreCNT)}–${safeNum(bestWin.scoreRival)} · ${startCase(bestWin.rivalTeam)}`,
+    body: `${fmtDate(bestWin.data)} · diferència de ${bestWin.diff} gols`,
+  });
+  if (worstLoss) items.push({
+    tag: 'Derrota més dura',
+    head: `${safeNum(worstLoss.scoreCNT)}–${safeNum(worstLoss.scoreRival)} · ${startCase(worstLoss.rivalTeam)}`,
+    body: `${fmtDate(worstLoss.data)} · ${worstLoss.margin} gols de marge`,
+  });
+  if (mostGoals) items.push({
+    tag: 'Partit més golejador',
+    head: `${mostGoals.total} gols a la piscina`,
+    body: `${startCase(mostGoals.rivalTeam)} · ${fmtDate(mostGoals.data)} · ${safeNum(mostGoals.scoreCNT)}–${safeNum(mostGoals.scoreRival)}`,
+  });
+  if (bestIndividual) items.push({
+    tag: 'Millor partit individual',
+    head: `${startCase(bestIndividual.name)} · ${bestIndividual.g} gols`,
+    body: `Contra ${startCase(bestIndividual.rival)} · ${fmtDate(bestIndividual.date)}`,
+  });
+  if (bestStreak >= 2 && bestStreakRange) items.push({
+    tag: 'Ratxa més llarga',
+    head: `${bestStreak} victòries seguides`,
+    body: `Del ${fmtDate(bestStreakRange.start)} al ${fmtDate(bestStreakRange.end)}`,
+  });
+  if (mostExclusionsMatch && mostExclusionsMatch.ex > 0) items.push({
+    tag: 'Partit amb més tensió',
+    head: `${mostExclusionsMatch.ex} exclusions del CNT`,
+    body: `Contra ${startCase(mostExclusionsMatch.rivalTeam)} · ${fmtDate(mostExclusionsMatch.data)}`,
+  });
+
+  if (!items.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha prou partits per calcular rècords.</div>';
+    return;
+  }
+
+  for (const r of items) {
+    box.appendChild(el('div', { class: 'highlight' }, [
+      el('div', { class: 'tag', text: r.tag }),
+      el('div', { class: 'head', text: r.head }),
+      el('div', { class: 'body', text: r.body }),
+    ]));
+  }
+}
+
+// ─────────── Boot ───────────
+(async function () {
+  try {
+    const { indexJson, actawp, matches } = await loadAll();
+    renderHeaderMeta(actawp, matches);
+    renderPulse(actawp, matches);
+    renderStandings(actawp);
+    renderMatches(matches);
+    renderPlayers(actawp);
+    renderHighlights(matches);
+  } catch (err) {
+    console.error(err);
+    document.querySelectorAll('.loading').forEach(n => {
+      n.className = 'error';
+      n.textContent = 'No s\'han pogut carregar les dades. Comprova la connexió.';
+    });
+  }
+})();
+</script>
+</body>
+</html>

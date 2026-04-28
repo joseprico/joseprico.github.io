@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anuari 2025-26 · Cadet · CN Terrassa Waterpolo</title>
+<meta name="description" content="Anuari de la temporada 2025-26 de l'equip cadet de waterpolo del CN Terrassa.">
+<link rel="icon" type="image/png" href="cnt-stats-192.png">
+<style>
+  :root {
+    --ink: #0f172a;
+    --ink-soft: #334155;
+    --ink-faint: #64748b;
+    --paper: #fbfaf6;
+    --paper-2: #f3f1ea;
+    --rule: #1e293b;
+    --rule-soft: #cbc8bd;
+    --accent: #b45309;
+    --accent-soft: #f59e0b;
+    --win: #166534;
+    --loss: #991b1b;
+    --draw: #92400e;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', 'Liberation Serif', serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 28px; }
+  .wrap-narrow { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+  /* ─────────── Masthead ─────────── */
+  .masthead {
+    border-top: 12px solid var(--rule);
+    border-bottom: 4px double var(--rule);
+    padding: 22px 0 20px;
+    text-align: center;
+    background: var(--paper);
+  }
+  .masthead .kicker {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.42em;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .masthead h1 {
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(48px, 8vw, 92px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    font-variant: small-caps;
+  }
+  .masthead .sub {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 18px;
+    margin: 0;
+  }
+  .masthead .meta {
+    margin-top: 18px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+  .masthead .meta span::before {
+    content: '·';
+    margin-right: 22px;
+    color: var(--rule-soft);
+  }
+  .masthead .meta span:first-child::before { content: ''; margin: 0; }
+
+  /* ─────────── Sumari ─────────── */
+  .toc {
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 18px 0;
+    margin-bottom: 40px;
+  }
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0;
+    counter-reset: chapter;
+  }
+  .toc li {
+    counter-increment: chapter;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 4px 16px;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .toc li:last-child { border-right: none; }
+  .toc li::before {
+    content: counter(chapter, upper-roman) ". ";
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+
+  /* ─────────── Section heading ─────────── */
+  section.chapter {
+    margin: 0 0 70px;
+    padding-top: 24px;
+    counter-increment: section;
+  }
+  .chapter-head {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .chapter-head .num {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.36em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .chapter-head h2 {
+    font-family: Georgia, serif;
+    font-size: clamp(30px, 4.5vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .chapter-head .stand {
+    width: 60px;
+    height: 1px;
+    background: var(--ink);
+    margin: 14px auto 0;
+  }
+  .chapter-head .lede {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 16px;
+    max-width: 560px;
+    margin: 14px auto 0;
+  }
+
+  /* ─────────── Big-number panel ─────────── */
+  .numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .numbers .cell {
+    padding: 22px 14px;
+    text-align: center;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .numbers .cell:last-child { border-right: none; }
+  .numbers .label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .numbers .value {
+    font-family: Georgia, serif;
+    font-size: clamp(38px, 6vw, 60px);
+    line-height: 1;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .numbers .delta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  @media (max-width: 720px) {
+    .numbers { grid-template-columns: repeat(2, 1fr); }
+    .numbers .cell:nth-child(2) { border-right: none; }
+    .numbers .cell:nth-child(1), .numbers .cell:nth-child(2) {
+      border-bottom: 1px solid var(--rule-soft);
+    }
+  }
+
+  /* ─────────── Drop cap article ─────────── */
+  .article p { margin: 0 0 14px; text-align: justify; hyphens: auto; }
+  .article p:first-of-type::first-letter {
+    font-family: Georgia, serif;
+    font-size: 64px;
+    line-height: 0.9;
+    float: left;
+    padding: 6px 10px 0 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ─────────── Classificació ─────────── */
+  table.standings {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 14px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  table.standings thead th {
+    border-top: 2px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 8px 6px;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  table.standings thead th:nth-child(1),
+  table.standings thead th:nth-child(2) { text-align: left; }
+  table.standings tbody td {
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  table.standings tbody td:nth-child(1) {
+    text-align: left;
+    color: var(--ink-faint);
+    font-weight: 600;
+    width: 32px;
+  }
+  table.standings tbody td:nth-child(2) {
+    text-align: left;
+    font-family: Georgia, serif;
+    font-size: 15px;
+  }
+  table.standings tr.us td {
+    background: var(--paper-2);
+    font-weight: 700;
+    color: var(--ink);
+  }
+  table.standings tr.us td:nth-child(2)::after {
+    content: ' ●';
+    color: var(--accent);
+  }
+
+  /* ─────────── Calendari ─────────── */
+  ul.calendar {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  ul.calendar li {
+    display: grid;
+    grid-template-columns: 80px 56px 1fr 110px 90px;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+  }
+  ul.calendar .date {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+  ul.calendar .loc {
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    border: 1px solid var(--rule-soft);
+    border-radius: 999px;
+    padding: 2px 8px;
+    width: max-content;
+  }
+  ul.calendar .loc.home { color: var(--ink); border-color: var(--ink); }
+  ul.calendar .rival {
+    font-family: Georgia, serif;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  ul.calendar .score {
+    text-align: right;
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  ul.calendar .score.W { color: var(--win); }
+  ul.calendar .score.L { color: var(--loss); }
+  ul.calendar .score.D { color: var(--draw); }
+  ul.calendar .badge {
+    text-align: right;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+  ul.calendar .badge.W { color: var(--win); }
+  ul.calendar .badge.L { color: var(--loss); }
+  ul.calendar .badge.D { color: var(--draw); }
+  ul.calendar .topscorer {
+    grid-column: 3 / -1;
+    margin-top: 4px;
+    font-style: italic;
+    font-family: Georgia, serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  @media (max-width: 720px) {
+    ul.calendar li {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "date  badge"
+        "rival score"
+        "loc   loc"
+        "ts    ts";
+      gap: 4px 12px;
+    }
+    ul.calendar .date { grid-area: date; }
+    ul.calendar .rival { grid-area: rival; font-size: 18px; }
+    ul.calendar .loc { grid-area: loc; }
+    ul.calendar .score { grid-area: score; }
+    ul.calendar .badge { grid-area: badge; }
+    ul.calendar .topscorer { grid-area: ts; margin-top: 2px; }
+  }
+
+  /* ─────────── Plantilla ─────────── */
+  .leaders {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 28px;
+  }
+  .leaders .lead {
+    text-align: center;
+    padding: 26px 18px;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .leaders .lead:last-child { border-right: none; }
+  .leaders .lead .rank {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .leaders .lead .name {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    min-height: 2.3em;
+  }
+  .leaders .lead .num {
+    font-family: Georgia, serif;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .leaders .lead .unit {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .leaders { grid-template-columns: 1fr; }
+    .leaders .lead { border-right: none; border-bottom: 1px solid var(--rule-soft); }
+    .leaders .lead:last-child { border-bottom: none; }
+  }
+
+  table.roster {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  table.roster thead th {
+    border-top: 2px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 8px 6px;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  table.roster thead th:nth-child(1),
+  table.roster thead th:nth-child(2) { text-align: left; }
+  table.roster tbody td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  table.roster tbody td:nth-child(1) {
+    text-align: left;
+    color: var(--accent);
+    font-weight: 700;
+    width: 36px;
+  }
+  table.roster tbody td:nth-child(2) {
+    text-align: left;
+    font-family: Georgia, serif;
+    font-size: 15px;
+  }
+  table.roster tbody tr:nth-child(odd) td { background: rgba(0,0,0,0.015); }
+
+  /* ─────────── Records ─────────── */
+  .records {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 36px;
+  }
+  @media (max-width: 720px) { .records { grid-template-columns: 1fr; } }
+  .record {
+    border-top: 3px solid var(--rule);
+    padding-top: 14px;
+  }
+  .record .label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .record .headline {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .record .body {
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  /* ─────────── Footer ─────────── */
+  footer.colofo {
+    border-top: 4px double var(--rule);
+    margin-top: 40px;
+    padding: 32px 0 60px;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+  footer.colofo .signature {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  footer.colofo a { color: var(--ink); }
+
+  /* ─────────── Loading & errors ─────────── */
+  .loading, .error {
+    text-align: center;
+    padding: 28px;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-family: Georgia, serif;
+  }
+  .error { color: var(--loss); }
+
+  @media print {
+    body { background: white; }
+    .toc, .floating-link { display: none; }
+    section.chapter { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ CAPÇALERA ════════════════ -->
+<header class="masthead">
+  <div class="wrap">
+    <div class="kicker">CN Terrassa · Waterpolo</div>
+    <h1>Anuari 2025·26</h1>
+    <p class="sub">Equip Cadet</p>
+    <div class="meta">
+      <span>Entrenador: Dídac Cobacho</span>
+      <span id="metaJornada">Jornada —</span>
+      <span id="metaUpdated">Actualitzat —</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════ SUMARI ════════════════ -->
+<nav class="toc">
+  <div class="wrap">
+    <ol>
+      <li><a href="#resum">El curs</a></li>
+      <li><a href="#classificacio">Classificació</a></li>
+      <li><a href="#calendari">El calendari</a></li>
+      <li><a href="#plantilla">La plantilla</a></li>
+      <li><a href="#records">Records</a></li>
+    </ol>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- I. RESUM -->
+  <section class="chapter" id="resum">
+    <div class="chapter-head">
+      <div class="num">Capítol I</div>
+      <h2>El curs en xifres</h2>
+      <div class="stand"></div>
+      <p class="lede">Una temporada que es deixa explicar amb números abans que amb paraules.</p>
+    </div>
+    <div id="resumNumbers" class="numbers">
+      <div class="loading">Carregant dades…</div>
+    </div>
+    <div id="resumText" class="article" style="margin-top: 32px;"></div>
+  </section>
+
+  <!-- II. CLASSIFICACIÓ -->
+  <section class="chapter" id="classificacio">
+    <div class="chapter-head">
+      <div class="num">Capítol II</div>
+      <h2>La classificació</h2>
+      <div class="stand"></div>
+      <p class="lede">El reflex setmanal de la lliga, segons les actes oficials d'ACTAWP.</p>
+    </div>
+    <div id="standingsBox">
+      <div class="loading">Carregant classificació…</div>
+    </div>
+  </section>
+
+  <!-- III. CALENDARI -->
+  <section class="chapter" id="calendari">
+    <div class="chapter-head">
+      <div class="num">Capítol III</div>
+      <h2>El calendari, partit a partit</h2>
+      <div class="stand"></div>
+      <p class="lede">Tots els enfrontaments de la temporada, de la primera a l'última jornada.</p>
+    </div>
+    <ul id="calendarList" class="calendar">
+      <li class="loading">Carregant partits…</li>
+    </ul>
+  </section>
+
+  <!-- IV. PLANTILLA -->
+  <section class="chapter" id="plantilla">
+    <div class="chapter-head">
+      <div class="num">Capítol IV</div>
+      <h2>La plantilla</h2>
+      <div class="stand"></div>
+      <p class="lede">Els tres més golejadors i el detall complet de cada jugador.</p>
+    </div>
+    <div id="topScorers" class="leaders">
+      <div class="loading">Carregant golejadors…</div>
+    </div>
+    <div id="rosterBox"></div>
+  </section>
+
+  <!-- V. RECORDS -->
+  <section class="chapter" id="records">
+    <div class="chapter-head">
+      <div class="num">Capítol V</div>
+      <h2>Records de la temporada</h2>
+      <div class="stand"></div>
+      <p class="lede">Els moments que deixaran constància quan algú miri enrere.</p>
+    </div>
+    <div id="recordsBox" class="records">
+      <div class="loading">Calculant rècords…</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════════════ COLOFÓ ════════════════ -->
+<footer class="colofo">
+  <div class="wrap-narrow">
+    <div class="signature">CN Terrassa · Cadet · Temporada 2025–26</div>
+    <div>Dades de la web pública del club i de la FCN/ACTAWP. Generat dinàmicament.</div>
+    <div style="margin-top: 12px;">
+      <a href="index.html">Tornar a l'app d'estadístiques</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+// ─────────── Config ───────────
+const TEAM_KEY = 'cadet';
+const REPO_BASE = 'https://joseprico.github.io/cnt_cadet_25-26/';
+const ACTAWP_FILE = 'actawp_cadet_data.json';
+
+// ─────────── Helpers ───────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso.split('T')[0] || iso;
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
+  return `${day} ${months[d.getMonth()]}. ${d.getFullYear()}`;
+}
+function fmtDateShort(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso.split('T')[0] || iso;
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}.${mon}.${String(d.getFullYear()).slice(2)}`;
+}
+function safeNum(x) { return Number.isFinite(+x) ? +x : 0; }
+function pct(num, den) { return den > 0 ? Math.round((num / den) * 100) : 0; }
+function startCase(s) {
+  if (!s) return '';
+  return s.toString().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+function el(tag, opts = {}, children = []) {
+  const e = document.createElement(tag);
+  if (opts.class) e.className = opts.class;
+  if (opts.text != null) e.textContent = opts.text;
+  if (opts.html != null) e.innerHTML = opts.html;
+  if (opts.attrs) for (const k in opts.attrs) e.setAttribute(k, opts.attrs[k]);
+  for (const c of children) if (c) e.appendChild(c);
+  return e;
+}
+
+// ─────────── Data loader ───────────
+async function fetchJSON(url) {
+  const r = await fetch(url, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return r.json();
+}
+
+async function loadAll() {
+  const [indexJson, actawp] = await Promise.all([
+    fetchJSON(REPO_BASE + 'index.json'),
+    fetchJSON(REPO_BASE + ACTAWP_FILE),
+  ]);
+  const matches = await Promise.all(
+    indexJson.files.map(f =>
+      fetchJSON(REPO_BASE + f).then(m => ({ file: f, ...m })).catch(() => null)
+    )
+  );
+  const valid = matches.filter(m => m && m.scoreCNT != null);
+  valid.sort((a, b) => new Date(a.data) - new Date(b.data));
+  return { indexJson, actawp, matches: valid };
+}
+
+// ─────────── Renderers ───────────
+function renderHeaderMeta(actawp, matches) {
+  const ts = actawp?.metadata?.downloaded_at;
+  if (ts) {
+    document.getElementById('metaUpdated').textContent =
+      'Actualitzat ' + fmtDate(ts);
+  }
+  const totalJor = (actawp?.last_results?.length || 0) + (actawp?.upcoming_matches?.length || 0);
+  const playedJor = actawp?.team_stats?.['Partits jugats'] ?? matches.length;
+  document.getElementById('metaJornada').textContent =
+    `Jornada ${playedJor}${totalJor ? ' / ' + totalJor : ''}`;
+}
+
+function renderResum(actawp, matches) {
+  const t = actawp?.team_stats || {};
+  const pj = safeNum(t['Partits jugats']) || matches.length;
+  const pg = safeNum(t['Partits guanyats']);
+  const pp = safeNum(t['Partits perduts']);
+  const pe = safeNum(t['Partits empatats']);
+  const gf = safeNum(t['En favor']);
+  const gc = safeNum(t['En contra']);
+  const punts = safeNum(t['Punts']);
+
+  const cells = [
+    { label: 'Partits jugats', value: pj, delta: '' },
+    { label: 'Victòries', value: pg, delta: pj ? `${pct(pg, pj)}%` : '' },
+    { label: 'Gols a favor', value: gf, delta: pj ? `${(gf / pj).toFixed(1)} per partit` : '' },
+    { label: 'Gols en contra', value: gc, delta: pj ? `${(gc / pj).toFixed(1)} per partit` : '' },
+  ];
+
+  const box = document.getElementById('resumNumbers');
+  box.innerHTML = '';
+  for (const c of cells) {
+    box.appendChild(el('div', { class: 'cell' }, [
+      el('div', { class: 'label', text: c.label }),
+      el('div', { class: 'value', text: c.value }),
+      c.delta ? el('div', { class: 'delta', text: c.delta }) : null,
+    ]));
+  }
+
+  const diff = gf - gc;
+  const txt = document.getElementById('resumText');
+  txt.innerHTML = '';
+  txt.appendChild(el('p', {
+    text: `L'equip cadet del CN Terrassa, dirigit per Dídac Cobacho, ha disputat ${pj} partits aquesta temporada amb un balanç de ${pg} victòries, ${pe} empats i ${pp} derrotes. ${punts ? punts + ' punts ' : ''}han portat l'equip a tancar (o estar tancant) la classificació amb una diferència de ${diff >= 0 ? '+' : ''}${diff} gols, anotant-ne ${gf} i encaixant-ne ${gc}.`
+  }));
+}
+
+function renderStandings(actawp) {
+  const box = document.getElementById('standingsBox');
+  const ranking = actawp?.ranking || [];
+  if (!ranking.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha classificació disponible.</div>';
+    return;
+  }
+  const us = (actawp?.metadata?.team_name || '').toUpperCase();
+
+  const table = el('table', { class: 'standings' });
+  const thead = el('thead');
+  const trh = el('tr');
+  ['#', 'Equip', 'PJ', 'G', 'E', 'P', 'GF', 'GC', '+/−', 'Pts'].forEach(h =>
+    trh.appendChild(el('th', { text: h })));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+
+  const tbody = el('tbody');
+  for (const r of ranking) {
+    const tr = el('tr');
+    const isUs = (r.equip || '').toUpperCase().includes('TERRASSA');
+    if (isUs) tr.className = 'us';
+    [
+      r.posicio,
+      startCase(r.equip),
+      r.partits, r.guanyats, r.empatats, r.perduts,
+      r.gols_favor, r.gols_contra, r.diferencia,
+      r.punts
+    ].forEach(v => tr.appendChild(el('td', { text: v ?? '—' })));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  box.innerHTML = '';
+  box.appendChild(table);
+}
+
+function topScorerOfMatch(match) {
+  const players = match.jugadors || [];
+  let best = null;
+  for (const p of players) {
+    const g = safeNum(p?.estadistiques?.gols);
+    if (g > 0 && (!best || g > best.g)) {
+      best = { name: p.nom, num: p.numero, g };
+    }
+  }
+  return best;
+}
+
+function renderCalendar(matches) {
+  const ul = document.getElementById('calendarList');
+  ul.innerHTML = '';
+  if (!matches.length) {
+    ul.appendChild(el('li', { class: 'loading', text: 'Encara no hi ha partits enregistrats.' }));
+    return;
+  }
+  for (const m of matches) {
+    const home = m.matchLocation === 'home';
+    const cnt = safeNum(m.scoreCNT);
+    const riv = safeNum(m.scoreRival);
+    const result = cnt > riv ? 'W' : (cnt < riv ? 'L' : 'D');
+    const badgeText = result === 'W' ? 'Victòria' : (result === 'L' ? 'Derrota' : 'Empat');
+    const top = topScorerOfMatch(m);
+
+    const li = el('li');
+    li.appendChild(el('div', { class: 'date', text: fmtDateShort(m.data) }));
+    li.appendChild(el('div', { class: 'loc' + (home ? ' home' : ''), text: home ? 'Local' : 'Visit.' }));
+    li.appendChild(el('div', { class: 'rival', text: startCase(m.rivalTeam || '—') }));
+    li.appendChild(el('div', { class: 'score ' + result, text: `${cnt}–${riv}` }));
+    li.appendChild(el('div', { class: 'badge ' + result, text: badgeText }));
+    if (top) {
+      li.appendChild(el('div', {
+        class: 'topscorer',
+        text: `★ ${startCase(top.name)} · ${top.g} gol${top.g === 1 ? '' : 's'}`
+      }));
+    }
+    ul.appendChild(li);
+  }
+}
+
+function renderPlantilla(actawp, matches) {
+  const players = (actawp?.players || [])
+    .filter(p => safeNum(p.PJ) > 0 || safeNum(p.GT) > 0)
+    .map(p => ({
+      name: p.Nombre,
+      pj: safeNum(p.PJ),
+      gt: safeNum(p.GT),
+      g: safeNum(p.G),
+      gp: safeNum(p.GP),
+      ex: safeNum(p.EX),
+      ta: safeNum(p.TA),
+      tr: safeNum(p.TR),
+      pf: safeNum(p.PF),
+    }));
+
+  const top = [...players].sort((a, b) => b.gt - a.gt).slice(0, 3);
+  const topBox = document.getElementById('topScorers');
+  topBox.innerHTML = '';
+  if (!top.length) {
+    topBox.innerHTML = '<div class="loading">Encara no hi ha dades de la plantilla.</div>';
+  } else {
+    const ranks = ['Primer pichichi', 'Segon pichichi', 'Tercer pichichi'];
+    top.forEach((p, i) => {
+      topBox.appendChild(el('div', { class: 'lead' }, [
+        el('div', { class: 'rank', text: ranks[i] || `#${i + 1}` }),
+        el('div', { class: 'name', text: startCase(p.name) }),
+        el('div', { class: 'num', text: p.gt }),
+        el('div', { class: 'unit', text: 'gols totals' }),
+      ]));
+    });
+  }
+
+  // Roster table
+  const rosterBox = document.getElementById('rosterBox');
+  rosterBox.innerHTML = '';
+  if (!players.length) return;
+  const sorted = [...players].sort((a, b) => b.gt - a.gt || b.pj - a.pj);
+  const tbl = el('table', { class: 'roster' });
+  const thead = el('thead');
+  const trh = el('tr');
+  ['#', 'Jugador', 'PJ', 'GT', 'Penals', 'EX', 'PF'].forEach(h =>
+    trh.appendChild(el('th', { text: h })));
+  thead.appendChild(trh);
+  tbl.appendChild(thead);
+  const tbody = el('tbody');
+  sorted.forEach((p, i) => {
+    const tr = el('tr');
+    [i + 1, startCase(p.name), p.pj, p.gt, p.gp, p.ex, p.pf]
+      .forEach(v => tr.appendChild(el('td', { text: v })));
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  rosterBox.appendChild(tbl);
+}
+
+function renderRecords(matches) {
+  const box = document.getElementById('recordsBox');
+  box.innerHTML = '';
+  if (!matches.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha rècords.</div>';
+    return;
+  }
+
+  // Best win (largest CNT victory by margin)
+  let bestWin = null, worstLoss = null, mostGoals = null, bestStreak = 0, currentStreak = 0;
+  let bestStreakRange = null, currentRange = null, bestIndividual = null;
+
+  matches.forEach((m, idx) => {
+    const cnt = safeNum(m.scoreCNT);
+    const riv = safeNum(m.scoreRival);
+    const diff = cnt - riv;
+
+    if (diff > 0) {
+      if (!bestWin || diff > bestWin.diff) bestWin = { ...m, diff };
+      currentStreak++;
+      if (!currentRange) currentRange = { start: m.data, end: m.data };
+      else currentRange.end = m.data;
+      if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+        bestStreakRange = { ...currentRange };
+      }
+    } else {
+      currentStreak = 0;
+      currentRange = null;
+      if (diff < 0) {
+        const margin = Math.abs(diff);
+        if (!worstLoss || margin > worstLoss.margin) {
+          worstLoss = { ...m, margin };
+        }
+      }
+    }
+
+    const total = cnt + riv;
+    if (!mostGoals || total > mostGoals.total) mostGoals = { ...m, total };
+
+    // Best individual game
+    (m.jugadors || []).forEach(p => {
+      const g = safeNum(p?.estadistiques?.gols);
+      if (g > 0 && (!bestIndividual || g > bestIndividual.g)) {
+        bestIndividual = {
+          name: p.nom, g, rival: m.rivalTeam, date: m.data,
+        };
+      }
+    });
+  });
+
+  const records = [];
+  if (bestWin) records.push({
+    label: 'Victòria més contundent',
+    headline: `${safeNum(bestWin.scoreCNT)}–${safeNum(bestWin.scoreRival)} contra ${startCase(bestWin.rivalTeam)}`,
+    body: `${fmtDate(bestWin.data)} · diferència de ${bestWin.diff} gols`,
+  });
+  if (worstLoss) records.push({
+    label: 'La derrota més dura',
+    headline: `${safeNum(worstLoss.scoreCNT)}–${safeNum(worstLoss.scoreRival)} contra ${startCase(worstLoss.rivalTeam)}`,
+    body: `${fmtDate(worstLoss.data)} · ${worstLoss.margin} gols de marge`,
+  });
+  if (mostGoals) records.push({
+    label: 'Partit amb més gols',
+    headline: `${mostGoals.total} gols a la piscina`,
+    body: `${startCase(mostGoals.rivalTeam)} · ${fmtDate(mostGoals.data)} · ${safeNum(mostGoals.scoreCNT)}–${safeNum(mostGoals.scoreRival)}`,
+  });
+  if (bestIndividual) records.push({
+    label: 'Millor partit individual',
+    headline: `${startCase(bestIndividual.name)} · ${bestIndividual.g} gols`,
+    body: `Contra ${startCase(bestIndividual.rival)} · ${fmtDate(bestIndividual.date)}`,
+  });
+  if (bestStreak >= 2 && bestStreakRange) records.push({
+    label: 'Ratxa més llarga',
+    headline: `${bestStreak} victòries seguides`,
+    body: `Del ${fmtDate(bestStreakRange.start)} al ${fmtDate(bestStreakRange.end)}`,
+  });
+
+  if (!records.length) {
+    box.innerHTML = '<div class="loading">Encara no hi ha prou partits per calcular rècords.</div>';
+    return;
+  }
+
+  for (const r of records) {
+    box.appendChild(el('div', { class: 'record' }, [
+      el('div', { class: 'label', text: r.label }),
+      el('div', { class: 'headline', text: r.headline }),
+      el('div', { class: 'body', text: r.body }),
+    ]));
+  }
+}
+
+// ─────────── Boot ───────────
+(async function () {
+  try {
+    const { indexJson, actawp, matches } = await loadAll();
+    renderHeaderMeta(actawp, matches);
+    renderResum(actawp, matches);
+    renderStandings(actawp);
+    renderCalendar(matches);
+    renderPlantilla(actawp, matches);
+    renderRecords(matches);
+  } catch (err) {
+    console.error(err);
+    document.querySelectorAll('.loading').forEach(n => {
+      n.className = 'error';
+      n.textContent = 'No s\'han pogut carregar les dades. Comprova la connexió.';
+    });
+  }
+})();
+</script>
+</body>
+</html>
