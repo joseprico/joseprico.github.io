@@ -3397,6 +3397,24 @@ body.theme-juvenil .ct-link-cadet { display: none; }
   border-radius: 8px;
 }
 
+.ct-venue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: #cbd5e1;
+  margin: 6px 0 14px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ct-venue:empty { display: none; }
+.ct-venue .ct-venue-item { display: inline-flex; align-items: center; gap: 6px; }
+.ct-venue .ct-venue-item strong { color: #f1f5f9; font-weight: 700; }
+
 .ct-match-footer {
   padding: 4px 10px;
   font-size: 10px;
@@ -3710,6 +3728,7 @@ body.theme-juvenil .ct-link-cadet { display: none; }
             <a href="campionat-catalunya-juvenil.html" class="ct-link ct-link-juvenil">Quadre complet →</a>
         </div>
     </div>
+    <div id="ctVenue" class="ct-venue"></div>
     <div id="ctBracketCadet" class="ct-bracket-host ct-cadet"></div>
     <div id="ctBracketJuvenil" class="ct-bracket-host ct-juvenil"></div>
 </div>
@@ -21936,260 +21955,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// ───── Campionat de Catalunya · Bracket dinàmic ─────
-const CT_TEAMS = {
-  cadet: [
-    null,
-    { name: 'Barceloneta',     short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
-    { name: 'C.N. Barcelona',  short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
-    { name: 'C.N. Sabadell',   short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
-    { name: 'C.N. Terrassa',   short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
-    { name: 'Sant Andreu',     short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
-    { name: 'Mediterrani',     short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
-    { name: 'Poble Nou',       short: 'Poble Nou',   logo: 'https://cdn.leverade.com/thumbnails/AavYwrQJ36uU.90x90.jpg' },
-    { name: "U.E. d'Horta",    short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' }
-  ],
-  juvenil: [
-    null,
-    { name: 'C.N. Sabadell',   short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
-    { name: 'Barceloneta',     short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
-    { name: 'C.N. Barcelona',  short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
-    { name: "U.E. d'Horta",    short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' },
-    { name: 'Mediterrani',     short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
-    { name: 'Sant Andreu',     short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
-    { name: 'C.N. Terrassa',   short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
-    { name: 'Montjuïc',        short: 'Montjuïc',    logo: null }
-  ]
-};
-
-const CT_MATCHES = [
-  { id: 'QF1', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 1 },     s2: { t: 'seed',   v: 8 }     },
-  { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 5 }     },
-  { id: 'QF3', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 2 },     s2: { t: 'seed',   v: 7 }     },
-  { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 6 }     },
-  { id: 'SF1', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF1' }, s2: { t: 'loser',  v: 'QF2' } },
-  { id: 'SF2', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF3' }, s2: { t: 'loser',  v: 'QF4' } },
-  { id: 'SF3', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF1' }, s2: { t: 'winner', v: 'QF2' } },
-  { id: 'SF4', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF3' }, s2: { t: 'winner', v: 'QF4' } },
-  { id: 'F78', col: 'finals', round: 'final-78',   s1: { t: 'loser',  v: 'SF1' }, s2: { t: 'loser',  v: 'SF2' } },
-  { id: 'F56', col: 'finals', round: 'final-56',   s1: { t: 'winner', v: 'SF1' }, s2: { t: 'winner', v: 'SF2' } },
-  { id: 'F34', col: 'finals', round: 'final-34',   s1: { t: 'loser',  v: 'SF3' }, s2: { t: 'loser',  v: 'SF4' } },
-  { id: 'F',   col: 'finals', round: 'final',      s1: { t: 'winner', v: 'SF3' }, s2: { t: 'winner', v: 'SF4' } }
-];
-
-const CT_LABELS = { QF1:'QF 1', QF2:'QF 2', QF3:'QF 3', QF4:'QF 4', SF1:'SF (5-8) A', SF2:'SF (5-8) B', SF3:'SF (1-4) A', SF4:'SF (1-4) B', F78:'7è/8è', F56:'5è/6è', F34:'3r/4t', F:'FINAL' };
-const CT_HEADER_SUBS = { QF1:'1 vs 8', QF2:'4 vs 5', QF3:'2 vs 7', QF4:'3 vs 6', SF1:'Perd. QF1 · QF2', SF2:'Perd. QF3 · QF4', SF3:'Guany. QF1 · QF2', SF4:'Guany. QF3 · QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
-
-// Horaris oficials del Cadet (Worldaquatics). Juvenil pendent.
-const CT_DEFAULT_TIMES = {
-  cadet:   { QF1:'09:30', QF2:'10:50', QF3:'12:10', QF4:'13:30', SF1:'15:30', SF2:'16:50', SF3:'18:10', SF4:'19:30', F78:'09:30', F56:'10:50', F34:'12:10', F:'13:30' },
-  juvenil: {}
-};
-
-let ctChampionshipData = { cadet: {}, juvenil: {} };
-
-function ctSideCouldBeCnt(side, team, results) {
-  if (side.t === 'seed') {
-    const t = CT_TEAMS[team][side.v];
-    return !!(t && t.isCnt);
-  }
-  const dep = CT_MATCHES.find(m => m.id === side.v);
-  const r = results[side.v];
-  if (r && r.score1 != null && r.score2 != null) {
-    const w1 = Number(r.score1) > Number(r.score2);
-    const target = side.t === 'winner' ? (w1 ? dep.s1 : dep.s2) : (w1 ? dep.s2 : dep.s1);
-    return ctSideCouldBeCnt(target, team, results);
-  }
-  return ctSideCouldBeCnt(dep.s1, team, results) || ctSideCouldBeCnt(dep.s2, team, results);
-}
-function ctMatchInvolvesCnt(m, team, results) {
-  return ctSideCouldBeCnt(m.s1, team, results) || ctSideCouldBeCnt(m.s2, team, results);
-}
-
-function ctResolveSide(side, team, results) {
-  if (side.t === 'seed') {
-    const t = CT_TEAMS[team][side.v];
-    return t ? { ...t, seed: side.v } : null;
-  }
-  const dep = CT_MATCHES.find(m => m.id === side.v);
-  const depR = results[side.v];
-  if (!depR || depR.score1 == null || depR.score2 == null) return null;
-  const t1 = ctResolveSide(dep.s1, team, results);
-  const t2 = ctResolveSide(dep.s2, team, results);
-  if (!t1 || !t2) return null;
-  const side1Wins = Number(depR.score1) > Number(depR.score2);
-  if (side.t === 'winner') return side1Wins ? t1 : t2;
-  return side1Wins ? t2 : t1;
-}
-
-function ctTeamHtml(teamObj, score, isWinner, isLoser, showSeed) {
-  if (!teamObj) {
-    return `<div class="ct-team ct-tbd"><span class="ct-seed">–</span><span class="ct-badge">?</span><span class="ct-name">Per determinar</span><span class="ct-score">–</span></div>`;
-  }
-  const badge = teamObj.logo
-    ? `<img src="${teamObj.logo}" alt="${teamObj.short}">`
-    : teamObj.short.slice(0, 3).toUpperCase();
-  const cls = ['ct-team'];
-  if (teamObj.isCnt) cls.push('ct-cnt');
-  if (isWinner) cls.push('ct-winner');
-  if (isLoser) cls.push('ct-loser');
-  const seed = showSeed && teamObj.seed ? teamObj.seed : '';
-  return `<div class="${cls.join(' ')}">
-    <span class="ct-seed">${seed}</span>
-    <span class="ct-badge">${badge}</span>
-    <span class="ct-name">${teamObj.short}</span>
-    <span class="ct-score">${score != null ? score : '–'}</span>
-  </div>`;
-}
-
-function ctFormatDateTime(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}/${mm} · ${hh}:${mi}`;
-}
-
-function ctMatchHtml(m, team, results) {
-  const r = results[m.id] || {};
-  const t1 = ctResolveSide(m.s1, team, results);
-  const t2 = ctResolveSide(m.s2, team, results);
-  const hasScore = r.score1 != null && r.score2 != null;
-  const side1Wins = hasScore && Number(r.score1) > Number(r.score2);
-  const isHasCnt = (t1 && t1.isCnt) || (t2 && t2.isCnt);
-  const matchCls = ['ct-match'];
-  if (isHasCnt) matchCls.push('ct-has-cnt');
-  if (m.round === 'final') matchCls.push('ct-final');
-  if (m.round === 'final-34') matchCls.push('ct-final-34');
-  if (m.round === 'final-56') matchCls.push('ct-final-56');
-  if (m.round === 'final-78') matchCls.push('ct-final-78');
-  const dt = ctFormatDateTime(r.scheduledAt);
-  const defaultTime = CT_DEFAULT_TIMES[team] && CT_DEFAULT_TIMES[team][m.id];
-  let footer = '';
-  if (dt) footer = `<div class="ct-match-footer">📅 ${dt}</div>`;
-  else if (defaultTime) footer = `<div class="ct-match-footer">⏰ ${defaultTime} · data per confirmar</div>`;
-  const showSeed = m.col === 'qf';
-  return `<div class="${matchCls.join(' ')}" data-match="${m.id}">
-    <div class="ct-match-header"><span class="ct-id">${CT_LABELS[m.id]}</span><span>${CT_HEADER_SUBS[m.id]}</span></div>
-    ${ctTeamHtml(t1, hasScore ? r.score1 : null, hasScore && side1Wins, hasScore && !side1Wins, showSeed)}
-    ${ctTeamHtml(t2, hasScore ? r.score2 : null, hasScore && !side1Wins, hasScore && side1Wins, showSeed)}
-    ${footer}
-  </div>`;
-}
-
-function ctRenderBracket(team, hostId) {
-  const host = document.getElementById(hostId);
-  if (!host) return;
-  const results = ctChampionshipData[team] || {};
-  const find = (id) => CT_MATCHES.find(m => m.id === id);
-  const involvesCnt = (m) => ctMatchInvolvesCnt(m, team, results);
-  const qf = ['QF1','QF2','QF3','QF4'].map(find).filter(involvesCnt);
-  const sf = ['SF1','SF2','SF3','SF4'].map(find).filter(involvesCnt);
-  const finals = ['F78','F56','F34','F'].map(find).filter(involvesCnt);
-  const renderCol = (head, list, emptyMsg) => `
-    <div class="ct-col">
-      <div class="ct-col-head">${head}</div>
-      ${list.length ? list.map(m => ctMatchHtml(m, team, results)).join('') : `<div class="ct-empty">${emptyMsg}</div>`}
-    </div>`;
-  host.innerHTML = `
-    ${renderCol('Quarts', qf, '—')}
-    ${renderCol('Semifinals', sf, 'Pendent del resultat dels quarts')}
-    ${renderCol('Finals', finals, 'Pendent del resultat de semifinals')}
-  `;
-}
-
-function ctRenderAll() {
-  ctRenderBracket('cadet', 'ctBracketCadet');
-  ctRenderBracket('juvenil', 'ctBracketJuvenil');
-  try { renderCntNextMatchFromBracket(); } catch (_) {}
-}
-
-function ctInitFirebaseListener() {
-  if (!window.firebaseReady) { setTimeout(ctInitFirebaseListener, 200); return; }
-  ['cadet', 'juvenil'].forEach(team => {
-    const r = window.firebaseRef(window.firebaseDB, `championship/${team}`);
-    window.firebaseOnValue(r, snap => {
-      ctChampionshipData[team] = snap.val() || {};
-      ctRenderAll();
-    });
-  });
-}
-ctRenderAll();
-ctInitFirebaseListener();
-document.addEventListener('DOMContentLoaded', () => { try { ctRenderAll(); } catch (_) {} });
-window.addEventListener('load', () => { try { ctRenderAll(); } catch (_) {} });
-
-// Pròxim partit del CNT a partir del bracket
-function renderCntNextMatchFromBracket() {
-  const team = (typeof selectedTeam !== 'undefined' && selectedTeam)
-    || (document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
-  const container = document.getElementById('next-match-pill');
-  if (!container) return;
-  const results = ctChampionshipData[team] || {};
-  const now = new Date();
-  const candidates = [];
-  CT_MATCHES.forEach(m => {
-    const r = results[m.id] || {};
-    if (r.score1 != null && r.score2 != null) return;
-    const t1 = ctResolveSide(m.s1, team, results);
-    const t2 = ctResolveSide(m.s2, team, results);
-    const cntInvolved = (t1 && t1.isCnt) || (t2 && t2.isCnt);
-    if (!cntInvolved) return;
-    candidates.push({ m, t1, t2, scheduledAt: r.scheduledAt || null });
-  });
-  if (!candidates.length) {
-    container.innerHTML = '<div style="color:#bfdbfe;font-size:12px;">Pendent de programar partits del Campionat</div>';
-    return;
-  }
-  candidates.sort((a, b) => {
-    const da = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
-    const db = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
-    return da - db;
-  });
-  const next = candidates[0];
-  const dt = next.scheduledAt ? new Date(next.scheduledAt) : null;
-  let countdownHtml = '';
-  if (dt && !isNaN(dt.getTime())) {
-    const diff = dt - now;
-    if (diff > 0) {
-      const days = Math.floor(diff / 86400000);
-      const hrs = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const txt = days > 0 ? `${days}d ${hrs}h ${mins}m` : `${hrs}h ${mins}m`;
-      countdownHtml = `<div style="margin-top:10px;padding:8px 15px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;"><span style="font-size:12px;">⏱️ Falten <strong>${txt}</strong></span></div>`;
-    }
-  }
-  const defaultTime = CT_DEFAULT_TIMES[team] && CT_DEFAULT_TIMES[team][next.m.id];
-  const dateStr = dt && !isNaN(dt.getTime())
-    ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} · ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
-    : (defaultTime ? `⏰ ${defaultTime} · data per confirmar` : 'Data per determinar');
-  const teamHtml = (t) => t
-    ? `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;">${t.logo ? `<img src="${t.logo}" style="width:50px;height:50px;border-radius:50%;background:white;padding:3px;object-fit:contain;">` : `<div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;">${t.short.slice(0,3).toUpperCase()}</div>`}<div style="font-size:12px;font-weight:600;${t.isCnt ? 'color:#fbbf24;' : ''}max-width:100px;text-align:center;">${t.short}</div></div>`
-    : `<div style="opacity:0.5;font-style:italic;font-size:12px;">Per determinar</div>`;
-  container.innerHTML = `
-    <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">${CT_LABELS[next.m.id]} · Campionat de Catalunya</div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:18px;">
-      ${teamHtml(next.t1)}
-      <div style="font-size:22px;font-weight:800;opacity:0.7;">vs</div>
-      ${teamHtml(next.t2)}
-    </div>
-    <div style="margin-top:12px;font-size:13px;">${dateStr}</div>
-    ${countdownHtml}
-  `;
-}
-
-// Sobreescriu el pròxim partit (ja no llegeix ACTAWP, sinó el bracket)
-window.loadNextMatchPill = async function () { renderCntNextMatchFromBracket(); };
-
-// Refresca quan canviï el tema (body className)
-new MutationObserver(() => { try { ctRenderAll(); } catch (_) {} })
-  .observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-// Comptador refresc cada minut
-setInterval(() => { try { renderCntNextMatchFromBracket(); } catch (_) {} }, 60000);
+// Bracket dinàmic mogut a un <script> independent al final del fitxer
 </script>
 
   
@@ -22298,13 +22064,377 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 <script>
     // 🔒 Bloqueo de clic derecho y atajos
-    document.addEventListener("contextmenu", event => event.preventDefault());
-    document.addEventListener("keydown", event => {
-      if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
-          event.key === "F12") {
-        event.preventDefault();
-      }
-    });
+    //document.addEventListener("contextmenu", event => event.preventDefault());
+    //document.addEventListener("keydown", event => {
+    //  if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
+     //     event.key === "F12") {
+      //  event.preventDefault();
+      //}
+    //});
     </script>
+<script>
+// ───── Campionat de Catalunya · Bracket dinàmic (script independent) ─────
+(function () {
+  window.ctChampionshipData = window.ctChampionshipData || { cadet: {}, juvenil: {} };
+
+  var CT_TEAMS = {
+    cadet: [
+      null,
+      { name: 'Barceloneta',     short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
+      { name: 'C.N. Barcelona',  short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
+      { name: 'C.N. Sabadell',   short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
+      { name: 'C.N. Terrassa',   short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
+      { name: 'Sant Andreu',     short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
+      { name: 'Mediterrani',     short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
+      { name: 'Poble Nou',       short: 'Poble Nou',   logo: 'https://cdn.leverade.com/thumbnails/AavYwrQJ36uU.90x90.jpg' },
+      { name: "U.E. d'Horta",    short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' }
+    ],
+    juvenil: [
+      null,
+      { name: 'C.N. Sabadell',   short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
+      { name: 'Barceloneta',     short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
+      { name: 'C.N. Barcelona',  short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
+      { name: "U.E. d'Horta",    short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' },
+      { name: 'Mediterrani',     short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
+      { name: 'Sant Andreu',     short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
+      { name: 'C.N. Terrassa',   short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
+      { name: 'Montjuïc',        short: 'Montjuïc',    logo: null }
+    ]
+  };
+
+  var CT_MATCHES = [
+    { id: 'QF1', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 1 },     s2: { t: 'seed',   v: 8 }     },
+    { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 5 }     },
+    { id: 'QF3', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 2 },     s2: { t: 'seed',   v: 7 }     },
+    { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 6 }     },
+    { id: 'SF1', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF1' }, s2: { t: 'loser',  v: 'QF2' } },
+    { id: 'SF2', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF3' }, s2: { t: 'loser',  v: 'QF4' } },
+    { id: 'SF3', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF1' }, s2: { t: 'winner', v: 'QF2' } },
+    { id: 'SF4', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF3' }, s2: { t: 'winner', v: 'QF4' } },
+    { id: 'F78', col: 'finals', round: 'final-78',   s1: { t: 'loser',  v: 'SF1' }, s2: { t: 'loser',  v: 'SF2' } },
+    { id: 'F56', col: 'finals', round: 'final-56',   s1: { t: 'winner', v: 'SF1' }, s2: { t: 'winner', v: 'SF2' } },
+    { id: 'F34', col: 'finals', round: 'final-34',   s1: { t: 'loser',  v: 'SF3' }, s2: { t: 'loser',  v: 'SF4' } },
+    { id: 'F',   col: 'finals', round: 'final',      s1: { t: 'winner', v: 'SF3' }, s2: { t: 'winner', v: 'SF4' } }
+  ];
+
+  var CT_LABELS = { QF1:'QF 1', QF2:'QF 2', QF3:'QF 3', QF4:'QF 4', SF1:'SF (5-8) A', SF2:'SF (5-8) B', SF3:'SF (1-4) A', SF4:'SF (1-4) B', F78:'7è/8è', F56:'5è/6è', F34:'3r/4t', F:'FINAL' };
+  var CT_HEADER_SUBS = { QF1:'1 vs 8', QF2:'4 vs 5', QF3:'2 vs 7', QF4:'3 vs 6', SF1:'Perd. QF1 · QF2', SF2:'Perd. QF3 · QF4', SF3:'Guany. QF1 · QF2', SF4:'Guany. QF3 · QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
+
+  // Calendari oficial del Campionat de Catalunya 2025-26
+  var CT_SCHEDULE_DEFAULTS = {
+    cadet: {
+      QF1: { date: '2026-06-06', time: '09:30' },
+      QF2: { date: '2026-06-06', time: '10:50' },
+      QF3: { date: '2026-06-06', time: '12:10' },
+      QF4: { date: '2026-06-06', time: '13:30' },
+      SF1: { date: '2026-06-06', time: '15:30' },
+      SF2: { date: '2026-06-06', time: '16:50' },
+      SF3: { date: '2026-06-06', time: '18:10' },
+      SF4: { date: '2026-06-06', time: '19:30' },
+      F78: { date: '2026-06-07', time: '09:30' },
+      F56: { date: '2026-06-07', time: '10:50' },
+      F34: { date: '2026-06-07', time: '12:10' },
+      F:   { date: '2026-06-07', time: '13:30' }
+    },
+    juvenil: {
+      QF1: { date: '2026-05-29', period: 'tarda' },
+      QF2: { date: '2026-05-29', period: 'tarda' },
+      QF3: { date: '2026-05-29', period: 'tarda' },
+      QF4: { date: '2026-05-29', period: 'tarda' },
+      SF1: { date: '2026-05-30', period: 'tarda' },
+      SF2: { date: '2026-05-30', period: 'tarda' },
+      SF3: { date: '2026-05-30', period: 'tarda' },
+      SF4: { date: '2026-05-30', period: 'tarda' },
+      F78: { date: '2026-05-31', period: 'matí' },
+      F56: { date: '2026-05-31', period: 'matí' },
+      F34: { date: '2026-05-31', period: 'matí' },
+      F:   { date: '2026-05-31', period: 'matí' }
+    }
+  };
+  var CT_VENUE = {
+    cadet:   { name: 'Piscina Sílvia Fontana', city: 'Tarragona' },
+    juvenil: { name: 'CN Sabadell',            city: 'Sabadell'  }
+  };
+
+  function ctDayShort(isoDate) {
+    if (!isoDate) return '';
+    var parts = isoDate.split('-');
+    if (parts.length !== 3) return isoDate;
+    return parts[2] + '/' + parts[1];
+  }
+  function ctDayLong(isoDate) {
+    if (!isoDate) return '';
+    var d = new Date(isoDate + 'T12:00:00');
+    if (isNaN(d.getTime())) return isoDate;
+    var dies = ['diumenge','dilluns','dimarts','dimecres','dijous','divendres','dissabte'];
+    var mesos = ['gen','feb','març','abril','maig','juny','juliol','ag','set','oct','nov','des'];
+    return dies[d.getDay()] + ' ' + d.getDate() + ' ' + mesos[d.getMonth()];
+  }
+  function ctScheduleFor(team, matchId, scheduledAt) {
+    if (scheduledAt) {
+      var d = new Date(scheduledAt);
+      if (!isNaN(d.getTime())) {
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        return {
+          short: pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes()),
+          sortKey: d.getTime()
+        };
+      }
+    }
+    var def = CT_SCHEDULE_DEFAULTS[team] && CT_SCHEDULE_DEFAULTS[team][matchId];
+    if (!def) return null;
+    var label = ctDayShort(def.date) + ' · ' + (def.time || def.period || '');
+    var sortKey = new Date(def.date + 'T' + (def.time ? def.time + ':00' : (def.period === 'matí' ? '10:00:00' : '17:00:00'))).getTime();
+    return { short: label, sortKey: sortKey };
+  }
+
+  function resolveSide(side, team, results) {
+    if (side.t === 'seed') {
+      var t = CT_TEAMS[team][side.v];
+      return t ? Object.assign({}, t, { seed: side.v }) : null;
+    }
+    var dep = CT_MATCHES.find(function (m) { return m.id === side.v; });
+    var r = results[side.v];
+    if (!r || r.score1 == null || r.score2 == null) return null;
+    var t1 = resolveSide(dep.s1, team, results);
+    var t2 = resolveSide(dep.s2, team, results);
+    if (!t1 || !t2) return null;
+    var w1 = Number(r.score1) > Number(r.score2);
+    if (side.t === 'winner') return w1 ? t1 : t2;
+    return w1 ? t2 : t1;
+  }
+
+  function sideCouldBeCnt(side, team, results) {
+    if (side.t === 'seed') {
+      var t = CT_TEAMS[team][side.v];
+      return !!(t && t.isCnt);
+    }
+    var dep = CT_MATCHES.find(function (m) { return m.id === side.v; });
+    var r = results[side.v];
+    if (r && r.score1 != null && r.score2 != null) {
+      var w1 = Number(r.score1) > Number(r.score2);
+      var target = side.t === 'winner' ? (w1 ? dep.s1 : dep.s2) : (w1 ? dep.s2 : dep.s1);
+      return sideCouldBeCnt(target, team, results);
+    }
+    return sideCouldBeCnt(dep.s1, team, results) || sideCouldBeCnt(dep.s2, team, results);
+  }
+  function matchInvolvesCnt(m, team, results) {
+    return sideCouldBeCnt(m.s1, team, results) || sideCouldBeCnt(m.s2, team, results);
+  }
+
+  function teamHtml(t, score, isWinner, isLoser, showSeed) {
+    if (!t) {
+      return '<div class="ct-team ct-tbd"><span class="ct-seed">–</span><span class="ct-badge">?</span><span class="ct-name">Per determinar</span><span class="ct-score">–</span></div>';
+    }
+    var badge = t.logo
+      ? '<img src="' + t.logo + '" alt="' + t.short + '">'
+      : t.short.slice(0, 3).toUpperCase();
+    var cls = ['ct-team'];
+    if (t.isCnt) cls.push('ct-cnt');
+    if (isWinner) cls.push('ct-winner');
+    if (isLoser) cls.push('ct-loser');
+    var seed = showSeed && t.seed ? t.seed : '';
+    return '<div class="' + cls.join(' ') + '">'
+      + '<span class="ct-seed">' + seed + '</span>'
+      + '<span class="ct-badge">' + badge + '</span>'
+      + '<span class="ct-name">' + t.short + '</span>'
+      + '<span class="ct-score">' + (score != null ? score : '–') + '</span>'
+      + '</div>';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  function matchHtml(m, team, results) {
+    var r = results[m.id] || {};
+    var t1 = resolveSide(m.s1, team, results);
+    var t2 = resolveSide(m.s2, team, results);
+    var has = r.score1 != null && r.score2 != null;
+    var w1 = has && Number(r.score1) > Number(r.score2);
+    var cnt = (t1 && t1.isCnt) || (t2 && t2.isCnt);
+    var cls = ['ct-match'];
+    if (cnt) cls.push('ct-has-cnt');
+    if (m.round === 'final') cls.push('ct-final');
+    if (m.round === 'final-34') cls.push('ct-final-34');
+    if (m.round === 'final-56') cls.push('ct-final-56');
+    if (m.round === 'final-78') cls.push('ct-final-78');
+    var sched = ctScheduleFor(team, m.id, r.scheduledAt);
+    var footer = sched ? ('<div class="ct-match-footer">📅 ' + sched.short + '</div>') : '';
+    var showSeed = m.col === 'qf';
+    return '<div class="' + cls.join(' ') + '" data-match="' + m.id + '">'
+      + '<div class="ct-match-header"><span class="ct-id">' + CT_LABELS[m.id] + '</span><span>' + CT_HEADER_SUBS[m.id] + '</span></div>'
+      + teamHtml(t1, has ? r.score1 : null, has && w1, has && !w1, showSeed)
+      + teamHtml(t2, has ? r.score2 : null, has && !w1, has && w1, showSeed)
+      + footer
+      + '</div>';
+  }
+
+  function renderBracket(team, hostId) {
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
+    var find = function (id) { return CT_MATCHES.find(function (m) { return m.id === id; }); };
+    var inv = function (m) { return matchInvolvesCnt(m, team, results); };
+    var qf = ['QF1','QF2','QF3','QF4'].map(find).filter(inv);
+    var sf = ['SF1','SF2','SF3','SF4'].map(find).filter(inv);
+    var fn = ['F78','F56','F34','F'].map(find).filter(inv);
+    var renderCol = function (head, list, emptyMsg) {
+      var body = list.length
+        ? list.map(function (m) { return matchHtml(m, team, results); }).join('')
+        : '<div class="ct-empty">' + emptyMsg + '</div>';
+      return '<div class="ct-col"><div class="ct-col-head">' + head + '</div>' + body + '</div>';
+    };
+    host.innerHTML = renderCol('Quarts', qf, '—')
+      + renderCol('Semifinals', sf, 'Pendent del resultat dels quarts')
+      + renderCol('Finals', fn, 'Pendent del resultat de semifinals');
+  }
+
+  function renderNextMatchPill() {
+    var team = (typeof window.selectedTeam !== 'undefined' && window.selectedTeam)
+      || (document.body && document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
+    var container = document.getElementById('next-match-pill');
+    if (!container) return;
+    var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
+    var now = new Date();
+    var candidates = [];
+    CT_MATCHES.forEach(function (m) {
+      var r = results[m.id] || {};
+      if (r.score1 != null && r.score2 != null) return;
+      var t1 = resolveSide(m.s1, team, results);
+      var t2 = resolveSide(m.s2, team, results);
+      var cntInvolved = (t1 && t1.isCnt) || (t2 && t2.isCnt);
+      if (!cntInvolved) return;
+      candidates.push({ m: m, t1: t1, t2: t2, scheduledAt: r.scheduledAt || null });
+    });
+    if (!candidates.length) {
+      container.innerHTML = '<div style="color:#bfdbfe;font-size:12px;">Pendent de programar partits del Campionat</div>';
+      return;
+    }
+    candidates.forEach(function (c) {
+      c.sched = ctScheduleFor(team, c.m.id, c.scheduledAt);
+    });
+    candidates.sort(function (a, b) {
+      var da = a.sched ? a.sched.sortKey : Infinity;
+      var db = b.sched ? b.sched.sortKey : Infinity;
+      return da - db;
+    });
+    var next = candidates[0];
+    var dt = next.scheduledAt ? new Date(next.scheduledAt) : null;
+    var countdownHtml = '';
+    if (dt && !isNaN(dt.getTime())) {
+      var diff = dt - now;
+      if (diff > 0) {
+        var days = Math.floor(diff / 86400000);
+        var hrs = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var txt = days > 0 ? (days + 'd ' + hrs + 'h ' + mins + 'm') : (hrs + 'h ' + mins + 'm');
+        countdownHtml = '<div style="margin-top:10px;padding:8px 15px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;"><span style="font-size:12px;">⏱️ Falten <strong>' + txt + '</strong></span></div>';
+      }
+    }
+    var def = CT_SCHEDULE_DEFAULTS[team] && CT_SCHEDULE_DEFAULTS[team][next.m.id];
+    var dateStr;
+    if (dt && !isNaN(dt.getTime())) {
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      dateStr = pad(dt.getDate()) + '/' + pad(dt.getMonth() + 1) + ' · ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+    } else if (def) {
+      var dayLong = ctDayLong(def.date);
+      var when = def.time ? def.time : (def.period || '');
+      dateStr = '📅 ' + dayLong + (when ? ' · ' + when : '');
+    } else {
+      dateStr = 'Data per determinar';
+    }
+    var venue = CT_VENUE[team];
+    var venueStr = venue ? ('<div style="margin-top:6px;font-size:12px;opacity:0.85;">📍 ' + venue.name + (venue.city ? ' · ' + venue.city : '') + '</div>') : '';
+    var tHtml = function (t) {
+      if (!t) return '<div style="opacity:0.5;font-style:italic;font-size:12px;">Per determinar</div>';
+      var img = t.logo
+        ? '<img src="' + t.logo + '" style="width:50px;height:50px;border-radius:50%;background:white;padding:3px;object-fit:contain;">'
+        : '<div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;">' + t.short.slice(0,3).toUpperCase() + '</div>';
+      var color = t.isCnt ? 'color:#fbbf24;' : '';
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;">' + img
+        + '<div style="font-size:12px;font-weight:600;' + color + 'max-width:100px;text-align:center;">' + t.short + '</div></div>';
+    };
+    container.innerHTML =
+      '<div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">' + CT_LABELS[next.m.id] + ' · Campionat de Catalunya</div>'
+      + '<div style="display:flex;align-items:center;justify-content:center;gap:18px;">'
+      + tHtml(next.t1)
+      + '<div style="font-size:22px;font-weight:800;opacity:0.7;">vs</div>'
+      + tHtml(next.t2)
+      + '</div>'
+      + '<div style="margin-top:12px;font-size:13px;">' + dateStr + '</div>'
+      + venueStr
+      + countdownHtml;
+  }
+
+  function renderVenue() {
+    var host = document.getElementById('ctVenue');
+    if (!host) return;
+    var team = (typeof window.selectedTeam !== 'undefined' && window.selectedTeam)
+      || (document.body && document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
+    var venue = CT_VENUE[team];
+    var def = CT_SCHEDULE_DEFAULTS[team];
+    if (!venue && !def) { host.innerHTML = ''; return; }
+    var parts = [];
+    if (venue) {
+      parts.push('<span class="ct-venue-item">📍 <strong>' + venue.name + '</strong>' + (venue.city ? ' · ' + venue.city : '') + '</span>');
+    }
+    if (def) {
+      var dates = {};
+      ['QF1','SF1','F'].forEach(function (id) {
+        var d = def[id];
+        if (d) dates[id] = d.date;
+      });
+      if (dates.QF1) parts.push('<span class="ct-venue-item">🥉 Quarts: <strong>' + ctDayLong(dates.QF1) + '</strong></span>');
+      if (dates.SF1) parts.push('<span class="ct-venue-item">🥈 Semifinals: <strong>' + ctDayLong(dates.SF1) + '</strong></span>');
+      if (dates.F)   parts.push('<span class="ct-venue-item">🏆 Finals: <strong>' + ctDayLong(dates.F)   + '</strong></span>');
+    }
+    host.innerHTML = parts.join('');
+  }
+
+  function renderAll() {
+    try { renderVenue(); } catch (e) { console.warn('ct venue', e); }
+    try { renderBracket('cadet', 'ctBracketCadet'); } catch (e) { console.warn('ct cadet', e); }
+    try { renderBracket('juvenil', 'ctBracketJuvenil'); } catch (e) { console.warn('ct juvenil', e); }
+    try { renderNextMatchPill(); } catch (e) { console.warn('ct pill', e); }
+  }
+
+  // Exposem com a globals perquè el codi del fitxer hi pugui cridar
+  window.ctRenderAll = renderAll;
+  window.renderCntNextMatchFromBracket = renderNextMatchPill;
+  window.loadNextMatchPill = function () { renderNextMatchPill(); return Promise.resolve(); };
+
+  // Listener Firebase (espera fins que firebaseReady estigui llest)
+  function initFirebase() {
+    if (!window.firebaseReady) { setTimeout(initFirebase, 200); return; }
+    ['cadet', 'juvenil'].forEach(function (team) {
+      try {
+        var ref = window.firebaseRef(window.firebaseDB, 'championship/' + team);
+        window.firebaseOnValue(ref, function (snap) {
+          window.ctChampionshipData = window.ctChampionshipData || { cadet: {}, juvenil: {} };
+          window.ctChampionshipData[team] = snap.val() || {};
+          renderAll();
+        });
+      } catch (e) { console.warn('ct firebase ' + team, e); }
+    });
+  }
+
+  // Render inicial + listeners defensius
+  renderAll();
+  initFirebase();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  }
+  window.addEventListener('load', renderAll);
+  if (document.body) {
+    new MutationObserver(renderAll).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+  setInterval(renderNextMatchPill, 60000);
+})();
+</script>
 </body>
 </html>
