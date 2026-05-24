@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultats Campionat de Catalunya · Admin · CN Terrassa</title>
+<meta name="description" content="Entrar resultats dels partits del Campionat de Catalunya 2025-26.">
+<link rel="icon" type="image/png" href="cnt-stats-192.png">
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getDatabase, ref, onValue, set, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  const firebaseConfig = {
+    apiKey: "AIzaSyCmJwgJvh10LcpPjeWhLbN5EDYeHT3tAoU",
+    authDomain: "cnt-wp-stats-bb7dc.firebaseapp.com",
+    databaseURL: "https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cnt-wp-stats-bb7dc",
+    storageBucket: "cnt-wp-stats-bb7dc.firebasestorage.app",
+    messagingSenderId: "3430713575",
+    appId: "1:3430713575:web:d580671a5d19049b187a42",
+    measurementId: "G-VZVL8MZV4K"
+  };
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  window.fb = { db: database, ref, onValue, set, update, remove };
+  window.fbReady = true;
+</script>
+
+<style>
+  :root {
+    --bg-1: #0f172a;
+    --bg-2: #1e293b;
+    --bg-3: #334155;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-strong: rgba(255, 255, 255, 0.12);
+    --border: rgba(255, 255, 255, 0.14);
+    --text: #f1f5f9;
+    --text-soft: #cbd5e1;
+    --text-faint: #94a3b8;
+    --accent: #06b6d4;
+    --cnt-gold: #fbbf24;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 24px 16px 64px;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+  .back {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 8px 14px;
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .back:hover { background: var(--card-strong); }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .subtitle { color: var(--text-faint); font-size: 13px; margin-bottom: 20px; }
+
+  .team-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .team-tabs button {
+    flex: 1;
+    padding: 12px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .team-tabs button:hover { background: var(--card-strong); }
+  .team-tabs button.active {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    border-color: #3b82f6;
+    color: white;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .toolbar button {
+    padding: 8px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .toolbar button:hover { background: var(--card-strong); }
+  .toolbar .danger { color: #fca5a5; border-color: rgba(239,68,68,0.4); }
+  .toolbar .danger:hover { background: rgba(239,68,68,0.18); }
+
+  .round-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .round-section h2 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-faint);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+
+  .match-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 70px 18px 70px 180px 90px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row .mid {
+    font-weight: 800;
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .match-row .teams {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    min-width: 0;
+  }
+  .match-row .teams img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    padding: 2px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  .match-row .teams .team-block {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .match-row .teams .team-block.cnt { color: var(--cnt-gold); font-weight: 700; }
+  .match-row .teams .tbd-text { color: var(--text-faint); font-style: italic; }
+  .match-row .vs { color: var(--text-faint); font-size: 11px; }
+  .match-row input[type="number"], .match-row input[type="datetime-local"] {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .match-row input[type="number"]::-webkit-outer-spin-button,
+  .match-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .match-row input[type="number"] { -moz-appearance: textfield; text-align: center; font-weight: 700; }
+  .match-row input:focus { outline: none; border-color: var(--accent); }
+  .match-row .save-btn {
+    padding: 8px 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .match-row .save-btn:hover { background: #0891b2; }
+  .match-row .save-btn.saved { background: var(--ok); }
+  .match-row .save-btn.error { background: var(--danger); }
+
+  @media (max-width: 800px) {
+    .match-row {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 12px 0;
+    }
+    .match-row .row-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+  }
+
+  .legend {
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--card);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+  .legend strong { color: var(--text); }
+  .schedule-hint {
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back">← Tornar a estadístiques</a>
+  <h1>📝 Resultats Campionat de Catalunya</h1>
+  <p class="subtitle">Entra els resultats i els horaris de cada partit. Els canvis es desen al núvol i el bracket de la portada s'actualitza en temps real.</p>
+
+  <div class="team-tabs">
+    <button data-team="cadet" class="active" onclick="selectTeamTab('cadet')">⬛ Cadet</button>
+    <button data-team="juvenil" onclick="selectTeamTab('juvenil')">🟦 Juvenil</button>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="applySuggestedSchedule()">📅 Aplicar horaris suggerits</button>
+    <button class="danger" onclick="confirmClearAll()">🗑️ Esborrar tots els resultats</button>
+  </div>
+
+  <div id="matchesHost"></div>
+
+  <div class="legend">
+    <strong>Com funciona:</strong><br>
+    · Introdueix els <strong>gols de cada equip</strong> i clica <strong>Desar</strong>.<br>
+    · El <strong>guanyador</strong> passa automàticament a la següent ronda al bracket de la portada.<br>
+    · Els camps de <strong>data/hora</strong> ordenen el "Pròxim partit" del CN Terrassa.<br>
+    · Els horaris suggerits són els del cadet (segons la normativa Worldaquatics): QF/Finals 09.30·10.50·12.10·13.30, SF 15.30·16.50·18.10·19.30.
+  </div>
+</div>
+
+<script>
+const CT_TEAMS = {
+  cadet: [
+    null,
+    { name: 'Barceloneta',    short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
+    { name: 'C.N. Barcelona', short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
+    { name: 'C.N. Sabadell',  short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
+    { name: 'C.N. Terrassa',  short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
+    { name: 'Sant Andreu',    short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
+    { name: 'Mediterrani',    short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
+    { name: 'Poble Nou',      short: 'Poble Nou',   logo: 'https://cdn.leverade.com/thumbnails/AavYwrQJ36uU.90x90.jpg' },
+    { name: "U.E. d'Horta",   short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' }
+  ],
+  juvenil: [
+    null,
+    { name: 'C.N. Sabadell',  short: 'Sabadell',    logo: 'https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.90x90.jpg' },
+    { name: 'Barceloneta',    short: 'Barceloneta', logo: 'https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.90x90.jpg' },
+    { name: 'C.N. Barcelona', short: 'CNB',         logo: 'https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.90x90.jpg' },
+    { name: "U.E. d'Horta",   short: 'Horta',       logo: 'https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.90x90.jpg' },
+    { name: 'Mediterrani',    short: 'Mediterrani', logo: 'https://cdn.leverade.com/thumbnails/AasntmnZMsxi.90x90.jpg' },
+    { name: 'Sant Andreu',    short: 'St Andreu',   logo: 'https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.90x90.jpg' },
+    { name: 'C.N. Terrassa',  short: 'Terrassa',    logo: 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg', isCnt: true },
+    { name: 'Montjuïc',       short: 'Montjuïc',    logo: null }
+  ]
+};
+
+const CT_MATCHES = [
+  { id: 'QF1', section: 'Quarts',                s1: { t: 'seed',   v: 1 },     s2: { t: 'seed',   v: 8 },     suggestedTime: '09:30' },
+  { id: 'QF2', section: 'Quarts',                s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 5 },     suggestedTime: '10:50' },
+  { id: 'QF3', section: 'Quarts',                s1: { t: 'seed',   v: 2 },     s2: { t: 'seed',   v: 7 },     suggestedTime: '12:10' },
+  { id: 'QF4', section: 'Quarts',                s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 6 },     suggestedTime: '13:30' },
+  { id: 'SF1', section: 'Semifinals 5-8',        s1: { t: 'loser',  v: 'QF1' }, s2: { t: 'loser',  v: 'QF2' }, suggestedTime: '15:30' },
+  { id: 'SF2', section: 'Semifinals 5-8',        s1: { t: 'loser',  v: 'QF3' }, s2: { t: 'loser',  v: 'QF4' }, suggestedTime: '16:50' },
+  { id: 'SF3', section: 'Semifinals 1-4',        s1: { t: 'winner', v: 'QF1' }, s2: { t: 'winner', v: 'QF2' }, suggestedTime: '18:10' },
+  { id: 'SF4', section: 'Semifinals 1-4',        s1: { t: 'winner', v: 'QF3' }, s2: { t: 'winner', v: 'QF4' }, suggestedTime: '19:30' },
+  { id: 'F78', section: 'Finals',                s1: { t: 'loser',  v: 'SF1' }, s2: { t: 'loser',  v: 'SF2' }, suggestedTime: '09:30' },
+  { id: 'F56', section: 'Finals',                s1: { t: 'winner', v: 'SF1' }, s2: { t: 'winner', v: 'SF2' }, suggestedTime: '10:50' },
+  { id: 'F34', section: 'Finals',                s1: { t: 'loser',  v: 'SF3' }, s2: { t: 'loser',  v: 'SF4' }, suggestedTime: '12:10' },
+  { id: 'F',   section: 'Finals',                s1: { t: 'winner', v: 'SF3' }, s2: { t: 'winner', v: 'SF4' }, suggestedTime: '13:30' }
+];
+
+const CT_LABELS = { QF1:'QF 1', QF2:'QF 2', QF3:'QF 3', QF4:'QF 4', SF1:'SF 1', SF2:'SF 2', SF3:'SF 3', SF4:'SF 4', F78:'7è/8è', F56:'5è/6è', F34:'3r/4t', F:'FINAL' };
+const CT_HINTS = { QF1:'1 vs 8', QF2:'4 vs 5', QF3:'2 vs 7', QF4:'3 vs 6', SF1:'Perd. QF1·QF2', SF2:'Perd. QF3·QF4', SF3:'Guany. QF1·QF2', SF4:'Guany. QF3·QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'Guany. SF (1-4)' };
+
+let currentTeam = 'cadet';
+let dataByTeam = { cadet: {}, juvenil: {} };
+
+function resolveSide(side, team, results) {
+  if (side.t === 'seed') {
+    const t = CT_TEAMS[team][side.v];
+    return t ? { ...t, seed: side.v } : null;
+  }
+  const dep = CT_MATCHES.find(m => m.id === side.v);
+  const depR = results[side.v];
+  if (!depR || depR.score1 == null || depR.score2 == null) return null;
+  const t1 = resolveSide(dep.s1, team, results);
+  const t2 = resolveSide(dep.s2, team, results);
+  if (!t1 || !t2) return null;
+  const side1Wins = Number(depR.score1) > Number(depR.score2);
+  if (side.t === 'winner') return side1Wins ? t1 : t2;
+  return side1Wins ? t2 : t1;
+}
+
+function teamBlockHtml(t, fallback) {
+  if (!t) return `<span class="tbd-text">${fallback}</span>`;
+  const logoHtml = t.logo ? `<img src="${t.logo}" alt="">` : `<span style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.18);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${t.short.slice(0,3).toUpperCase()}</span>`;
+  return `<span class="team-block ${t.isCnt ? 'cnt' : ''}">${logoHtml}<span>${t.short}</span></span>`;
+}
+
+function renderMatches() {
+  const host = document.getElementById('matchesHost');
+  const results = dataByTeam[currentTeam] || {};
+  const bySection = {};
+  CT_MATCHES.forEach(m => { (bySection[m.section] = bySection[m.section] || []).push(m); });
+  let html = '';
+  Object.keys(bySection).forEach(section => {
+    html += `<div class="round-section"><h2>${section}</h2>`;
+    bySection[section].forEach(m => {
+      const t1 = resolveSide(m.s1, currentTeam, results);
+      const t2 = resolveSide(m.s2, currentTeam, results);
+      const r = results[m.id] || {};
+      const scoreVal = (v) => (v != null && v !== '') ? v : '';
+      const dtVal = r.scheduledAt ? r.scheduledAt.slice(0, 16) : '';
+      html += `
+        <div class="match-row" data-mid="${m.id}">
+          <div class="mid">${CT_LABELS[m.id]}<div class="schedule-hint">${m.suggestedTime}</div></div>
+          <div class="teams">
+            ${teamBlockHtml(t1, `Guany./Perd. ${m.s1.v}`)}
+            <span class="vs">vs</span>
+            ${teamBlockHtml(t2, `Guany./Perd. ${m.s2.v}`)}
+          </div>
+          <input type="number" min="0" inputmode="numeric" class="score1" value="${scoreVal(r.score1)}" placeholder="–">
+          <span class="vs" style="text-align:center;">–</span>
+          <input type="number" min="0" inputmode="numeric" class="score2" value="${scoreVal(r.score2)}" placeholder="–">
+          <input type="datetime-local" class="dt" value="${dtVal}">
+          <button class="save-btn" onclick="saveMatch('${m.id}')">Desar</button>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  host.innerHTML = html;
+}
+
+function selectTeamTab(team) {
+  currentTeam = team;
+  document.querySelectorAll('.team-tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.team === team);
+  });
+  renderMatches();
+}
+
+async function saveMatch(matchId) {
+  if (!window.fbReady) { alert('Firebase encarregant... espera un instant.'); return; }
+  const row = document.querySelector(`.match-row[data-mid="${matchId}"]`);
+  const btn = row.querySelector('.save-btn');
+  const s1 = row.querySelector('.score1').value;
+  const s2 = row.querySelector('.score2').value;
+  const dt = row.querySelector('.dt').value;
+  const payload = {
+    score1: s1 === '' ? null : Number(s1),
+    score2: s2 === '' ? null : Number(s2),
+    scheduledAt: dt ? new Date(dt).toISOString() : null,
+    updatedAt: Date.now()
+  };
+  try {
+    btn.textContent = 'Desant…';
+    btn.disabled = true;
+    await window.fb.set(window.fb.ref(window.fb.db, `championship/${currentTeam}/${matchId}`), payload);
+    btn.textContent = '✓ Desat';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = 'Desar'; btn.classList.remove('saved'); btn.disabled = false; }, 1600);
+  } catch (e) {
+    console.error(e);
+    btn.textContent = '✗ Error';
+    btn.classList.add('error');
+    setTimeout(() => { btn.textContent = 'Desar'; btn.classList.remove('error'); btn.disabled = false; }, 2200);
+  }
+}
+window.saveMatch = saveMatch;
+window.selectTeamTab = selectTeamTab;
+
+async function applySuggestedSchedule() {
+  const dayQF = prompt('Data dels Quarts (format AAAA-MM-DD), p.ex. 2026-05-30');
+  if (!dayQF) return;
+  const daySF = prompt('Data de les Semifinals (AAAA-MM-DD)', dayQF) || dayQF;
+  const dayFn = prompt('Data de les Finals (AAAA-MM-DD)', daySF) || daySF;
+  CT_MATCHES.forEach(m => {
+    const row = document.querySelector(`.match-row[data-mid="${m.id}"]`);
+    if (!row) return;
+    const day = m.section === 'Quarts' ? dayQF : m.section === 'Finals' ? dayFn : daySF;
+    row.querySelector('.dt').value = `${day}T${m.suggestedTime}`;
+  });
+  alert('Horaris emplenats. Revisa i clica Desar a cada partit per guardar-los.');
+}
+window.applySuggestedSchedule = applySuggestedSchedule;
+
+async function confirmClearAll() {
+  if (!confirm(`Esborrar TOTS els resultats del ${currentTeam.toUpperCase()}? Aquesta acció no es pot desfer.`)) return;
+  if (!window.fbReady) { alert('Firebase no llest.'); return; }
+  await window.fb.remove(window.fb.ref(window.fb.db, `championship/${currentTeam}`));
+}
+window.confirmClearAll = confirmClearAll;
+
+function initFirebaseListener() {
+  if (!window.fbReady) { setTimeout(initFirebaseListener, 200); return; }
+  ['cadet', 'juvenil'].forEach(team => {
+    const r = window.fb.ref(window.fb.db, `championship/${team}`);
+    window.fb.onValue(r, snap => {
+      dataByTeam[team] = snap.val() || {};
+      if (team === currentTeam) renderMatches();
+    });
+  });
+}
+
+renderMatches();
+initFirebaseListener();
+</script>
+</body>
+</html>
