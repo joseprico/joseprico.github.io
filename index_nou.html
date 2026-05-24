@@ -19704,23 +19704,37 @@ async function loadRivalHistory() {
     let nextRival = null;
     let isHome = false;
     let nextMatch = null;
-    
-    if (actawpData && actawpData.upcoming_matches && actawpData.upcoming_matches.length > 0) {
+    let cntLogo = '';
+    let rivalLogo = '';
+    let bracketLabel = null;
+
+    // 🆕 1) PRIORITAT: rival del bracket del Campionat de Catalunya
+    try {
+        const bracketRival = typeof window.getCntBracketOpponent === 'function' ? window.getCntBracketOpponent() : null;
+        if (bracketRival) {
+            nextRival = bracketRival.name || bracketRival.short;
+            rivalLogo = bracketRival.logo || '';
+            cntLogo = 'https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.90x90.jpg';
+            bracketLabel = bracketRival.matchLabel || null;
+            nextMatch = { team1: 'CN TERRASSA', team2: nextRival, team1_logo: cntLogo, team2_logo: rivalLogo };
+        }
+    } catch (_) {}
+
+    // 2) FALLBACK: rival de la lliga (ACTAWP upcoming_matches)
+    if (!nextRival && actawpData && actawpData.upcoming_matches && actawpData.upcoming_matches.length > 0) {
         nextMatch = actawpData.upcoming_matches[0];
         const homeTeam = nextMatch.team1 || '';
         const awayTeam = nextMatch.team2 || '';
         isHome = homeTeam.toUpperCase().includes('TERRASSA');
         nextRival = isHome ? awayTeam : homeTeam;
+        cntLogo = isHome ? (nextMatch.team1_logo || '') : (nextMatch.team2_logo || '');
+        rivalLogo = isHome ? (nextMatch.team2_logo || '') : (nextMatch.team1_logo || '');
     }
-    
+
     if (!nextRival) {
         mapDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">No hi ha pròxim rival</div>';
         return;
     }
-    
-    // Logos
-    const cntLogo = isHome ? (nextMatch.team1_logo || '') : (nextMatch.team2_logo || '');
-    const rivalLogo = isHome ? (nextMatch.team2_logo || '') : (nextMatch.team1_logo || '');
     
     // Normalitzar nom
     const normalizeTeamName = (name) => {
@@ -19860,7 +19874,7 @@ async function loadRivalHistory() {
                 
                 <div style="text-align: center;">
                     <div style="font-size: 16px; font-weight: 700; color: white;">VS</div>
-                    <div style="font-size: 10px; color: rgba(255,255,255,0.7);">${isHome ? '🏠 Casa' : '✈️ Fora'}</div>
+                    <div style="font-size: 10px; color: rgba(255,255,255,0.7);">${bracketLabel ? '🏟️ Camp neutral' : (isHome ? '🏠 Casa' : '✈️ Fora')}</div>
                 </div>
                 
                 <div style="text-align: center;">
@@ -19873,7 +19887,10 @@ async function loadRivalHistory() {
             
             <div style="text-align: center; margin-bottom: 15px;">
                 <div style="font-size: 15px; font-weight: 700; color: white;">${nextRival}</div>
-                <div style="font-size: 11px; color: rgba(255,255,255,0.7);">Jornada ${nextMatch.jornada || '?'} · ${nextMatch.date || ''} · ${nextMatch.time || ''}h</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${bracketLabel
+                    ? bracketLabel + ' · Campionat de Catalunya'
+                    : ('Jornada ' + (nextMatch.jornada || '?') + ' · ' + (nextMatch.date || '') + ' · ' + (nextMatch.time || '') + 'h')
+                }</div>
             </div>
             
              <!-- Historial vs CNT -->
@@ -22396,17 +22413,48 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     host.innerHTML = parts.join('');
   }
 
+  // Retorna el rival del CNT al proper partit del bracket (per a la pastilla d'Anàlisi del Rival)
+  function getCntBracketOpponent() {
+    var team = (typeof window.selectedTeam !== 'undefined' && window.selectedTeam)
+      || (document.body && document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
+    var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
+    var found = null;
+    for (var i = 0; i < CT_MATCHES.length; i++) {
+      var m = CT_MATCHES[i];
+      var r = results[m.id] || {};
+      if (r.score1 != null && r.score2 != null) continue;
+      var t1 = resolveSide(m.s1, team, results);
+      var t2 = resolveSide(m.s2, team, results);
+      var cntIs1 = t1 && t1.isCnt;
+      var cntIs2 = t2 && t2.isCnt;
+      if (!cntIs1 && !cntIs2) continue;
+      var rival = cntIs1 ? t2 : t1;
+      if (!rival) continue;
+      found = {
+        short: rival.short,
+        name: rival.name,
+        logo: rival.logo || '',
+        matchLabel: CT_LABELS[m.id],
+        sched: ctScheduleFor(team, m.id, r.scheduledAt)
+      };
+      break;
+    }
+    return found;
+  }
+
   function renderAll() {
     try { renderVenue(); } catch (e) { console.warn('ct venue', e); }
     try { renderBracket('cadet', 'ctBracketCadet'); } catch (e) { console.warn('ct cadet', e); }
     try { renderBracket('juvenil', 'ctBracketJuvenil'); } catch (e) { console.warn('ct juvenil', e); }
     try { renderNextMatchPill(); } catch (e) { console.warn('ct pill', e); }
+    try { if (typeof window.loadRivalHistory === 'function') window.loadRivalHistory(); } catch (e) { console.warn('ct rival', e); }
   }
 
   // Exposem com a globals perquè el codi del fitxer hi pugui cridar
   window.ctRenderAll = renderAll;
   window.renderCntNextMatchFromBracket = renderNextMatchPill;
   window.loadNextMatchPill = function () { renderNextMatchPill(); return Promise.resolve(); };
+  window.getCntBracketOpponent = getCntBracketOpponent;
 
   // Listener Firebase (espera fins que firebaseReady estigui llest)
   function initFirebase() {
