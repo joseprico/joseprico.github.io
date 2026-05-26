@@ -22119,23 +22119,36 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     ]
   };
 
-  var CT_MATCHES = [
-    { id: 'QF1', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 1 },     s2: { t: 'seed',   v: 8 }     },
-    { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 5 }     },
-    { id: 'QF3', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 2 },     s2: { t: 'seed',   v: 7 }     },
-    { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 6 }     },
-    { id: 'SF1', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF1' }, s2: { t: 'loser',  v: 'QF2' } },
-    { id: 'SF2', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF3' }, s2: { t: 'loser',  v: 'QF4' } },
-    { id: 'SF3', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF1' }, s2: { t: 'winner', v: 'QF2' } },
-    { id: 'SF4', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF3' }, s2: { t: 'winner', v: 'QF4' } },
-    { id: 'F78', col: 'finals', round: 'final-78',   s1: { t: 'loser',  v: 'SF1' }, s2: { t: 'loser',  v: 'SF2' } },
-    { id: 'F56', col: 'finals', round: 'final-56',   s1: { t: 'winner', v: 'SF1' }, s2: { t: 'winner', v: 'SF2' } },
-    { id: 'F34', col: 'finals', round: 'final-34',   s1: { t: 'loser',  v: 'SF3' }, s2: { t: 'loser',  v: 'SF4' } },
-    { id: 'F',   col: 'finals', round: 'final',      s1: { t: 'winner', v: 'SF3' }, s2: { t: 'winner', v: 'SF4' } }
-  ];
+  function ctBuildMatches(qf1, qf2, qf3, qf4) {
+    return [
+      { id: 'QF1', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: qf1[0] }, s2: { t: 'seed',   v: qf1[1] } },
+      { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: qf2[0] }, s2: { t: 'seed',   v: qf2[1] } },
+      { id: 'QF3', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: qf3[0] }, s2: { t: 'seed',   v: qf3[1] } },
+      { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: qf4[0] }, s2: { t: 'seed',   v: qf4[1] } },
+      { id: 'SF1', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF1' },  s2: { t: 'loser',  v: 'QF2' } },
+      { id: 'SF2', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF3' },  s2: { t: 'loser',  v: 'QF4' } },
+      { id: 'SF3', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF1' },  s2: { t: 'winner', v: 'QF2' } },
+      { id: 'SF4', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF3' },  s2: { t: 'winner', v: 'QF4' } },
+      { id: 'F78', col: 'finals', round: 'final-78',   s1: { t: 'loser',  v: 'SF1' },  s2: { t: 'loser',  v: 'SF2' } },
+      { id: 'F56', col: 'finals', round: 'final-56',   s1: { t: 'winner', v: 'SF1' },  s2: { t: 'winner', v: 'SF2' } },
+      { id: 'F34', col: 'finals', round: 'final-34',   s1: { t: 'loser',  v: 'SF3' },  s2: { t: 'loser',  v: 'SF4' } },
+      { id: 'F',   col: 'finals', round: 'final',      s1: { t: 'winner', v: 'SF3' },  s2: { t: 'winner', v: 'SF4' } }
+    ];
+  }
+  var CT_MATCHES_BY_TEAM = {
+    cadet:   ctBuildMatches([1, 8], [3, 5], [2, 7], [4, 6]),
+    juvenil: ctBuildMatches([1, 8], [4, 5], [2, 7], [3, 6])
+  };
+  function getCtMatches(team) { return CT_MATCHES_BY_TEAM[team] || CT_MATCHES_BY_TEAM.cadet; }
 
   var CT_LABELS = { QF1:'QF 1', QF2:'QF 2', QF3:'QF 3', QF4:'QF 4', SF1:'SF (5-8) A', SF2:'SF (5-8) B', SF3:'SF (1-4) A', SF4:'SF (1-4) B', F78:'7è/8è', F56:'5è/6è', F34:'3r/4t', F:'FINAL' };
-  var CT_HEADER_SUBS = { QF1:'1 vs 8', QF2:'4 vs 5', QF3:'2 vs 7', QF4:'3 vs 6', SF1:'Perd. QF1 · QF2', SF2:'Perd. QF3 · QF4', SF3:'Guany. QF1 · QF2', SF4:'Guany. QF3 · QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
+  var CT_HEADER_SUBS = { SF1:'Perd. QF1 · QF2', SF2:'Perd. QF3 · QF4', SF3:'Guany. QF1 · QF2', SF4:'Guany. QF3 · QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
+  function ctHeaderSub(m) {
+    if (m.col === 'qf' && m.s1.t === 'seed' && m.s2.t === 'seed') {
+      return m.s1.v + ' vs ' + m.s2.v;
+    }
+    return CT_HEADER_SUBS[m.id] || '';
+  }
 
   // Calendari oficial del Campionat de Catalunya 2025-26
   var CT_SCHEDULE_DEFAULTS = {
@@ -22210,7 +22223,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       var t = CT_TEAMS[team][side.v];
       return t ? Object.assign({}, t, { seed: side.v }) : null;
     }
-    var dep = CT_MATCHES.find(function (m) { return m.id === side.v; });
+    var dep = getCtMatches(team).find(function (m) { return m.id === side.v; });
     var r = results[side.v];
     if (!r || r.score1 == null || r.score2 == null) return null;
     var t1 = resolveSide(dep.s1, team, results);
@@ -22226,7 +22239,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       var t = CT_TEAMS[team][side.v];
       return !!(t && t.isCnt);
     }
-    var dep = CT_MATCHES.find(function (m) { return m.id === side.v; });
+    var dep = getCtMatches(team).find(function (m) { return m.id === side.v; });
     var r = results[side.v];
     if (r && r.score1 != null && r.score2 != null) {
       var w1 = Number(r.score1) > Number(r.score2);
@@ -22284,7 +22297,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     var footer = sched ? ('<div class="ct-match-footer">📅 ' + sched.short + '</div>') : '';
     var showSeed = m.col === 'qf';
     return '<div class="' + cls.join(' ') + '" data-match="' + m.id + '">'
-      + '<div class="ct-match-header"><span class="ct-id">' + CT_LABELS[m.id] + '</span><span>' + CT_HEADER_SUBS[m.id] + '</span></div>'
+      + '<div class="ct-match-header"><span class="ct-id">' + CT_LABELS[m.id] + '</span><span>' + ctHeaderSub(m) + '</span></div>'
       + teamHtml(t1, has ? r.score1 : null, has && w1, has && !w1, showSeed)
       + teamHtml(t2, has ? r.score2 : null, has && !w1, has && w1, showSeed)
       + footer
@@ -22295,7 +22308,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     var host = document.getElementById(hostId);
     if (!host) return;
     var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
-    var find = function (id) { return CT_MATCHES.find(function (m) { return m.id === id; }); };
+    var find = function (id) { return getCtMatches(team).find(function (m) { return m.id === id; }); };
     var inv = function (m) { return matchInvolvesCnt(m, team, results); };
     var qf = ['QF1','QF2','QF3','QF4'].map(find).filter(inv);
     var sf = ['SF1','SF2','SF3','SF4'].map(find).filter(inv);
@@ -22319,7 +22332,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
     var now = new Date();
     var candidates = [];
-    CT_MATCHES.forEach(function (m) {
+    getCtMatches(team).forEach(function (m) {
       var r = results[m.id] || {};
       if (r.score1 != null && r.score2 != null) return;
       var t1 = resolveSide(m.s1, team, results);
@@ -22419,8 +22432,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       || (document.body && document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
     var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
     var found = null;
-    for (var i = 0; i < CT_MATCHES.length; i++) {
-      var m = CT_MATCHES[i];
+    var matches = getCtMatches(team);
+    for (var i = 0; i < matches.length; i++) {
+      var m = matches[i];
       var r = results[m.id] || {};
       if (r.score1 != null && r.score2 != null) continue;
       var t1 = resolveSide(m.s1, team, results);
