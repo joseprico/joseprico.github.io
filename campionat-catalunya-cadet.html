@@ -306,9 +306,9 @@ const TEAMS = [
 
 const MATCHES = [
   { id: 'QF1', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 1 },     s2: { t: 'seed',   v: 8 }     },
-  { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 5 }     },
+  { id: 'QF2', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 5 }     },
   { id: 'QF3', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 2 },     s2: { t: 'seed',   v: 7 }     },
-  { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 4 },     s2: { t: 'seed',   v: 6 }     },
+  { id: 'QF4', col: 'qf',     round: 'qf',         s1: { t: 'seed',   v: 3 },     s2: { t: 'seed',   v: 6 }     },
   { id: 'SF1', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF1' }, s2: { t: 'loser',  v: 'QF2' } },
   { id: 'SF2', col: 'sf',     round: 'sf-losers',  s1: { t: 'loser',  v: 'QF3' }, s2: { t: 'loser',  v: 'QF4' } },
   { id: 'SF3', col: 'sf',     round: 'sf-winners', s1: { t: 'winner', v: 'QF1' }, s2: { t: 'winner', v: 'QF2' } },
@@ -319,7 +319,7 @@ const MATCHES = [
   { id: 'F',   col: 'finals', round: 'final',      s1: { t: 'winner', v: 'SF3' }, s2: { t: 'winner', v: 'SF4' } }
 ];
 const LABELS = { QF1:'QF1', QF2:'QF2', QF3:'QF3', QF4:'QF4', SF1:'SF (5-8) A', SF2:'SF (5-8) B', SF3:'SF (1-4) A', SF4:'SF (1-4) B', F78:'7è/8è lloc', F56:'5è/6è lloc', F34:'3r/4t lloc', F:'FINAL' };
-const HINTS  = { QF1:'1 vs 8', QF2:'3 vs 5', QF3:'2 vs 7', QF4:'4 vs 6', SF1:'Perd. QF1·QF2', SF2:'Perd. QF3·QF4', SF3:'Guany. QF1·QF2', SF4:'Guany. QF3·QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
+const HINTS  = { QF1:'1 vs 8', QF2:'4 vs 5', QF3:'2 vs 7', QF4:'3 vs 6', SF1:'Perd. QF1·QF2', SF2:'Perd. QF3·QF4', SF3:'Guany. QF1·QF2', SF4:'Guany. QF3·QF4', F78:'Perd. SF (5-8)', F56:'Guany. SF (5-8)', F34:'Perd. SF (1-4)', F:'★' };
 const DEFAULT_TIMES = { QF1:'09:30', QF2:'10:50', QF3:'12:10', QF4:'13:30', SF1:'15:30', SF2:'16:50', SF3:'18:10', SF4:'19:30', F78:'09:30', F56:'10:50', F34:'12:10', F:'13:30' };
 
 let DATA = {};
