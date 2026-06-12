@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador · Campionat d'Espanya Cadet Masculí 2026</title>
+<style>
+  :root{
+    --pool:#06283d;
+    --pool-2:#0a3a57;
+    --water:#1b6ca8;
+    --lane:#ffd166;
+    --foam:#eaf6ff;
+    --ink:#dff0fb;
+    --muted:#7fa8c4;
+    --win:#36d399;
+    --terrassa:#ff5d73;
+    --sabadell:#4cc9f0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    background:linear-gradient(180deg,var(--pool) 0%,#052033 100%);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  header{
+    padding:22px 20px 14px;
+    border-bottom:4px solid var(--lane);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 46px, rgba(255,209,102,.08) 46px 50px),
+      linear-gradient(180deg,#062c44,#06283d);
+  }
+  header h1{
+    margin:0;
+    font-size:clamp(19px,3.4vw,28px);
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    font-weight:800;
+  }
+  header h1 span{color:var(--lane)}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .toolbar{padding:10px 20px;display:flex;gap:10px;flex-wrap:wrap}
+  .toolbar button{
+    background:var(--pool-2);color:var(--ink);border:1px solid #1b557e;border-radius:7px;
+    padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;
+  }
+  .toolbar button:hover{background:#0f4a6e}
+  main{display:flex;gap:18px;overflow-x:auto;padding:18px 20px 40px;align-items:flex-start}
+  .col{min-width:295px;max-width:330px;flex:0 0 auto}
+  .col-h{
+    font-size:13px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;
+    color:var(--lane);margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid rgba(255,209,102,.35);
+  }
+  .col-sub{font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.4}
+  .phase-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px;font-weight:700}
+  .match{
+    background:linear-gradient(180deg,#0b3a59,#082f49);
+    border:1px solid #14517a;border-radius:10px;margin-bottom:10px;overflow:hidden;
+  }
+  .match-h{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:10.5px;color:var(--muted);padding:5px 10px;background:rgba(0,0,0,.22);
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  .match-h b{color:var(--foam)}
+  .team{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:13px;
+    border-top:1px solid rgba(255,255,255,.05);cursor:pointer;user-select:none;
+    transition:background .12s;min-height:36px;
+  }
+  .team.noclick{cursor:default}
+  .team:hover:not(.noclick){background:rgba(255,255,255,.06)}
+  .team .nm{flex:1;font-weight:600;line-height:1.25}
+  .team.tbd .nm{color:var(--muted);font-weight:400;font-style:italic}
+  .team.winner{background:rgba(54,211,153,.13)}
+  .team.winner .nm::after{content:" ✓";color:var(--win);font-weight:800}
+  .team.loser{opacity:.45}
+  .team.terrassa .nm{color:var(--terrassa)}
+  .team.sabadell .nm{color:var(--sabadell)}
+  table.standings{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0 14px}
+  table.standings th{color:var(--muted);font-weight:600;text-align:left;padding:3px 5px;font-size:10.5px;text-transform:uppercase}
+  table.standings td{padding:4px 5px;border-top:1px solid rgba(255,255,255,.06)}
+  table.standings td.num,table.standings th.num{text-align:center}
+  .pos-badge{
+    display:inline-block;min-width:18px;text-align:center;background:var(--pool-2);
+    border-radius:4px;font-weight:800;font-size:11px;padding:1px 3px;color:var(--lane);
+  }
+  .grp-card{background:rgba(0,0,0,.18);border:1px solid #123f60;border-radius:12px;padding:10px 12px;margin-bottom:14px}
+  .grp-card h3{margin:0 0 8px;font-size:13px;color:var(--foam);letter-spacing:.05em}
+  .note{
+    background:rgba(255,209,102,.08);border-left:3px solid var(--lane);
+    padding:8px 10px;font-size:11.5px;color:#f3e3b0;border-radius:0 8px 8px 0;margin-bottom:12px;line-height:1.45;
+  }
+  .clasif{background:rgba(0,0,0,.2);border:1px solid #123f60;border-radius:12px;padding:12px 14px}
+  .clasif h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--lane)}
+  .clasif ol{margin:0;padding:0;list-style:none;font-size:13px}
+  .clasif li{display:flex;gap:9px;padding:4px 2px;border-top:1px solid rgba(255,255,255,.05);align-items:center}
+  .clasif li .p{min-width:24px;text-align:right;color:var(--muted);font-weight:700;font-size:11.5px}
+  .clasif li .t{font-weight:600}
+  .clasif li .t.terrassa{color:var(--terrassa)}
+  .clasif li .t.sabadell{color:var(--sabadell)}
+  .clasif li .t.tbd{color:var(--muted);font-weight:400;font-style:italic}
+  .clasif li.podi-1 .p{color:gold}
+  .clasif li.podi-2 .p{color:#cfd8e3}
+  .clasif li.podi-3 .p{color:#d8915b}
+  @media (max-width:640px){
+    .col{min-width:272px}
+    header h1{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Campionat d'Espanya <span>Cadet Masculí 2026</span></h1>
+  <p>Torremolinos · 2–5 de juliol · Simulador de resultats (programa provisional 11-jun-26)</p>
+  <div class="legend">
+    <span><i style="background:var(--terrassa)"></i>C.N. Terrassa</span>
+    <span><i style="background:var(--sabadell)"></i>C.N. Sabadell</span>
+    <span><i style="background:var(--win)"></i>Guanyador seleccionat (clica l'equip)</span>
+  </div>
+</header>
+<div class="toolbar">
+  <button onclick="resetAll()">↺ Reiniciar simulació</button>
+  <button onclick="randomFill()">🎲 Omplir aleatòriament</button>
+</div>
+<main id="app"></main>
+
+<script>
+// ───────────────────────── DADES ─────────────────────────
+const T = {
+  ATB:"C.N. Atlètic-Barceloneta", CAN:"Real Canoe N.C.", BCN:"C.N. Barcelona",
+  TER:"C.N. Terrassa", SAB:"C.N. Sabadell", OLI:"E.M. El Olivar",
+  CA1:"1r Ceuta-Andalusia (a determinar)", CA2:"2n Ceuta-Andalusia (a determinar)",
+  ASK:"C. Askartza", AND:"Andalusia B (a determinar)", ENC:"C. Encinas de Boadilla", ELX:"C.W. Elx",
+  LPA:"C.N. Las Palmas", TRU:"CDW Trudgeon Sestao", IBA:"C.E. Illes Balears-Gobycar", CAR:"W. Carthago SAES",
+  HEL:"C.N. Helios", MOR:"C.N.A. Morvedre Sagunto", FER:"C. Marina Ferrol", LOG:"W.C. Logroño"
+};
+const groups = {
+  A:["ASK","CAR","HEL"],
+  B:["AND","IBA","MOR"],
+  C:["ENC","TRU","FER"],
+  D:["ELX","LPA","LOG"]
+};
+// Partits de grup segons el programa (dijous 2 de juliol)
+const groupMatches = [
+  {id:"gC1",grp:"C",a:"TRU",b:"FER",t:"Dj 13:00"},
+  {id:"gD1",grp:"D",a:"LPA",b:"LOG",t:"Dj 13:00"},
+  {id:"gA1",grp:"A",a:"CAR",b:"HEL",t:"Dj 14:10"},
+  {id:"gB1",grp:"B",a:"IBA",b:"MOR",t:"Dj 14:10"},
+  {id:"gC2",grp:"C",a:"ENC",b:"FER",t:"Dj 16:30"},
+  {id:"gD2",grp:"D",a:"ELX",b:"LOG",t:"Dj 16:30"},
+  {id:"gA2",grp:"A",a:"ASK",b:"HEL",t:"Dj 17:40"},
+  {id:"gB2",grp:"B",a:"AND",b:"MOR",t:"Dj 17:40"},
+  {id:"gC3",grp:"C",a:"ENC",b:"TRU",t:"Dj 20:00"},
+  {id:"gD3",grp:"D",a:"ELX",b:"LPA",t:"Dj 20:00"},
+  {id:"gA3",grp:"A",a:"ASK",b:"CAR",t:"Dj 21:10"},
+  {id:"gB3",grp:"B",a:"AND",b:"IBA",t:"Dj 21:10"}
+];
+// Prèvia dels 8 classificats directes — NO eliminatòria, només defineix encreuaments
+const previas = [
+  {id:"p3",a:"BCN",b:"TER",t:"Dv 9:00",lbl:"Partit 3"},
+  {id:"p4",a:"SAB",b:"CA1",t:"Dv 9:00",lbl:"Partit 4"},
+  {id:"p1",a:"ATB",b:"OLI",t:"Dv 10:10",lbl:"Partit 1"},
+  {id:"p2",a:"CAN",b:"CA2",t:"Dv 10:10",lbl:"Partit 2"}
+];
+// Lligueta de 3rs de grup per a les places 17-20 (tots contra tots)
+const repescaMatches = [
+  {id:"R1",ga:"A",gb:"D",t:"Dv 16:00"},
+  {id:"R2",ga:"B",gb:"C",t:"Dv 16:00"},
+  {id:"R3",ga:"A",gb:"C",t:"Ds 11:20"},
+  {id:"R4",ga:"B",gb:"D",t:"Ds 11:20"},
+  {id:"R5",ga:"A",gb:"B",t:"Ds 17:20"},
+  {id:"R6",ga:"C",gb:"D",t:"Ds 17:20"}
+];
+
+// ───────────────────────── ESTAT ─────────────────────────
+let winners = {};      // {matchId:teamCode} per a tots els partits
+let manualOrder = {};  // {grp:[codis]} ordre manual en cas d'empats no resolubles
+
+function resetAll(){ winners={}; manualOrder={}; render(); }
+
+// ───────────────────── CLASSIFICACIÓ GRUPS ─────────────────────
+function standings(grp){
+  const st = {};
+  groups[grp].forEach(c=>st[c]={c,pj:0,v:0});
+  groupMatches.filter(m=>m.grp===grp).forEach(m=>{
+    const w = winners[m.id];
+    if(!w) return;
+    st[m.a].pj++; st[m.b].pj++; st[w].v++;
+  });
+  const arr = Object.values(st);
+  // Empat triple circular (cadascú guanya un partit): cal ordenar a mà
+  const triple = arr.every(r=>r.pj===2) && arr.every(r=>r.v===1);
+  if(triple){
+    const ord = manualOrder[grp] || groups[grp];
+    arr.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
+    arr.triple = true;
+    return arr;
+  }
+  arr.sort((x,y)=>{
+    if(y.v!==x.v) return y.v-x.v;
+    const h2h = groupMatches.find(m=>m.grp===grp && winners[m.id] &&
+      ((m.a===x.c&&m.b===y.c)||(m.a===y.c&&m.b===x.c)));
+    if(h2h) return winners[h2h.id]===x.c ? -1 : 1;
+    return T[x.c].localeCompare(T[y.c]);
+  });
+  return arr;
+}
+function groupComplete(grp){
+  return groupMatches.filter(m=>m.grp===grp).every(m=>winners[m.id]);
+}
+function grpPos(grp,pos){
+  if(!groupComplete(grp)) return null;
+  return standings(grp)[pos-1].c;
+}
+
+// ───────────────── LLIGUETA PLACES 17-20 ─────────────────
+function repescaComplete(){
+  return ["A","B","C","D"].every(groupComplete) && repescaMatches.every(m=>winners[m.id]);
+}
+function repescaStandings(){
+  const codes = ["A","B","C","D"].map(g=>grpPos(g,3));
+  if(codes.some(c=>!c)) return null;
+  const st = {};
+  codes.forEach(c=>st[c]={c,pj:0,v:0});
+  const h2h = {};
+  repescaMatches.forEach(rm=>{
+    const a=grpPos(rm.ga,3), b=grpPos(rm.gb,3), w=winners[rm.id];
+    if(!w) return;
+    st[a].pj++; st[b].pj++; st[w].v++;
+    h2h[a+"|"+b]=w; h2h[b+"|"+a]=w;
+  });
+  let rows = Object.values(st).sort((x,y)=>y.v-x.v);
+  const ord = manualOrder.R || codes;
+  const out = [];
+  let needsManual = false;
+  let i = 0;
+  while(i<rows.length){
+    let j=i;
+    while(j<rows.length && rows[j].v===rows[i].v) j++;
+    const tied = rows.slice(i,j);
+    if(tied.length===2){
+      const w = h2h[tied[0].c+"|"+tied[1].c];
+      if(w===tied[1].c) tied.reverse();
+      else if(!w) tied.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
+    } else if(tied.length>2){
+      tied.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
+      if(repescaComplete()) needsManual = true;
+    }
+    out.push(...tied);
+    i=j;
+  }
+  out.needsManual = needsManual;
+  return out;
+}
+
+// ───────────────────── RESOLUCIÓ DEL QUADRE ─────────────────────
+function W(id){ return winners[id]||null; }
+function L(id,a,b){
+  const w=winners[id];
+  if(!w||!a||!b) return null;
+  return w===a ? b : a;
+}
+
+function buildBracket(){
+  const M = {};
+  previas.forEach(p=>{ M[p.id]={a:p.a,b:p.b}; });
+  const pw = id=>W(id), pl = id=>L(id,M[id].a,M[id].b);
+
+  // Vuitens de final (places 1-16) — divendres tarda
+  M.P1={a:pw("p1"), b:grpPos("D",2), lbl:"Vuitè P1", t:"Dv 20:40"};
+  M.P2={a:pw("p2"), b:grpPos("C",2), lbl:"Vuitè P2", t:"Dv 20:40"};
+  M.P3={a:pw("p3"), b:grpPos("B",2), lbl:"Vuitè P3", t:"Dv 18:20"};
+  M.P4={a:pw("p4"), b:grpPos("A",2), lbl:"Vuitè P4", t:"Dv 18:20"};
+  M.P5={a:pl("p1"), b:grpPos("D",1), lbl:"Vuitè P5", t:"Dv 19:30"};
+  M.P6={a:pl("p2"), b:grpPos("C",1), lbl:"Vuitè P6", t:"Dv 19:30"};
+  M.P7={a:pl("p3"), b:grpPos("B",1), lbl:"Vuitè P7", t:"Dv 17:10"};
+  M.P8={a:pl("p4"), b:grpPos("A",1), lbl:"Vuitè P8", t:"Dv 17:10"};
+
+  // Lligueta places 17-20
+  repescaMatches.forEach(rm=>{
+    M[rm.id]={a:grpPos(rm.ga,3), b:grpPos(rm.gb,3),
+      lbl:`3r ${rm.ga} – 3r ${rm.gb}`, t:rm.t};
+  });
+
+  const w=id=>W(id), l=id=>L(id,M[id].a,M[id].b);
+
+  // Quarts — dissabte
+  M.C1={a:l("P1"),b:l("P8"),lbl:"Quart C1 · places 9-16",t:"Ds 9:00"};
+  M.C4={a:l("P4"),b:l("P5"),lbl:"Quart C4 · places 9-16",t:"Ds 9:00"};
+  M.C2={a:l("P2"),b:l("P7"),lbl:"Quart C2 · places 9-16",t:"Ds 10:10"};
+  M.C3={a:l("P3"),b:l("P6"),lbl:"Quart C3 · places 9-16",t:"Ds 10:10"};
+  M.C5={a:w("P1"),b:w("P8"),lbl:"Quart C5 · places 1-8",t:"Ds 12:30"};
+  M.C8={a:w("P4"),b:w("P5"),lbl:"Quart C8 · places 1-8",t:"Ds 12:30"};
+  M.C6={a:w("P2"),b:w("P7"),lbl:"Quart C6 · places 1-8",t:"Ds 13:40"};
+  M.C7={a:w("P3"),b:w("P6"),lbl:"Quart C7 · places 1-8",t:"Ds 13:40"};
+
+  // Semifinals — dissabte
+  M.S6={a:w("C1"),b:w("C4"),lbl:"S6 · places 9-12",t:"Ds 15:00"};
+  M.S8={a:l("C1"),b:l("C4"),lbl:"S8 · places 13-16",t:"Ds 15:00"};
+  M.S5={a:w("C2"),b:w("C3"),lbl:"S5 · places 9-12",t:"Ds 16:10"};
+  M.S7={a:l("C2"),b:l("C3"),lbl:"S7 · places 13-16",t:"Ds 16:10"};
+  M.S3={a:l("C5"),b:l("C8"),lbl:"S3 · places 5-8",t:"Ds 18:30"};
+  M.S4={a:l("C6"),b:l("C7"),lbl:"S4 · places 5-8",t:"Ds 18:30"};
+  M.S1={a:w("C5"),b:w("C8"),lbl:"Semifinal S1 · places 1-4",t:"Ds 19:40"};
+  M.S2={a:w("C6"),b:w("C7"),lbl:"Semifinal S2 · places 1-4",t:"Ds 20:50"};
+
+  // Finals — diumenge
+  M.F13={a:w("S7"),b:w("S8"),lbl:"Places 13-14",t:"Dg 8:30"};
+  M.F15={a:l("S7"),b:l("S8"),lbl:"Places 15-16",t:"Dg 8:30"};
+  M.F9 ={a:w("S5"),b:w("S6"),lbl:"Places 9-10",t:"Dg 9:40"};
+  M.F11={a:l("S5"),b:l("S6"),lbl:"Places 11-12",t:"Dg 9:40"};
+  M.F5 ={a:w("S3"),b:w("S4"),lbl:"Places 5-6",t:"Dg 10:50"};
+  M.F7 ={a:l("S3"),b:l("S4"),lbl:"Places 7-8",t:"Dg 10:50"};
+  M.F3 ={a:l("S1"),b:l("S2"),lbl:"Places 3-4",t:"Dg 12:50"};
+  M.F1 ={a:w("S1"),b:w("S2"),lbl:"FINAL · places 1-2",t:"Dg 14:00"};
+
+  // neteja seleccions invàlides (si canvia un resultat anterior)
+  for(const id in winners){
+    if(M[id] && winners[id] && winners[id]!==M[id].a && winners[id]!==M[id].b){
+      delete winners[id];
+      return buildBracket();
+    }
+  }
+  return M;
+}
+
+// ───────────────────── CLASSIFICACIÓ FINAL ─────────────────────
+function finalRanking(M){
+  const out=[];
+  const pair=(id,p)=>{
+    const m=M[id];
+    out.push({p,team:W(id)});
+    out.push({p:p+1,team:L(id,m.a,m.b)});
+  };
+  pair("F1",1);pair("F3",3);pair("F5",5);pair("F7",7);
+  pair("F9",9);pair("F11",11);pair("F13",13);pair("F15",15);
+  const rs = repescaComplete()? repescaStandings() : null;
+  for(let k=0;k<4;k++) out.push({p:17+k, team: rs? rs[k].c : null});
+  return out;
+}
+
+// ───────────────────── RENDER ─────────────────────
+const special = c => c==="TER"?"terrassa":(c==="SAB"?"sabadell":"");
+
+function teamRow(code, matchId, isWinner, isLoser, clickable){
+  const cls=["team"];
+  if(!code) cls.push("tbd");
+  if(code) cls.push(special(code));
+  if(isWinner) cls.push("winner");
+  if(isLoser) cls.push("loser");
+  if(!clickable) cls.push("noclick");
+  const nm = code? T[code] : "Per determinar";
+  const onclick = clickable&&code? `onclick="pick('${matchId}','${code}')"` : "";
+  return `<div class="${cls.join(' ')}" ${onclick}><span class="nm">${nm}</span></div>`;
+}
+
+function matchBox(id, m, opts={}){
+  const w=winners[id];
+  const both = m.a && m.b;
+  return `<div class="match">
+    <div class="match-h"><b>${m.lbl||opts.lbl||id}</b><span>${m.t||""}</span></div>
+    ${teamRow(m.a,id, w&&w===m.a, w&&w!==m.a, both)}
+    ${teamRow(m.b,id, w&&w===m.b, w&&w!==m.b, both)}
+  </div>`;
+}
+
+function groupMatchBox(m){
+  return matchBox(m.id, {a:m.a, b:m.b, lbl:`Grup ${m.grp}`, t:m.t});
+}
+
+function standingsTable(grp){
+  const st=standings(grp);
+  const hint = st.triple
+    ? `<div class="note" style="margin:6px 0 8px">Empat triple (1 victòria cadascú): toca un equip de la taula per pujar-lo de posició.</div>`
+    : "";
+  return hint + `<table class="standings">
+    <tr><th>#</th><th>Equip</th><th class="num">PJ</th><th class="num">V</th></tr>
+    ${st.map((r,i)=>`<tr ${st.triple?`style="cursor:pointer" onclick="promote('${grp}','${r.c}')"`:""}>
+      <td><span class="pos-badge">${i+1}º</span></td>
+      <td class="${special(r.c)}" style="font-weight:600">${T[r.c]}</td>
+      <td class="num">${r.pj}</td><td class="num">${r.v}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function repescaTable(){
+  const rs = repescaStandings();
+  if(!rs) return `<p class="col-sub">La lligueta es jugarà entre els 3rs de cada grup (cal completar la fase de grups).</p>`;
+  const hint = rs.needsManual
+    ? `<div class="note" style="margin:6px 0 8px">Empat múltiple: toca un equip de la taula per pujar-lo de posició.</div>`
+    : "";
+  return hint + `<table class="standings">
+    <tr><th>#</th><th>Equip</th><th class="num">PJ</th><th class="num">V</th></tr>
+    ${rs.map((r,i)=>`<tr ${rs.needsManual?`style="cursor:pointer" onclick="promoteR('${r.c}')"`:""}>
+      <td><span class="pos-badge">${17+i}º</span></td>
+      <td class="${special(r.c)}" style="font-weight:600">${T[r.c]}</td>
+      <td class="num">${r.pj}</td><td class="num">${r.v}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function render(){
+  const M = buildBracket();
+  const app = document.getElementById("app");
+  let h = "";
+
+  // Columna 1: grups
+  h += `<div class="col"><h2 class="col-h">Fase prèvia · Grups</h2>
+    <p class="col-sub">Dijous 2 de juliol · Equips 9-20. Clica l'equip guanyador de cada partit; la classificació es calcula sola.</p>`;
+  for(const g of ["A","B","C","D"]){
+    h += `<div class="grp-card"><h3>Grup ${g}</h3>`;
+    h += groupMatches.filter(m=>m.grp===g).map(groupMatchBox).join('');
+    h += standingsTable(g);
+    h += `</div>`;
+  }
+  h += `</div>`;
+
+  // Columna 2: prèvia 8 directes + lligueta 17-20
+  h += `<div class="col"><h2 class="col-h">Prèvia · 8 directes</h2>
+    <p class="col-sub">Divendres 3 al matí.</p>
+    <div class="note"><b>No és eliminatòria:</b> tots 8 segueixen a places 1-16. El resultat només decideix l'encreuament dels vuitens (guanyadors contra 2ns de grup, perdedors contra 1rs de grup).</div>`;
+  previas.forEach(p=>{ h += matchBox(p.id,{a:p.a,b:p.b,lbl:p.lbl,t:p.t}); });
+  h += `<div class="phase-label">Lligueta places 17-20 (3rs de grup)</div>`;
+  repescaMatches.forEach(rm=>{ h += matchBox(rm.id, M[rm.id]); });
+  h += repescaTable();
+  h += `</div>`;
+
+  // Columna 3: vuitens
+  h += `<div class="col"><h2 class="col-h">Vuitens de final</h2>
+    <p class="col-sub">Divendres tarda · places 1-16. Clica l'equip guanyador.</p>`;
+  ["P8","P4","P7","P3","P6","P2","P5","P1"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `</div>`;
+
+  // Columna 4: quarts
+  h += `<div class="col"><h2 class="col-h">Quarts de final</h2>
+    <p class="col-sub">Dissabte matí.</p>
+    <div class="phase-label">Places 1-8 (guanyadors de vuitens)</div>`;
+  ["C5","C6","C7","C8"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `<div class="phase-label">Places 9-16 (perdedors de vuitens)</div>`;
+  ["C1","C2","C3","C4"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `</div>`;
+
+  // Columna 5: semis
+  h += `<div class="col"><h2 class="col-h">Semifinals</h2>
+    <p class="col-sub">Dissabte tarda.</p>
+    <div class="phase-label">Places 1-4</div>`;
+  ["S1","S2"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `<div class="phase-label">Places 5-8</div>`;
+  ["S3","S4"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `<div class="phase-label">Places 9-12</div>`;
+  ["S5","S6"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `<div class="phase-label">Places 13-16</div>`;
+  ["S7","S8"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `</div>`;
+
+  // Columna 6: finals
+  h += `<div class="col"><h2 class="col-h">Finals · Diumenge</h2>
+    <p class="col-sub">5 de juliol.</p>`;
+  ["F1","F3","F5","F7","F9","F11","F13","F15"].forEach(id=>h+=matchBox(id,M[id]));
+  h += `</div>`;
+
+  // Columna 7: classificació
+  const rank = finalRanking(M);
+  h += `<div class="col"><div class="clasif"><h3>🏆 Classificació final</h3><ol>`;
+  rank.forEach(r=>{
+    const podi = r.p<=3? ` podi-${r.p}` : "";
+    const tcls = r.team? special(r.team) : "tbd";
+    h += `<li class="${podi}"><span class="p">${r.p}º</span><span class="t ${tcls}">${r.team?T[r.team]:"—"}</span></li>`;
+  });
+  h += `</ol></div></div>`;
+
+  app.innerHTML = h;
+}
+
+// ───────────────────── ACCIONS ─────────────────────
+function pick(id, code){
+  winners[id] = winners[id]===code ? undefined : code;
+  if(winners[id]===undefined) delete winners[id];
+  const gm = groupMatches.find(m=>m.id===id);
+  if(gm) delete manualOrder[gm.grp];
+  if(id.startsWith("R")) delete manualOrder.R;
+  render();
+}
+function promote(grp, code){
+  const ord = standings(grp).map(r=>r.c);
+  const i = ord.indexOf(code);
+  if(i>0){ [ord[i-1],ord[i]]=[ord[i],ord[i-1]]; }
+  manualOrder[grp]=ord;
+  render();
+}
+function promoteR(code){
+  const rs = repescaStandings();
+  if(!rs) return;
+  const ord = rs.map(r=>r.c);
+  const i = ord.indexOf(code);
+  if(i>0){ [ord[i-1],ord[i]]=[ord[i],ord[i-1]]; }
+  manualOrder.R=ord;
+  render();
+}
+function randomFill(){
+  groupMatches.forEach(m=>{ winners[m.id]=Math.random()<.5?m.a:m.b; });
+  manualOrder={};
+  for(let i=0;i<40;i++){
+    const M=buildBracket();
+    let any=false;
+    for(const id in M){
+      const m=M[id];
+      if(m.a&&m.b&&!winners[id]){ winners[id]=Math.random()<.5?m.a:m.b; any=true; }
+    }
+    if(!any) break;
+  }
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
