@@ -163,7 +163,6 @@
   <p>Torremolinos · 2–5 de juliol · Simulador de resultats (programa provisional 08-jun-26)</p>
   <div class="legend">
     <span><i style="background:var(--terrassa)"></i>C.N. Terrassa</span>
-    <span><i style="background:var(--sabadell)"></i>C.N. Sabadell</span>
     <span><i style="background:var(--win)"></i>Guanyador seleccionat (clica l'equip)</span>
   </div>
 </header>
@@ -298,7 +297,7 @@ function finalRanking(M){
 }
 
 // ───────────────────── RENDER ─────────────────────
-const special = c => c==="TER"?"terrassa":(c==="SAB"?"sabadell":"");
+const special = c => c==="TER"?"terrassa":"";
 
 function teamRow(code, matchId, isWinner, isLoser, clickable){
   const cls=["team"];
