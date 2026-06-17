@@ -16,6 +16,7 @@
     --win:#36d399;
     --terrassa:#ff5d73;
     --sabadell:#4cc9f0;
+    --card:#0b3a59;
   }
   *{box-sizing:border-box}
   body{
@@ -81,6 +82,11 @@
   .team.loser{opacity:.45}
   .team.terrassa .nm{color:var(--terrassa)}
   .team.sabadell .nm{color:var(--sabadell)}
+  .score-in{
+    width:44px;background:#062536;border:1px solid #1b557e;color:var(--foam);
+    border-radius:6px;padding:5px 4px;font-size:13px;text-align:center;font-weight:700;
+  }
+  .score-in:focus{outline:2px solid var(--lane)}
   table.standings{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0 14px}
   table.standings th{color:var(--muted);font-weight:600;text-align:left;padding:3px 5px;font-size:10.5px;text-transform:uppercase}
   table.standings td{padding:4px 5px;border-top:1px solid rgba(255,255,255,.06)}
@@ -91,6 +97,12 @@
   }
   .grp-card{background:rgba(0,0,0,.18);border:1px solid #123f60;border-radius:12px;padding:10px 12px;margin-bottom:14px}
   .grp-card h3{margin:0 0 8px;font-size:13px;color:var(--foam);letter-spacing:.05em}
+  .grp-rank{list-style:none;margin:0;padding:0;font-size:13px}
+  .grp-rank li{display:flex;align-items:center;gap:9px;padding:6px 2px;border-top:1px solid rgba(255,255,255,.06)}
+  .grp-rank li:first-child{border-top:none}
+  .grp-rank .t{font-weight:600}
+  .grp-rank .t.terrassa{color:var(--terrassa)}
+  .grp-rank .t.sabadell{color:var(--sabadell)}
   .note{
     background:rgba(255,209,102,.08);border-left:3px solid var(--lane);
     padding:8px 10px;font-size:11.5px;color:#f3e3b0;border-radius:0 8px 8px 0;margin-bottom:12px;line-height:1.45;
@@ -107,16 +119,48 @@
   .clasif li.podi-1 .p{color:gold}
   .clasif li.podi-2 .p{color:#cfd8e3}
   .clasif li.podi-3 .p{color:#d8915b}
-  @media (max-width:640px){
-    .col{min-width:272px}
-    header h1{font-size:18px}
+  /* Tauletes estretes: columnes una mica més primes, scroll horitzontal amb snap */
+  @media (max-width:900px) and (min-width:761px){
+    main{scroll-snap-type:x proximity}
+    .col{min-width:260px;scroll-snap-align:start}
+  }
+  /* Mòbil: apila les fases verticalment (es llegeixen en ordre) */
+  @media (max-width:760px){
+    main{
+      flex-direction:column;
+      overflow-x:visible;
+      gap:0;
+      padding:14px 12px 48px;
+      align-items:stretch;
+    }
+    .col{
+      min-width:0;
+      max-width:none;
+      width:100%;
+      flex:1 1 auto;
+      margin-bottom:6px;
+    }
+    .col-h{font-size:14px}
+    header{padding:16px 14px 12px}
+    header h1{font-size:clamp(16px,5.2vw,22px)}
+    header p{font-size:12px}
+    .toolbar{padding:10px 14px}
+    .toolbar button{flex:1;padding:10px 12px;font-size:14px}
+    /* targets tàctils més grans */
+    .team{padding:11px 12px;min-height:44px;font-size:14px}
+    .match-h{font-size:11px;padding:7px 11px}
+    /* 16px evita el zoom automàtic d'iOS en enfocar l'input */
+    .score-in{width:54px;font-size:16px;padding:8px 4px}
+    table.standings{font-size:13px}
+    table.standings th{font-size:11px}
+    .clasif ol,.clasif li{font-size:14px}
   }
 </style>
 </head>
 <body>
 <header>
   <h1>Campionat d'Espanya <span>Cadet Masculí 2026</span></h1>
-  <p>Torremolinos · 2–5 de juliol · Simulador de resultats (programa provisional 11-jun-26)</p>
+  <p>Torremolinos · 2–5 de juliol · Simulador de resultats (programa provisional 08-jun-26)</p>
   <div class="legend">
     <span><i style="background:var(--terrassa)"></i>C.N. Terrassa</span>
     <span><i style="background:var(--sabadell)"></i>C.N. Sabadell</span>
@@ -133,134 +177,40 @@
 // ───────────────────────── DADES ─────────────────────────
 const T = {
   ATB:"C.N. Atlètic-Barceloneta", CAN:"Real Canoe N.C.", BCN:"C.N. Barcelona",
-  TER:"C.N. Terrassa", SAB:"C.N. Sabadell", OLI:"E.M. El Olivar",
-  CA1:"1r Ceuta-Andalusia (a determinar)", CA2:"2n Ceuta-Andalusia (a determinar)",
-  ASK:"C. Askartza", AND:"Andalusia B (a determinar)", ENC:"C. Encinas de Boadilla", ELX:"C.W. Elx",
+  TER:"C.N. Terrassa", SEV:"C.W. Sevilla", SAB:"C.N. Sabadell",
+  MAL:"C.D.W. Màlaga", OLI:"E.M. El Olivar",
+  ASK:"C. Askartza", JER:"CDUW Ciudad de Jerez", ENC:"C. Encinas de Boadilla", ELX:"C.W. Elx",
   LPA:"C.N. Las Palmas", TRU:"CDW Trudgeon Sestao", IBA:"C.E. Illes Balears-Gobycar", CAR:"W. Carthago SAES",
   HEL:"C.N. Helios", MOR:"C.N.A. Morvedre Sagunto", FER:"C. Marina Ferrol", LOG:"W.C. Logroño"
 };
-const groups = {
-  A:["ASK","CAR","HEL"],
-  B:["AND","IBA","MOR"],
-  C:["ENC","TRU","FER"],
-  D:["ELX","LPA","LOG"]
-};
-// Partits de grup segons el programa (dijous 2 de juliol)
-const groupMatches = [
-  {id:"gC1",grp:"C",a:"TRU",b:"FER",t:"Dj 13:00"},
-  {id:"gD1",grp:"D",a:"LPA",b:"LOG",t:"Dj 13:00"},
-  {id:"gA1",grp:"A",a:"CAR",b:"HEL",t:"Dj 14:10"},
-  {id:"gB1",grp:"B",a:"IBA",b:"MOR",t:"Dj 14:10"},
-  {id:"gC2",grp:"C",a:"ENC",b:"FER",t:"Dj 16:30"},
-  {id:"gD2",grp:"D",a:"ELX",b:"LOG",t:"Dj 16:30"},
-  {id:"gA2",grp:"A",a:"ASK",b:"HEL",t:"Dj 17:40"},
-  {id:"gB2",grp:"B",a:"AND",b:"MOR",t:"Dj 17:40"},
-  {id:"gC3",grp:"C",a:"ENC",b:"TRU",t:"Dj 20:00"},
-  {id:"gD3",grp:"D",a:"ELX",b:"LPA",t:"Dj 20:00"},
-  {id:"gA3",grp:"A",a:"ASK",b:"CAR",t:"Dj 21:10"},
-  {id:"gB3",grp:"B",a:"AND",b:"IBA",t:"Dj 21:10"}
-];
 // Prèvia dels 8 classificats directes — NO eliminatòria, només defineix encreuaments
 const previas = [
-  {id:"p3",a:"BCN",b:"TER",t:"Dv 9:00",lbl:"Partit 3"},
-  {id:"p4",a:"SAB",b:"CA1",t:"Dv 9:00",lbl:"Partit 4"},
   {id:"p1",a:"ATB",b:"OLI",t:"Dv 10:10",lbl:"Partit 1"},
-  {id:"p2",a:"CAN",b:"CA2",t:"Dv 10:10",lbl:"Partit 2"}
-];
-// Lligueta de 3rs de grup per a les places 17-20 (tots contra tots)
-const repescaMatches = [
-  {id:"R1",ga:"A",gb:"D",t:"Dv 16:00"},
-  {id:"R2",ga:"B",gb:"C",t:"Dv 16:00"},
-  {id:"R3",ga:"A",gb:"C",t:"Ds 11:20"},
-  {id:"R4",ga:"B",gb:"D",t:"Ds 11:20"},
-  {id:"R5",ga:"A",gb:"B",t:"Ds 17:20"},
-  {id:"R6",ga:"C",gb:"D",t:"Ds 17:20"}
+  {id:"p2",a:"CAN",b:"MAL",t:"Dv 10:10",lbl:"Partit 2"},
+  {id:"p3",a:"BCN",b:"SAB",t:"Dv 9:00",lbl:"Partit 3"},
+  {id:"p4",a:"TER",b:"SEV",t:"Dv 9:00",lbl:"Partit 4"}
 ];
 
 // ───────────────────────── ESTAT ─────────────────────────
-let winners = {};      // {matchId:teamCode} per a tots els partits
-let manualOrder = {};  // {grp:[codis]} ordre manual en cas d'empats no resolubles
+let winners = {};  // {matchId:teamCode} per a tot el quadre
 
-function resetAll(){ winners={}; manualOrder={}; render(); }
+function resetAll(){ winners={}; render(); }
 
-// ───────────────────── CLASSIFICACIÓ GRUPS ─────────────────────
-function standings(grp){
-  const st = {};
-  groups[grp].forEach(c=>st[c]={c,pj:0,v:0});
-  groupMatches.filter(m=>m.grp===grp).forEach(m=>{
-    const w = winners[m.id];
-    if(!w) return;
-    st[m.a].pj++; st[m.b].pj++; st[w].v++;
-  });
-  const arr = Object.values(st);
-  // Empat triple circular (cadascú guanya un partit): cal ordenar a mà
-  const triple = arr.every(r=>r.pj===2) && arr.every(r=>r.v===1);
-  if(triple){
-    const ord = manualOrder[grp] || groups[grp];
-    arr.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
-    arr.triple = true;
-    return arr;
-  }
-  arr.sort((x,y)=>{
-    if(y.v!==x.v) return y.v-x.v;
-    const h2h = groupMatches.find(m=>m.grp===grp && winners[m.id] &&
-      ((m.a===x.c&&m.b===y.c)||(m.a===y.c&&m.b===x.c)));
-    if(h2h) return winners[h2h.id]===x.c ? -1 : 1;
-    return T[x.c].localeCompare(T[y.c]);
-  });
-  return arr;
-}
-function groupComplete(grp){
-  return groupMatches.filter(m=>m.grp===grp).every(m=>winners[m.id]);
-}
-function grpPos(grp,pos){
-  if(!groupComplete(grp)) return null;
-  return standings(grp)[pos-1].c;
-}
-
-// ───────────────── LLIGUETA PLACES 17-20 ─────────────────
-function repescaComplete(){
-  return ["A","B","C","D"].every(groupComplete) && repescaMatches.every(m=>winners[m.id]);
-}
-function repescaStandings(){
-  const codes = ["A","B","C","D"].map(g=>grpPos(g,3));
-  if(codes.some(c=>!c)) return null;
-  const st = {};
-  codes.forEach(c=>st[c]={c,pj:0,v:0});
-  const h2h = {};
-  repescaMatches.forEach(rm=>{
-    const a=grpPos(rm.ga,3), b=grpPos(rm.gb,3), w=winners[rm.id];
-    if(!w) return;
-    st[a].pj++; st[b].pj++; st[w].v++;
-    h2h[a+"|"+b]=w; h2h[b+"|"+a]=w;
-  });
-  let rows = Object.values(st).sort((x,y)=>y.v-x.v);
-  const ord = manualOrder.R || codes;
-  const out = [];
-  let needsManual = false;
-  let i = 0;
-  while(i<rows.length){
-    let j=i;
-    while(j<rows.length && rows[j].v===rows[i].v) j++;
-    const tied = rows.slice(i,j);
-    if(tied.length===2){
-      const w = h2h[tied[0].c+"|"+tied[1].c];
-      if(w===tied[1].c) tied.reverse();
-      else if(!w) tied.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
-    } else if(tied.length>2){
-      tied.sort((x,y)=>ord.indexOf(x.c)-ord.indexOf(y.c));
-      if(repescaComplete()) needsManual = true;
-    }
-    out.push(...tied);
-    i=j;
-  }
-  out.needsManual = needsManual;
-  return out;
+// ───────────────────── CLASSIFICACIÓ GRUPS (FIXADA) ─────────────────────
+// Resultats de grup previstos: ordre 1r, 2n, 3r de cada grup.
+const groupResults = {
+  A:["ASK","HEL","CAR"],   // 1 Askartza · 2 Helios · 3 Carthago
+  B:["JER","IBA","MOR"],   // 1 Jerez · 2 Illes Balears · 3 Morvedre
+  C:["ENC","FER","TRU"],   // 1 Encinas de Boadilla · 2 Ferrol · 3 Trudgeon Sestao
+  D:["ELX","LPA","LOG"]    // 1 Elx · 2 Las Palmas · 3 Logroño
+};
+function grpPos(grp,pos){ // pos: 1,2,3 → codi d'equip
+  return groupResults[grp][pos-1];
 }
 
 // ───────────────────── RESOLUCIÓ DEL QUADRE ─────────────────────
 function W(id){ return winners[id]||null; }
-function L(id,a,b){
+function L(id,a,b){ // perdedor d'un partit amb participants coneguts a,b
   const w=winners[id];
   if(!w||!a||!b) return null;
   return w===a ? b : a;
@@ -268,6 +218,7 @@ function L(id,a,b){
 
 function buildBracket(){
   const M = {};
+  // prèvia: participants fixos
   previas.forEach(p=>{ M[p.id]={a:p.a,b:p.b}; });
   const pw = id=>W(id), pl = id=>L(id,M[id].a,M[id].b);
 
@@ -280,50 +231,54 @@ function buildBracket(){
   M.P6={a:pl("p2"), b:grpPos("C",1), lbl:"Vuitè P6", t:"Dv 19:30"};
   M.P7={a:pl("p3"), b:grpPos("B",1), lbl:"Vuitè P7", t:"Dv 17:10"};
   M.P8={a:pl("p4"), b:grpPos("A",1), lbl:"Vuitè P8", t:"Dv 17:10"};
-
-  // Lligueta places 17-20
-  repescaMatches.forEach(rm=>{
-    M[rm.id]={a:grpPos(rm.ga,3), b:grpPos(rm.gb,3),
-      lbl:`3r ${rm.ga} – 3r ${rm.gb}`, t:rm.t};
-  });
+  // Places 17-20 (3rs de grup)
+  M.P9 ={a:grpPos("A",3), b:grpPos("D",3), lbl:"P9 · places 17-20", t:"Dv 16:00"};
+  M.P10={a:grpPos("B",3), b:grpPos("C",3), lbl:"P10 · places 17-20", t:"Dv 16:00"};
 
   const w=id=>W(id), l=id=>L(id,M[id].a,M[id].b);
 
   // Quarts — dissabte
-  M.C1={a:l("P1"),b:l("P8"),lbl:"Quart C1 · places 9-16",t:"Ds 9:00"};
-  M.C4={a:l("P4"),b:l("P5"),lbl:"Quart C4 · places 9-16",t:"Ds 9:00"};
-  M.C2={a:l("P2"),b:l("P7"),lbl:"Quart C2 · places 9-16",t:"Ds 10:10"};
-  M.C3={a:l("P3"),b:l("P6"),lbl:"Quart C3 · places 9-16",t:"Ds 10:10"};
-  M.C5={a:w("P1"),b:w("P8"),lbl:"Quart C5 · places 1-8",t:"Ds 12:30"};
-  M.C8={a:w("P4"),b:w("P5"),lbl:"Quart C8 · places 1-8",t:"Ds 12:30"};
-  M.C6={a:w("P2"),b:w("P7"),lbl:"Quart C6 · places 1-8",t:"Ds 13:40"};
-  M.C7={a:w("P3"),b:w("P6"),lbl:"Quart C7 · places 1-8",t:"Ds 13:40"};
+  M.C5={a:w("P1"),b:w("P8"),lbl:"Quart C5 · places 1-8",t:"Ds 12:00"};
+  M.C6={a:w("P2"),b:w("P7"),lbl:"Quart C6 · places 1-8",t:"Ds 13:10"};
+  M.C7={a:w("P3"),b:w("P6"),lbl:"Quart C7 · places 1-8",t:"Ds 13:10"};
+  M.C8={a:w("P4"),b:w("P5"),lbl:"Quart C8 · places 1-8",t:"Ds 12:00"};
+  M.C1={a:l("P1"),b:l("P8"),lbl:"Quart C1 · places 9-16",t:"Ds 8:30"};
+  M.C2={a:l("P2"),b:l("P7"),lbl:"Quart C2 · places 9-16",t:"Ds 9:40"};
+  M.C3={a:l("P3"),b:l("P6"),lbl:"Quart C3 · places 9-16",t:"Ds 9:40"};
+  M.C4={a:l("P4"),b:l("P5"),lbl:"Quart C4 · places 9-16",t:"Ds 8:30"};
 
   // Semifinals — dissabte
-  M.S6={a:w("C1"),b:w("C4"),lbl:"S6 · places 9-12",t:"Ds 15:00"};
-  M.S8={a:l("C1"),b:l("C4"),lbl:"S8 · places 13-16",t:"Ds 15:00"};
-  M.S5={a:w("C2"),b:w("C3"),lbl:"S5 · places 9-12",t:"Ds 16:10"};
-  M.S7={a:l("C2"),b:l("C3"),lbl:"S7 · places 13-16",t:"Ds 16:10"};
+  M.S1={a:w("C5"),b:w("C8"),lbl:"Semifinal S1 · places 1-4",t:"Ds 20:50"};
+  M.S2={a:w("C6"),b:w("C7"),lbl:"Semifinal S2 · places 1-4",t:"Ds 19:40"};
   M.S3={a:l("C5"),b:l("C8"),lbl:"S3 · places 5-8",t:"Ds 18:30"};
-  M.S4={a:l("C6"),b:l("C7"),lbl:"S4 · places 5-8",t:"Ds 18:30"};
-  M.S1={a:w("C5"),b:w("C8"),lbl:"Semifinal S1 · places 1-4",t:"Ds 19:40"};
-  M.S2={a:w("C6"),b:w("C7"),lbl:"Semifinal S2 · places 1-4",t:"Ds 20:50"};
+  M.S4={a:l("C6"),b:l("C7"),lbl:"S4 · places 5-8",t:"Ds 19:30"};
+  M.S5={a:w("C2"),b:w("C3"),lbl:"S5 · places 9-12",t:"Ds 16:10"};
+  M.S6={a:w("C1"),b:w("C4"),lbl:"S6 · places 9-12",t:"Ds 15:00"};
+  M.S7={a:l("C2"),b:l("C3"),lbl:"S7 · places 13-16",t:"Ds 15:30"};
+  M.S8={a:l("C1"),b:l("C4"),lbl:"S8 · places 13-16",t:"Ds 14:30"};
 
   // Finals — diumenge
-  M.F13={a:w("S7"),b:w("S8"),lbl:"Places 13-14",t:"Dg 8:30"};
-  M.F15={a:l("S7"),b:l("S8"),lbl:"Places 15-16",t:"Dg 8:30"};
-  M.F9 ={a:w("S5"),b:w("S6"),lbl:"Places 9-10",t:"Dg 9:40"};
-  M.F11={a:l("S5"),b:l("S6"),lbl:"Places 11-12",t:"Dg 9:40"};
+  M.F1 ={a:w("S1"),b:w("S2"),lbl:"FINAL · places 1-2",t:"Dg 14:00"};
+  M.F3 ={a:l("S1"),b:l("S2"),lbl:"Places 3-4",t:"Dg 12:50"};
   M.F5 ={a:w("S3"),b:w("S4"),lbl:"Places 5-6",t:"Dg 10:50"};
   M.F7 ={a:l("S3"),b:l("S4"),lbl:"Places 7-8",t:"Dg 10:50"};
-  M.F3 ={a:l("S1"),b:l("S2"),lbl:"Places 3-4",t:"Dg 12:50"};
-  M.F1 ={a:w("S1"),b:w("S2"),lbl:"FINAL · places 1-2",t:"Dg 14:00"};
+  M.F9 ={a:w("S5"),b:w("S6"),lbl:"Places 9-10",t:"Dg 9:40"};
+  M.F11={a:l("S5"),b:l("S6"),lbl:"Places 11-12",t:"Dg 9:40"};
+  M.F13={a:w("S7"),b:w("S8"),lbl:"Places 13-14",t:"Dg 8:30"};
+  M.F15={a:l("S7"),b:l("S8"),lbl:"Places 15-16",t:"Dg 8:30"};
+  M.F17={a:w("P9"),b:w("P10"),lbl:"Places 17-18",t:"Ds 17:30"};
+  M.F19={a:l("P9"),b:l("P10"),lbl:"Places 19-20",t:"Ds 18:30"};
 
   // neteja seleccions invàlides (si canvia un resultat anterior)
-  for(const id in winners){
-    if(M[id] && winners[id] && winners[id]!==M[id].a && winners[id]!==M[id].b){
-      delete winners[id];
-      return buildBracket();
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const id in winners){
+      if(M[id] && winners[id] && winners[id]!==M[id].a && winners[id]!==M[id].b){
+        delete winners[id]; changed=true;
+        // recomputa el quadre amb la selecció eliminada
+        return buildBracket();
+      }
     }
   }
   return M;
@@ -333,14 +288,12 @@ function buildBracket(){
 function finalRanking(M){
   const out=[];
   const pair=(id,p)=>{
-    const m=M[id];
-    out.push({p,team:W(id)});
-    out.push({p:p+1,team:L(id,m.a,m.b)});
+    const m=M[id], w=W(id), lo=L(id,m.a,m.b);
+    out.push({p,team:w}); out.push({p:p+1,team:lo});
   };
   pair("F1",1);pair("F3",3);pair("F5",5);pair("F7",7);
   pair("F9",9);pair("F11",11);pair("F13",13);pair("F15",15);
-  const rs = repescaComplete()? repescaStandings() : null;
-  for(let k=0;k<4;k++) out.push({p:17+k, team: rs? rs[k].c : null});
+  pair("F17",17);pair("F19",19);
   return out;
 }
 
@@ -362,46 +315,22 @@ function teamRow(code, matchId, isWinner, isLoser, clickable){
 function matchBox(id, m, opts={}){
   const w=winners[id];
   const both = m.a && m.b;
+  const clickable = both;
+  const note = opts.note? `<span>${opts.note}</span>` : `<span>${m.t||""}</span>`;
   return `<div class="match">
-    <div class="match-h"><b>${m.lbl||opts.lbl||id}</b><span>${m.t||""}</span></div>
-    ${teamRow(m.a,id, w&&w===m.a, w&&w!==m.a, both)}
-    ${teamRow(m.b,id, w&&w===m.b, w&&w!==m.b, both)}
+    <div class="match-h"><b>${m.lbl||opts.lbl||id}</b>${note}</div>
+    ${teamRow(m.a,id, w&&w===m.a, w&&w!==m.a, clickable)}
+    ${teamRow(m.b,id, w&&w===m.b, w&&w!==m.b, clickable)}
   </div>`;
 }
 
-function groupMatchBox(m){
-  return matchBox(m.id, {a:m.a, b:m.b, lbl:`Grup ${m.grp}`, t:m.t});
-}
-
-function standingsTable(grp){
-  const st=standings(grp);
-  const hint = st.triple
-    ? `<div class="note" style="margin:6px 0 8px">Empat triple (1 victòria cadascú): toca un equip de la taula per pujar-lo de posició.</div>`
-    : "";
-  return hint + `<table class="standings">
-    <tr><th>#</th><th>Equip</th><th class="num">PJ</th><th class="num">V</th></tr>
-    ${st.map((r,i)=>`<tr ${st.triple?`style="cursor:pointer" onclick="promote('${grp}','${r.c}')"`:""}>
-      <td><span class="pos-badge">${i+1}º</span></td>
-      <td class="${special(r.c)}" style="font-weight:600">${T[r.c]}</td>
-      <td class="num">${r.pj}</td><td class="num">${r.v}</td>
-    </tr>`).join('')}
-  </table>`;
-}
-
-function repescaTable(){
-  const rs = repescaStandings();
-  if(!rs) return `<p class="col-sub">La lligueta es jugarà entre els 3rs de cada grup (cal completar la fase de grups).</p>`;
-  const hint = rs.needsManual
-    ? `<div class="note" style="margin:6px 0 8px">Empat múltiple: toca un equip de la taula per pujar-lo de posició.</div>`
-    : "";
-  return hint + `<table class="standings">
-    <tr><th>#</th><th>Equip</th><th class="num">PJ</th><th class="num">V</th></tr>
-    ${rs.map((r,i)=>`<tr ${rs.needsManual?`style="cursor:pointer" onclick="promoteR('${r.c}')"`:""}>
-      <td><span class="pos-badge">${17+i}º</span></td>
-      <td class="${special(r.c)}" style="font-weight:600">${T[r.c]}</td>
-      <td class="num">${r.pj}</td><td class="num">${r.v}</td>
-    </tr>`).join('')}
-  </table>`;
+function groupRankBox(grp){
+  return `<div class="grp-card"><h3>Grup ${grp}</h3><ol class="grp-rank">
+    ${groupResults[grp].map((c,i)=>`<li>
+      <span class="pos-badge">${i+1}º</span>
+      <span class="t ${special(c)}">${T[c]}</span>
+    </li>`).join('')}
+  </ol></div>`;
 }
 
 function render(){
@@ -409,25 +338,21 @@ function render(){
   const app = document.getElementById("app");
   let h = "";
 
-  // Columna 1: grups
+  // Columna 1: grups (resultats previstos, fixats)
   h += `<div class="col"><h2 class="col-h">Fase prèvia · Grups</h2>
-    <p class="col-sub">Dijous 2 de juliol · Equips 9-20. Clica l'equip guanyador de cada partit; la classificació es calcula sola.</p>`;
+    <p class="col-sub">Dijous 2 de juliol · resultats previstos. El 1r i el 2n de cada grup passen a places 1-16; el 3r juga places 17-20.</p>`;
   for(const g of ["A","B","C","D"]){
-    h += `<div class="grp-card"><h3>Grup ${g}</h3>`;
-    h += groupMatches.filter(m=>m.grp===g).map(groupMatchBox).join('');
-    h += standingsTable(g);
-    h += `</div>`;
+    h += groupRankBox(g);
   }
   h += `</div>`;
 
-  // Columna 2: prèvia 8 directes + lligueta 17-20
+  // Columna 2: prèvia 8 directes
   h += `<div class="col"><h2 class="col-h">Prèvia · 8 directes</h2>
     <p class="col-sub">Divendres 3 al matí.</p>
     <div class="note"><b>No és eliminatòria:</b> tots 8 segueixen a places 1-16. El resultat només decideix l'encreuament dels vuitens (guanyadors contra 2ns de grup, perdedors contra 1rs de grup).</div>`;
   previas.forEach(p=>{ h += matchBox(p.id,{a:p.a,b:p.b,lbl:p.lbl,t:p.t}); });
-  h += `<div class="phase-label">Lligueta places 17-20 (3rs de grup)</div>`;
-  repescaMatches.forEach(rm=>{ h += matchBox(rm.id, M[rm.id]); });
-  h += repescaTable();
+  h += `<div class="phase-label">Places 17-20 (3rs de grup)</div>`;
+  h += matchBox("P9",M.P9) + matchBox("P10",M.P10) + matchBox("F17",M.F17) + matchBox("F19",M.F19);
   h += `</div>`;
 
   // Columna 3: vuitens
@@ -481,30 +406,10 @@ function render(){
 function pick(id, code){
   winners[id] = winners[id]===code ? undefined : code;
   if(winners[id]===undefined) delete winners[id];
-  const gm = groupMatches.find(m=>m.id===id);
-  if(gm) delete manualOrder[gm.grp];
-  if(id.startsWith("R")) delete manualOrder.R;
-  render();
-}
-function promote(grp, code){
-  const ord = standings(grp).map(r=>r.c);
-  const i = ord.indexOf(code);
-  if(i>0){ [ord[i-1],ord[i]]=[ord[i],ord[i-1]]; }
-  manualOrder[grp]=ord;
-  render();
-}
-function promoteR(code){
-  const rs = repescaStandings();
-  if(!rs) return;
-  const ord = rs.map(r=>r.c);
-  const i = ord.indexOf(code);
-  if(i>0){ [ord[i-1],ord[i]]=[ord[i],ord[i-1]]; }
-  manualOrder.R=ord;
   render();
 }
 function randomFill(){
-  groupMatches.forEach(m=>{ winners[m.id]=Math.random()<.5?m.a:m.b; });
-  manualOrder={};
+  // recorre el quadre triant guanyadors aleatoris fins que tot quedi resolt
   for(let i=0;i<40;i++){
     const M=buildBracket();
     let any=false;
