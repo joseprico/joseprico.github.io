@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar resultats · Campionat d'Espanya Cadet 2026 · CN Terrassa</title>
+<meta name="description" content="Editor manual de resultats del Campionat d'Espanya Cadet Masculí 2026.">
+<link rel="icon" type="image/png" href="cnt-stats-192.png">
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  const firebaseConfig = {
+    apiKey: "AIzaSyCmJwgJvh10LcpPjeWhLbN5EDYeHT3tAoU",
+    authDomain: "cnt-wp-stats-bb7dc.firebaseapp.com",
+    databaseURL: "https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cnt-wp-stats-bb7dc",
+    storageBucket: "cnt-wp-stats-bb7dc.firebasestorage.app",
+    messagingSenderId: "3430713575",
+    appId: "1:3430713575:web:d580671a5d19049b187a42"
+  };
+  const app = initializeApp(firebaseConfig);
+  window.fb = { db: getDatabase(app), ref, onValue, set, remove };
+  window.fbReady = true;
+</script>
+
+<style>
+  :root{
+    --bg-1:#0f172a;--bg-2:#1e293b;--bg-3:#334155;
+    --card:rgba(255,255,255,0.06);--card-strong:rgba(255,255,255,0.12);--border:rgba(255,255,255,0.14);
+    --text:#f1f5f9;--text-soft:#cbd5e1;--text-faint:#94a3b8;
+    --accent:#06b6d4;--cnt:#ff5d73;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{min-height:100vh;background:linear-gradient(135deg,var(--bg-1),var(--bg-2),var(--bg-3));color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px 16px 64px}
+  .container{max-width:1000px;margin:0 auto}
+  .back{display:inline-flex;gap:6px;align-items:center;color:var(--text-soft);text-decoration:none;font-size:13px;
+    padding:8px 14px;background:var(--card);border-radius:20px;border:1px solid var(--border);margin-bottom:20px}
+  .back:hover{background:var(--card-strong)}
+  h1{font-size:24px;margin:0 0 6px}
+  .subtitle{color:var(--text-faint);font-size:13px;margin-bottom:18px;line-height:1.5}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .toolbar button{padding:8px 14px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;cursor:pointer}
+  .toolbar button:hover{background:var(--card-strong)}
+  .toolbar .danger{color:#fca5a5;border-color:rgba(239,68,68,0.4)}
+  .toolbar .danger:hover{background:rgba(239,68,68,0.18)}
+
+  .round-section{margin-bottom:22px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+  .round-section h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-faint);
+    border-bottom:1px solid var(--border);padding-bottom:9px}
+  .match-row{display:grid;grid-template-columns:54px 1fr 64px 14px 64px 168px 84px;gap:9px;align-items:center;
+    padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .match-row:last-child{border-bottom:none}
+  .match-row .mid{font-weight:800;color:var(--accent);font-size:12px;letter-spacing:.04em}
+  .match-row .mid small{display:block;color:var(--text-faint);font-weight:500;font-size:9px;letter-spacing:.02em}
+  .match-row .teams{display:flex;align-items:center;gap:7px;font-size:12.5px;min-width:0}
+  .match-row .teams .tb{display:flex;align-items:center;gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0;min-width:0}
+  .match-row .teams .tb.cnt{color:var(--cnt);font-weight:700}
+  .match-row .teams .tb.tbd{color:var(--text-faint);font-style:italic}
+  .match-row .teams img{width:20px;height:20px;border-radius:50%;background:#fff;padding:2px;object-fit:contain;flex-shrink:0}
+  .match-row .vs{color:var(--text-faint);font-size:11px;text-align:center}
+  .match-row input{background:rgba(0,0,0,0.25);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:14px;font-family:inherit;width:100%}
+  .match-row input[type=number]{text-align:center;font-weight:700;-moz-appearance:textfield}
+  .match-row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .match-row input:focus{outline:none;border-color:var(--accent)}
+  .match-row .lev{font-size:9px;color:var(--text-faint);text-align:center}
+  .match-row .save{padding:8px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+  .match-row .save:hover{background:#0891b2}
+  .match-row .save.saved{background:var(--ok)}
+  .match-row .save.error{background:var(--danger)}
+  .match-row .save.cleared{background:var(--warn)}
+  .auto-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(6,182,212,0.2);color:#67e8f9;margin-left:5px;vertical-align:middle}
+  .legend{margin-top:20px;padding:14px;background:var(--card);border-radius:10px;font-size:12px;color:var(--text-faint);line-height:1.7}
+  .legend strong{color:var(--text)}
+  @media (max-width:820px){
+    .match-row{grid-template-columns:1fr;gap:6px;padding:12px 0}
+    .match-row .row-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back">← Tornar a estadístiques</a>
+  <h1>📝 Editar resultats · Espanya Cadet 2026</h1>
+  <p class="subtitle">
+    Els resultats es carreguen <strong>automàticament de la federació</strong> (Leverade). Aquí només cal entrar un resultat
+    <strong>si la federació encara no l'ha publicat o és incorrecte</strong>. El que desis aquí té <strong>prioritat</strong> sobre la federació.
+    Deixa-ho buit i clica <strong>Treure</strong> per tornar al valor automàtic.
+  </p>
+
+  <div class="toolbar">
+    <button onclick="window.esAdmin.reloadLeverade()">↻ Recarregar federació</button>
+    <button class="danger" onclick="window.esAdmin.clearAll()">🗑️ Treure totes les correccions manuals</button>
+    <a class="back" style="margin:0" href="campionat-espanya-cadet.html">Veure quadre públic →</a>
+  </div>
+
+  <div id="host"></div>
+
+  <div class="legend">
+    <strong>Com funciona:</strong><br>
+    · <span class="auto-badge">auto</span> indica que la federació ja té el resultat carregat. Si és correcte, no facis res.<br>
+    · Per corregir o avançar-te: escriu els gols de cada equip i clica <strong>Desar</strong>.<br>
+    · El guanyador avança sol pel quadre; els equips «Per determinar» s'omplen quan es resol el partit anterior.<br>
+    · Path Firebase: <code>championship_es/cadet/&lt;id&gt;</code>.
+  </div>
+</div>
+
+<script>
+// ── Mateix model que la pàgina pública ──
+const T = {
+  ATB:{short:'Barceloneta',lv:'15854586'},CAN:{short:'Real Canoe',lv:'15840296'},BCN:{short:'C.N. Barcelona',lv:'15865276'},
+  TER:{short:'C.N. Terrassa',lv:'15860361',cnt:true},SEV:{short:'C.W. Sevilla',lv:'15827637'},SAB:{short:'C.N. Sabadell',lv:'15859682'},
+  MAL:{short:'C.D.W. Màlaga',lv:'15851150'},OLI:{short:'El Olivar',lv:'15855609'},ASK:{short:'Askartza',lv:'15841416'},
+  CAR:{short:'Carthago SAES',lv:'15865275'},HEL:{short:'Helios',lv:'15857527'},JER:{short:'Jerez',lv:'15827643'},
+  IBA:{short:'Illes Balears',lv:'15832310'},MOR:{short:'Morvedre',lv:'15838132'},ENC:{short:'Encinas Boadilla',lv:'15823460'},
+  FER:{short:'Marina Ferrol',lv:'15859640'},TRU:{short:'Trudgeon Sestao',lv:'15823206'},ELX:{short:'Elx',lv:'15851683'},
+  LPA:{short:'Las Palmas',lv:'15846183'},LOG:{short:'Logroño',lv:'15862461'}
+};
+const LV_TO_CODE={}; Object.keys(T).forEach(c=>LV_TO_CODE[T[c].lv]=c);
+const GROUPS={A:['ASK','CAR','HEL'],B:['JER','IBA','MOR'],C:['ENC','FER','TRU'],D:['ELX','LPA','LOG']};
+const GROUP_MATCHES={
+  A:[{id:'gA1',a:'CAR',b:'HEL'},{id:'gA2',a:'ASK',b:'HEL'},{id:'gA3',a:'ASK',b:'CAR'}],
+  B:[{id:'gB1',a:'IBA',b:'MOR'},{id:'gB2',a:'JER',b:'MOR'},{id:'gB3',a:'JER',b:'IBA'}],
+  C:[{id:'gC1',a:'TRU',b:'FER'},{id:'gC2',a:'ENC',b:'FER'},{id:'gC3',a:'ENC',b:'TRU'}],
+  D:[{id:'gD1',a:'LPA',b:'LOG'},{id:'gD2',a:'ELX',b:'LOG'},{id:'gD3',a:'ELX',b:'LPA'}]
+};
+const PREVIAS=[{id:'p3',a:'BCN',b:'TER',lbl:'Partit 3'},{id:'p4',a:'SAB',b:'SEV',lbl:'Partit 4'},
+  {id:'p1',a:'ATB',b:'OLI',lbl:'Partit 1'},{id:'p2',a:'CAN',b:'MAL',lbl:'Partit 2'}];
+
+let scorePair={}, overrides={};
+const pairKey=(a,b)=>[a,b].sort().join('|');
+function levScore(a,b){ // marcador Leverade orientat a a,b (no overrides)
+  if(a&&b&&T[a]&&T[b]){const p=scorePair[pairKey(T[a].lv,T[b].lv)];
+    if(p&&p[T[a].lv]!=null&&p[T[b].lv]!=null) return {s1:p[T[a].lv],s2:p[T[b].lv],finished:p.finished};}
+  return null;
+}
+function getScore(id,a,b){
+  const o=overrides[id]; if(o&&o.score1!=null&&o.score2!=null) return {s1:+o.score1,s2:+o.score2,finished:true};
+  return levScore(a,b);
+}
+function winnerCode(id,a,b){const r=getScore(id,a,b);if(!r||r.s1==null||!r.finished||r.s1===r.s2)return null;return r.s1>r.s2?a:b;}
+function loserCode(id,a,b){const w=winnerCode(id,a,b);return w?(w===a?b:a):null;}
+function groupStandings(grp){const ts=GROUPS[grp];const st={};ts.forEach(c=>st[c]={code:c,gf:0,gc:0,pts:0});let all=true;
+  GROUP_MATCHES[grp].forEach(m=>{const r=getScore(m.id,m.a,m.b);if(!r||!r.finished){all=false;return;}
+    st[m.a].gf+=r.s1;st[m.a].gc+=r.s2;st[m.b].gf+=r.s2;st[m.b].gc+=r.s1;
+    if(r.s1>r.s2)st[m.a].pts+=3;else st[m.b].pts+=3;});
+  const order=ts.map(c=>st[c]).sort((x,y)=>(y.pts-x.pts)||((y.gf-y.gc)-(x.gf-x.gc))||(y.gf-x.gf)||x.code.localeCompare(y.code));
+  return {order,allDone:all};}
+function grpPos(g,p){const s=groupStandings(g);return s.allDone?s.order[p-1].code:null;}
+function buildBracket(){const M={};PREVIAS.forEach(p=>M[p.id]={a:p.a,b:p.b});
+  const pw=id=>winnerCode(id,M[id].a,M[id].b),pl=id=>loserCode(id,M[id].a,M[id].b);
+  M.P1={a:pw('p1'),b:grpPos('D',2)};M.P2={a:pw('p2'),b:grpPos('C',2)};M.P3={a:pw('p3'),b:grpPos('B',2)};M.P4={a:pw('p4'),b:grpPos('A',2)};
+  M.P5={a:pl('p1'),b:grpPos('D',1)};M.P6={a:pl('p2'),b:grpPos('C',1)};M.P7={a:pl('p3'),b:grpPos('B',1)};M.P8={a:pl('p4'),b:grpPos('A',1)};
+  M.P9={a:grpPos('A',3),b:grpPos('D',3)};M.P10={a:grpPos('B',3),b:grpPos('C',3)};
+  const w=id=>winnerCode(id,M[id].a,M[id].b),l=id=>loserCode(id,M[id].a,M[id].b);
+  M.C5={a:w('P1'),b:w('P8')};M.C6={a:w('P2'),b:w('P7')};M.C7={a:w('P3'),b:w('P6')};M.C8={a:w('P4'),b:w('P5')};
+  M.C1={a:l('P1'),b:l('P8')};M.C2={a:l('P2'),b:l('P7')};M.C3={a:l('P3'),b:l('P6')};M.C4={a:l('P4'),b:l('P5')};
+  M.S1={a:w('C5'),b:w('C8')};M.S2={a:w('C6'),b:w('C7')};M.S3={a:l('C5'),b:l('C8')};M.S4={a:l('C6'),b:l('C7')};
+  M.S5={a:w('C2'),b:w('C3')};M.S6={a:w('C1'),b:w('C4')};M.S7={a:l('C2'),b:l('C3')};M.S8={a:l('C1'),b:l('C4')};
+  M.F1={a:w('S1'),b:w('S2')};M.F3={a:l('S1'),b:l('S2')};M.F5={a:w('S3'),b:w('S4')};M.F7={a:l('S3'),b:l('S4')};
+  M.F9={a:w('S5'),b:w('S6')};M.F11={a:l('S5'),b:l('S6')};M.F13={a:w('S7'),b:w('S8')};M.F15={a:l('S7'),b:l('S8')};
+  M.F17={a:w('P9'),b:w('P10')};M.F19={a:l('P9'),b:l('P10')};
+  return M;}
+
+// Etiquetes per a slots "per determinar"
+const HINTS={
+  P1:'Guan. P1 · 2n D',P2:'Guan. P2 · 2n C',P3:'Guan. P3 · 2n B',P4:'Guan. P4 · 2n A',
+  P5:'Perd. P1 · 1r D',P6:'Perd. P2 · 1r C',P7:'Perd. P3 · 1r B',P8:'Perd. P4 · 1r A',
+  P9:'3r A · 3r D',P10:'3r B · 3r C',
+  C5:'Guan. P1·P8',C6:'Guan. P2·P7',C7:'Guan. P3·P6',C8:'Guan. P4·P5',
+  C1:'Perd. P1·P8',C2:'Perd. P2·P7',C3:'Perd. P3·P6',C4:'Perd. P4·P5',
+  S1:'Guan. C5·C8',S2:'Guan. C6·C7',S3:'Perd. C5·C8',S4:'Perd. C6·C7',
+  S5:'Guan. C2·C3',S6:'Guan. C1·C4',S7:'Perd. C2·C3',S8:'Perd. C1·C4',
+  F1:'Guan. S1·S2',F3:'Perd. S1·S2',F5:'Guan. S3·S4',F7:'Perd. S3·S4',
+  F9:'Guan. S5·S6',F11:'Perd. S5·S6',F13:'Guan. S7·S8',F15:'Perd. S7·S8',
+  F17:'Guan. P9·P10',F19:'Perd. P9·P10'
+};
+const LABELS={
+  P1:'Vuitè 1',P2:'Vuitè 2',P3:'Vuitè 3',P4:'Vuitè 4',P5:'Vuitè 5',P6:'Vuitè 6',P7:'Vuitè 7',P8:'Vuitè 8',
+  P9:'17-20',P10:'17-20',
+  C1:'Quart 9-16',C2:'Quart 9-16',C3:'Quart 9-16',C4:'Quart 9-16',C5:'Quart 1-8',C6:'Quart 1-8',C7:'Quart 1-8',C8:'Quart 1-8',
+  S1:'Semi 1-4',S2:'Semi 1-4',S3:'Semi 5-8',S4:'Semi 5-8',S5:'Semi 9-12',S6:'Semi 9-12',S7:'Semi 13-16',S8:'Semi 13-16',
+  F1:'FINAL',F3:'3r-4t',F5:'5è-6è',F7:'7è-8è',F9:'9è-10è',F11:'11è-12è',F13:'13è-14è',F15:'15è-16è',F17:'17è-18è',F19:'19è-20è'
+};
+// Seccions de l'editor
+const SECTIONS=[
+  {title:'Fase prèvia · Grup A', ids:GROUP_MATCHES.A.map(m=>m.id), gm:GROUP_MATCHES.A},
+  {title:'Fase prèvia · Grup B', ids:GROUP_MATCHES.B.map(m=>m.id), gm:GROUP_MATCHES.B},
+  {title:'Fase prèvia · Grup C', ids:GROUP_MATCHES.C.map(m=>m.id), gm:GROUP_MATCHES.C},
+  {title:'Fase prèvia · Grup D', ids:GROUP_MATCHES.D.map(m=>m.id), gm:GROUP_MATCHES.D},
+  {title:'Prèvia 8 directes', ids:['p1','p2','p3','p4']},
+  {title:'Vuitens (places 1-16)', ids:['P3','P4','P7','P8','P2','P1','P6','P5']},
+  {title:'Places 17-20', ids:['P9','P10','F17','F19']},
+  {title:'Quarts', ids:['C5','C6','C7','C8','C1','C2','C3','C4']},
+  {title:'Semifinals', ids:['S1','S2','S3','S4','S5','S6','S7','S8']},
+  {title:'Finals', ids:['F1','F3','F5','F7','F9','F11','F13','F15']}
+];
+
+function teamMeta(code, hintId, slotHint){
+  if(code){const t=T[code];const img=t.logo?`<img src="${t.logo}" alt="">`:'';
+    return `<span class="tb ${t.cnt?'cnt':''}">${img}${t.short}</span>`;}
+  return `<span class="tb tbd">${slotHint||'Per determinar'}</span>`;
+}
+
+function render(){
+  const M=buildBracket();
+  const allMatches={};
+  PREVIAS.forEach(p=>allMatches[p.id]={a:p.a,b:p.b});
+  ['A','B','C','D'].forEach(g=>GROUP_MATCHES[g].forEach(m=>allMatches[m.id]={a:m.a,b:m.b}));
+  Object.keys(M).forEach(id=>allMatches[id]=M[id]);
+
+  let html='';
+  SECTIONS.forEach(sec=>{
+    html+=`<div class="round-section"><h2>${sec.title}</h2>`;
+    sec.ids.forEach(id=>{
+      const m=allMatches[id]; if(!m)return;
+      const o=overrides[id]||{};
+      const lev=levScore(m.a,m.b);
+      const s1=(o.score1!=null)?o.score1:'';
+      const s2=(o.score2!=null)?o.score2:'';
+      const ph1=lev&&lev.s1!=null?lev.s1:'–';
+      const ph2=lev&&lev.s2!=null?lev.s2:'–';
+      const dtVal=o.scheduledAt?o.scheduledAt.slice(0,16):'';
+      const autoBadge=lev&&lev.s1!=null?'<span class="auto-badge">auto</span>':'';
+      const aH=(id[0]==='g'||id[0]==='p')?'':HINTS[id];
+      // pista per a cada equip TBD
+      const slotA = m.a?null:(aH?aH.split(' · ')[0]:'Per determinar');
+      const slotB = m.b?null:(aH?(aH.split(' · ')[1]||aH):'Per determinar');
+      html+=`<div class="match-row" data-id="${id}">
+        <div class="mid">${LABELS[id]||id}<small>${id}</small></div>
+        <div class="teams">${teamMeta(m.a,id,slotA)}<span class="vs">vs</span>${teamMeta(m.b,id,slotB)}${autoBadge}</div>
+        <input type="number" min="0" inputmode="numeric" class="s1" value="${s1}" placeholder="${ph1}">
+        <span class="vs">–</span>
+        <input type="number" min="0" inputmode="numeric" class="s2" value="${s2}" placeholder="${ph2}">
+        <input type="datetime-local" class="dt" value="${dtVal}">
+        <button class="save" onclick="window.esAdmin.save('${id}')">Desar</button>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  document.getElementById('host').innerHTML=html;
+}
+
+async function save(id){
+  if(!window.fbReady){alert('Firebase carregant, espera un instant.');return;}
+  const row=document.querySelector(`.match-row[data-id="${id}"]`);
+  const btn=row.querySelector('.save');
+  const s1=row.querySelector('.s1').value, s2=row.querySelector('.s2').value, dt=row.querySelector('.dt').value;
+  try{
+    if(s1===''&&s2===''&&dt===''){
+      await window.fb.remove(window.fb.ref(window.fb.db,'championship_es/cadet/'+id));
+      btn.textContent='✓ Tret';btn.classList.add('cleared');
+    }else{
+      await window.fb.set(window.fb.ref(window.fb.db,'championship_es/cadet/'+id),{
+        score1:s1===''?null:Number(s1), score2:s2===''?null:Number(s2),
+        scheduledAt:dt?new Date(dt).toISOString():null, updatedAt:Date.now()
+      });
+      btn.textContent='✓ Desat';btn.classList.add('saved');
+    }
+    setTimeout(()=>{btn.textContent='Desar';btn.classList.remove('saved','cleared');},1600);
+  }catch(e){console.error(e);btn.textContent='✗ Error';btn.classList.add('error');
+    setTimeout(()=>{btn.textContent='Desar';btn.classList.remove('error');},2200);}
+}
+async function clearAll(){
+  if(!confirm('Treure TOTES les correccions manuals? Es tornarà als valors automàtics de la federació.'))return;
+  if(!window.fbReady){alert('Firebase no llest.');return;}
+  await window.fb.remove(window.fb.ref(window.fb.db,'championship_es/cadet'));
+}
+
+const LV_TOURNAMENT='1334843';
+async function loadLeverade(){
+  try{
+    const res=await fetch('https://api.leverade.com/tournaments/'+LV_TOURNAMENT+'?include=teams,groups.rounds.matches.results',{headers:{'Accept':'application/vnd.api+json'}});
+    const j=await res.json();const inc=j.included||[];
+    inc.filter(x=>x.type==='team').forEach(t=>{const c=LV_TO_CODE[t.id];
+      if(c){const lo=t.meta&&t.meta.avatar&&(t.meta.avatar.large||t.meta.avatar.small);if(lo)T[c].logo=lo;}});
+    const results=inc.filter(x=>x.type==='result'&&x.relationships.period&&x.relationships.period.data===null);
+    const matches=inc.filter(x=>x.type==='match');const np={};
+    matches.forEach(m=>{const h=m.meta&&m.meta.home_team,a=m.meta&&m.meta.away_team;if(!h||!a)return;
+      const e={dt:m.attributes.datetime,finished:!!m.attributes.finished};
+      results.filter(r=>r.relationships.match.data.id===m.id).forEach(r=>e[r.relationships.team.data.id]=r.attributes.value);
+      np[pairKey(h,a)]=e;});
+    scorePair=np;
+  }catch(e){console.warn('Leverade',e);}
+  render();
+}
+function initFirebase(){
+  if(!window.fbReady){setTimeout(initFirebase,200);return;}
+  window.fb.onValue(window.fb.ref(window.fb.db,'championship_es/cadet'),snap=>{overrides=snap.val()||{};render();});
+}
+window.esAdmin={save,clearAll,reloadLeverade:loadLeverade};
+render();loadLeverade();initFirebase();
+</script>
+</body>
+</html>

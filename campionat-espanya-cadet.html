@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campionat d'Espanya Cadet Masculí 2026 · CN Terrassa Waterpolo</title>
+<meta name="description" content="Resultats en directe del Campionat d'Espanya Cadet Masculí de waterpolo 2026 (Torremolinos, 2-5 juliol). Es carreguen automàticament de la federació.">
+<link rel="icon" type="image/png" href="cnt-stats-192.png">
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x8gtfi5cdi");
+</script>
+
+<!-- Firebase (override manual de resultats) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  const firebaseConfig = {
+    apiKey: "AIzaSyCmJwgJvh10LcpPjeWhLbN5EDYeHT3tAoU",
+    authDomain: "cnt-wp-stats-bb7dc.firebaseapp.com",
+    databaseURL: "https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cnt-wp-stats-bb7dc",
+    storageBucket: "cnt-wp-stats-bb7dc.firebasestorage.app",
+    messagingSenderId: "3430713575",
+    appId: "1:3430713575:web:d580671a5d19049b187a42"
+  };
+  const app = initializeApp(firebaseConfig);
+  window.fb = { db: getDatabase(app), ref, onValue };
+  window.fbReady = true;
+</script>
+
+<style>
+  :root{
+    --pool:#06283d;
+    --pool-2:#0a3a57;
+    --foam:#eaf6ff;
+    --ink:#dff0fb;
+    --muted:#7fa8c4;
+    --lane:#ffd166;
+    --win:#36d399;
+    --terrassa:#ff5d73;
+    --line:#14517a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    background:linear-gradient(180deg,var(--pool) 0%,#052033 100%);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:48px;
+  }
+  header{
+    padding:22px 20px 14px;
+    border-bottom:4px solid var(--lane);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 46px, rgba(255,209,102,.08) 46px 50px),
+      linear-gradient(180deg,#062c44,#06283d);
+  }
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;
+    font-size:13px;margin-bottom:14px;padding:7px 13px;background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:20px;
+  }
+  .back-link:hover{background:rgba(255,255,255,.12)}
+  header h1{margin:0;font-size:clamp(19px,3.4vw,28px);letter-spacing:.04em;text-transform:uppercase;font-weight:800}
+  header h1 span{color:var(--lane)}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .head-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .head-links a{
+    font-size:12px;font-weight:600;text-decoration:none;padding:7px 13px;border-radius:7px;
+    background:var(--pool-2);color:var(--ink);border:1px solid var(--line);
+  }
+  .head-links a.sim{background:rgba(255,93,115,.14);border-color:rgba(255,93,115,.5);color:#ffd0d8}
+  .head-links a.admin{background:rgba(54,211,153,.12);border-color:rgba(54,211,153,.45);color:#a7f3d0}
+  .head-links a:hover{filter:brightness(1.18)}
+
+  .status-bar{
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+    padding:10px 20px;font-size:12px;color:var(--muted);
+  }
+  .status-bar .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px}
+  .status-bar.live .dot{background:var(--win);box-shadow:0 0 0 3px rgba(54,211,153,.2)}
+  .status-bar button{
+    background:var(--pool-2);color:var(--ink);border:1px solid var(--line);border-radius:7px;
+    padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;
+  }
+  .status-bar button:hover{background:#0f4a6e}
+
+  main{padding:8px 20px 0;max-width:1500px;margin:0 auto}
+  .section-h{
+    font-size:13px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:var(--lane);
+    margin:26px 0 4px;padding-bottom:7px;border-bottom:2px solid rgba(255,209,102,.32);
+  }
+  .section-sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.45}
+
+  /* ---- Grups ---- */
+  .groups-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+  .grp-card{background:rgba(0,0,0,.18);border:1px solid #123f60;border-radius:12px;padding:12px 14px}
+  .grp-card h3{margin:0 0 4px;font-size:14px;color:var(--foam);letter-spacing:.04em}
+  .grp-card .grp-phase{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+  table.standings{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0 6px}
+  table.standings th{color:var(--muted);font-weight:600;text-align:left;padding:4px 5px;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+  table.standings th.num,table.standings td.num{text-align:center;width:30px}
+  table.standings td{padding:6px 5px;border-top:1px solid rgba(255,255,255,.07)}
+  table.standings tr.cnt td{color:var(--terrassa);font-weight:700}
+  table.standings .pos{display:inline-block;min-width:18px;text-align:center;font-weight:800;color:var(--lane);font-size:11px}
+  table.standings tr.q1 .pos,table.standings tr.q2 .pos{color:var(--win)}
+  .grp-matches{margin-top:6px;border-top:1px dashed rgba(255,255,255,.12);padding-top:8px}
+  .grp-match{display:flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 0;color:var(--ink)}
+  .grp-match .gm-when{color:var(--muted);font-size:10px;min-width:52px}
+  .grp-match .gm-teams{flex:1;display:flex;justify-content:space-between;gap:8px}
+  .grp-match .gm-sc{font-weight:800;color:var(--foam)}
+  .grp-match .gm-sc.tbd{color:var(--muted);font-weight:400}
+
+  /* ---- Bracket ---- */
+  .bracket{display:flex;gap:18px;overflow-x:auto;padding:6px 0 18px;align-items:flex-start}
+  .col{min-width:250px;max-width:300px;flex:0 0 auto}
+  .col-h{font-size:12px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:var(--lane);margin:0 0 3px;padding-bottom:6px;border-bottom:2px solid rgba(255,209,102,.3)}
+  .col-sub{font-size:10.5px;color:var(--muted);margin:0 0 12px;line-height:1.4}
+  .phase-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px;font-weight:700}
+  .note{background:rgba(255,209,102,.08);border-left:3px solid var(--lane);padding:8px 10px;font-size:11px;color:#f3e3b0;border-radius:0 8px 8px 0;margin-bottom:12px;line-height:1.45}
+  .match{background:linear-gradient(180deg,#0b3a59,#082f49);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .match.has-cnt{border-color:var(--terrassa);box-shadow:0 0 0 1px var(--terrassa),0 4px 14px rgba(255,93,115,.15)}
+  .match.is-final{border-color:var(--lane);box-shadow:0 4px 18px rgba(255,209,102,.18)}
+  .match-h{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;color:var(--muted);padding:5px 10px;background:rgba(0,0,0,.24);text-transform:uppercase;letter-spacing:.05em}
+  .match-h b{color:var(--foam)}
+  .match.is-final .match-h{background:linear-gradient(90deg,#caa033,#a5801f);color:#1a1206}
+  .match.is-final .match-h b{color:#1a1206}
+  .team{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:13px;border-top:1px solid rgba(255,255,255,.05);min-height:38px}
+  .team .badge{width:24px;height:24px;border-radius:50%;background:#fff;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#06283d;border:1px solid rgba(255,255,255,.15)}
+  .team .badge img{width:100%;height:100%;object-fit:contain}
+  .team .nm{flex:1;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .team .sc{font-weight:800;font-size:15px;color:var(--muted);min-width:20px;text-align:right}
+  .team.tbd .nm{color:var(--muted);font-weight:400;font-style:italic}
+  .team.tbd .badge{background:rgba(255,255,255,.08);color:var(--muted);border:0}
+  .team.winner{background:rgba(54,211,153,.13)}
+  .team.winner .sc{color:var(--win)}
+  .team.loser{opacity:.5}
+  .team.cnt .nm{color:var(--terrassa)}
+  .team.cnt .badge{box-shadow:0 0 0 2px var(--terrassa)}
+  .team.cnt.winner{background:rgba(255,93,115,.16)}
+  .match-foot{padding:4px 10px;font-size:10px;color:var(--muted);background:rgba(0,0,0,.18);text-align:center;border-top:1px solid rgba(255,255,255,.08)}
+
+  /* ---- Classificació final ---- */
+  .clasif{background:rgba(0,0,0,.2);border:1px solid #123f60;border-radius:12px;padding:14px 16px;max-width:420px}
+  .clasif h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--lane)}
+  .clasif ol{margin:0;padding:0;list-style:none;font-size:13px}
+  .clasif li{display:flex;gap:10px;padding:5px 2px;border-top:1px solid rgba(255,255,255,.05);align-items:center}
+  .clasif li .p{min-width:26px;text-align:right;color:var(--muted);font-weight:800;font-size:12px}
+  .clasif li .t{font-weight:600}
+  .clasif li.cnt .t{color:var(--terrassa)}
+  .clasif li .t.tbd{color:var(--muted);font-weight:400;font-style:italic}
+  .clasif li.podi-1 .p{color:gold}
+  .clasif li.podi-2 .p{color:#cfd8e3}
+  .clasif li.podi-3 .p{color:#d8915b}
+
+  .legend{margin-top:24px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend .sw{width:12px;height:12px;border-radius:3px}
+
+  @media (max-width:760px){
+    .bracket{flex-direction:column;overflow-x:visible;gap:0}
+    .col{min-width:0;max-width:none;width:100%;margin-bottom:6px}
+    .team{padding:11px 12px;min-height:44px;font-size:14px}
+    main{padding:8px 12px 0}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="back-link">← Tornar a estadístiques de lliga</a>
+  <h1>Campionat d'Espanya <span>Cadet Masculí 2026</span></h1>
+  <p>Torremolinos · 2–5 de juliol · Resultats oficials de la RFEN (federació)</p>
+  <div class="head-links">
+    <a class="sim" href="bracket_cadet_espanya_2026.html">🎲 Simulador (mode predicció) →</a>
+    <a class="admin" href="campionat-espanya-admin.html">📝 Editar resultats →</a>
+  </div>
+</header>
+
+<div id="statusBar" class="status-bar">
+  <span><span class="dot"></span><span id="statusText">Carregant resultats de la federació…</span></span>
+  <button onclick="window.esReload && window.esReload()">↻ Actualitzar</button>
+</div>
+
+<main>
+  <h2 class="section-h">Fase prèvia · Grups (places 9-20)</h2>
+  <p class="section-sub">Dijous 2 de juliol. El 1r i 2n de cada grup passen a la fase de places 1-16; el 3r juga les places 17-20.</p>
+  <div id="groupsHost" class="groups-grid"></div>
+
+  <h2 class="section-h">Quadre eliminatori · Places 1-16</h2>
+  <p class="section-sub">El recorregut del <strong style="color:var(--terrassa)">C.N. Terrassa</strong> està ressaltat. Els resultats s'omplen automàticament a mesura que la federació els publica.</p>
+  <div id="bracketHost" class="bracket"></div>
+
+  <h2 class="section-h">🏆 Classificació final</h2>
+  <p class="section-sub">Es completa a mesura que es juguen les finals.</p>
+  <div id="clasifHost"></div>
+
+  <div class="legend">
+    <div class="item"><span class="sw" style="background:var(--terrassa)"></span>C.N. Terrassa</div>
+    <div class="item"><span class="sw" style="background:var(--win)"></span>Guanyador / classificat</div>
+    <div class="item"><span class="sw" style="background:rgba(255,255,255,.12)"></span>Per determinar</div>
+  </div>
+  <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:18px">
+    Dades: <a href="https://wp.rfen.es/calendar" target="_blank" rel="noopener" style="color:var(--muted)">RFEN · Leverade</a>.
+    Si un resultat no apareix o és incorrecte, es pot corregir manualment des de l'<a href="campionat-espanya-admin.html" style="color:var(--muted)">editor</a>.
+  </p>
+</main>
+
+<script>
+// ═══════════════════════ REGISTRE D'EQUIPS (Leverade ids) ═══════════════════════
+// short = nom curt per mostrar; lv = id de Leverade (per encreuar marcadors i logos)
+const T = {
+  ATB:{short:'Barceloneta',     lv:'15854586'},
+  CAN:{short:'Real Canoe',      lv:'15840296'},
+  BCN:{short:'C.N. Barcelona',  lv:'15865276'},
+  TER:{short:'C.N. Terrassa',   lv:'15860361', cnt:true},
+  SEV:{short:'C.W. Sevilla',    lv:'15827637'},
+  SAB:{short:'C.N. Sabadell',   lv:'15859682'},
+  MAL:{short:'C.D.W. Màlaga',   lv:'15851150'},
+  OLI:{short:'El Olivar',       lv:'15855609'},
+  ASK:{short:'Askartza',        lv:'15841416'},
+  CAR:{short:'Carthago SAES',   lv:'15865275'},
+  HEL:{short:'Helios',          lv:'15857527'},
+  JER:{short:'Jerez',           lv:'15827643'},
+  IBA:{short:'Illes Balears',   lv:'15832310'},
+  MOR:{short:'Morvedre',        lv:'15838132'},
+  ENC:{short:'Encinas Boadilla',lv:'15823460'},
+  FER:{short:'Marina Ferrol',   lv:'15859640'},
+  TRU:{short:'Trudgeon Sestao', lv:'15823206'},
+  ELX:{short:'Elx',             lv:'15851683'},
+  LPA:{short:'Las Palmas',      lv:'15846183'},
+  LOG:{short:'Logroño',         lv:'15862461'}
+};
+const LV_TO_CODE = {};
+Object.keys(T).forEach(c => { LV_TO_CODE[T[c].lv] = c; });
+// logos: omplerts en temps real des de Leverade (T[code].logo)
+
+// ═══════════════════════ ESQUELET DEL QUADRE (programa definitiu 18-jun-26) ═══════════════════════
+const GROUPS = {
+  A:['ASK','CAR','HEL'],
+  B:['JER','IBA','MOR'],
+  C:['ENC','FER','TRU'],
+  D:['ELX','LPA','LOG']
+};
+// Partits de grup (round-robin de 3) amb id propi i horari del programa (dijous 2 juliol)
+const GROUP_MATCHES = {
+  A:[ {id:'gA1',a:'CAR',b:'HEL',dt:'2026-07-02 14:10'}, {id:'gA2',a:'ASK',b:'HEL',dt:'2026-07-02 17:40'}, {id:'gA3',a:'ASK',b:'CAR',dt:'2026-07-02 21:10'} ],
+  B:[ {id:'gB1',a:'IBA',b:'MOR',dt:'2026-07-02 14:10'}, {id:'gB2',a:'JER',b:'MOR',dt:'2026-07-02 17:40'}, {id:'gB3',a:'JER',b:'IBA',dt:'2026-07-02 21:10'} ],
+  C:[ {id:'gC1',a:'TRU',b:'FER',dt:'2026-07-02 13:00'}, {id:'gC2',a:'ENC',b:'FER',dt:'2026-07-02 16:30'}, {id:'gC3',a:'ENC',b:'TRU',dt:'2026-07-02 20:00'} ],
+  D:[ {id:'gD1',a:'LPA',b:'LOG',dt:'2026-07-02 13:00'}, {id:'gD2',a:'ELX',b:'LOG',dt:'2026-07-02 16:30'}, {id:'gD3',a:'ELX',b:'LPA',dt:'2026-07-02 20:00'} ]
+};
+// Prèvia 8 directes (divendres 3 matí) — NO eliminatòria; només defineix encreuaments
+const PREVIAS = [
+  {id:'p3',a:'BCN',b:'TER',dt:'2026-07-03 09:00',lbl:'Partit 3'},
+  {id:'p4',a:'SAB',b:'SEV',dt:'2026-07-03 09:00',lbl:'Partit 4'},
+  {id:'p1',a:'ATB',b:'OLI',dt:'2026-07-03 10:10',lbl:'Partit 1'},
+  {id:'p2',a:'CAN',b:'MAL',dt:'2026-07-03 10:10',lbl:'Partit 2'}
+];
+
+// ═══════════════════════ ESTAT ═══════════════════════
+// scoreByPair: "lvId1|lvId2" (ordenat) -> {a:codeAlta? } guardem per parella ordenada amb marcadors per lv id
+let scorePair = {};      // key = sorted lv pair -> {[lvId]:gols, finished:bool, dt:string}
+let overrides = {};      // matchId -> {score1,score2,scheduledAt} (Firebase, prioritari)
+let leveradeReady = false, firebaseReady = false;
+
+function pairKey(lv1, lv2){ return [lv1, lv2].sort().join('|'); }
+
+// Retorna {s1,s2,finished,dt} per a un partit entre codes a i b (orientat a a→s1, b→s2). null si desconegut.
+function getScore(matchId, a, b){
+  // 1) override manual (Firebase)
+  const o = overrides[matchId];
+  if (o && o.score1 != null && o.score2 != null) {
+    return { s1:Number(o.score1), s2:Number(o.score2), finished:true, dt:o.scheduledAt||null, manual:true };
+  }
+  // 2) Leverade per parella d'equips
+  if (a && b && T[a] && T[b]) {
+    const p = scorePair[pairKey(T[a].lv, T[b].lv)];
+    if (p && p[T[a].lv] != null && p[T[b].lv] != null) {
+      return { s1:p[T[a].lv], s2:p[T[b].lv], finished:p.finished, dt:p.dt||null };
+    }
+    if (p && p.dt) return { s1:null, s2:null, finished:false, dt:p.dt }; // programat, sense marcador
+  }
+  return (o && o.scheduledAt) ? { s1:null, s2:null, finished:false, dt:o.scheduledAt } : null;
+}
+function winnerCode(matchId, a, b){
+  const r = getScore(matchId, a, b);
+  if (!r || r.s1 == null || r.s2 == null || !r.finished) return null;
+  if (r.s1 === r.s2) return null;
+  return r.s1 > r.s2 ? a : b;
+}
+function loserCode(matchId, a, b){
+  const w = winnerCode(matchId, a, b);
+  if (!w) return null;
+  return w === a ? b : a;
+}
+
+// ═══════════════════════ CLASSIFICACIÓ DE GRUP ═══════════════════════
+function groupStandings(grp){
+  const teams = GROUPS[grp];
+  const st = {}; teams.forEach(c => st[c] = {code:c, pj:0, g:0, gf:0, gc:0, pts:0});
+  let allDone = true;
+  GROUP_MATCHES[grp].forEach(m => {
+    const r = getScore(m.id, m.a, m.b);
+    if (!r || r.s1 == null || r.s2 == null || !r.finished) { allDone = false; return; }
+    st[m.a].pj++; st[m.b].pj++;
+    st[m.a].gf += r.s1; st[m.a].gc += r.s2;
+    st[m.b].gf += r.s2; st[m.b].gc += r.s1;
+    if (r.s1 > r.s2) { st[m.a].g++; st[m.a].pts += 3; }
+    else { st[m.b].g++; st[m.b].pts += 3; }
+  });
+  const order = teams.map(c => st[c]).sort((x,y) =>
+    (y.pts - x.pts) || ((y.gf-y.gc) - (x.gf-x.gc)) || (y.gf - x.gf) || x.code.localeCompare(y.code)
+  );
+  return { order, allDone };
+}
+function grpPos(grp, pos){
+  const s = groupStandings(grp);
+  return s.allDone ? s.order[pos-1].code : null;
+}
+
+// ═══════════════════════ CONSTRUCCIÓ DEL QUADRE ═══════════════════════
+function buildBracket(){
+  const M = {};
+  PREVIAS.forEach(p => { M[p.id] = {a:p.a, b:p.b, lbl:p.lbl, dt:p.dt, kind:'previa'}; });
+  const pw = id => winnerCode(id, M[id].a, M[id].b);
+  const pl = id => loserCode(id, M[id].a, M[id].b);
+
+  // Vuitens (places 1-16) — divendres tarda
+  M.P1 = {a:pw('p1'), b:grpPos('D',2), lbl:'Vuitè 1', dt:'2026-07-03 20:40'};
+  M.P2 = {a:pw('p2'), b:grpPos('C',2), lbl:'Vuitè 2', dt:'2026-07-03 20:40'};
+  M.P3 = {a:pw('p3'), b:grpPos('B',2), lbl:'Vuitè 3', dt:'2026-07-03 18:20'};
+  M.P4 = {a:pw('p4'), b:grpPos('A',2), lbl:'Vuitè 4', dt:'2026-07-03 18:20'};
+  M.P5 = {a:pl('p1'), b:grpPos('D',1), lbl:'Vuitè 5', dt:'2026-07-03 19:30'};
+  M.P6 = {a:pl('p2'), b:grpPos('C',1), lbl:'Vuitè 6', dt:'2026-07-03 19:30'};
+  M.P7 = {a:pl('p3'), b:grpPos('B',1), lbl:'Vuitè 7', dt:'2026-07-03 17:10'};
+  M.P8 = {a:pl('p4'), b:grpPos('A',1), lbl:'Vuitè 8', dt:'2026-07-03 17:10'};
+  // Places 17-20 (3rs de grup)
+  M.P9  = {a:grpPos('A',3), b:grpPos('D',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
+  M.P10 = {a:grpPos('B',3), b:grpPos('C',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
+
+  const w = id => winnerCode(id, M[id].a, M[id].b);
+  const l = id => loserCode(id, M[id].a, M[id].b);
+
+  // Quarts — dissabte 4
+  M.C5 = {a:w('P1'), b:w('P8'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
+  M.C6 = {a:w('P2'), b:w('P7'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
+  M.C7 = {a:w('P3'), b:w('P6'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
+  M.C8 = {a:w('P4'), b:w('P5'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
+  M.C1 = {a:l('P1'), b:l('P8'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
+  M.C2 = {a:l('P2'), b:l('P7'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
+  M.C3 = {a:l('P3'), b:l('P6'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
+  M.C4 = {a:l('P4'), b:l('P5'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
+
+  // Semifinals — dissabte 4
+  M.S1 = {a:w('C5'), b:w('C8'), lbl:'Semi · 1-4',  dt:'2026-07-04 19:40'};
+  M.S2 = {a:w('C6'), b:w('C7'), lbl:'Semi · 1-4',  dt:'2026-07-04 20:50'};
+  M.S3 = {a:l('C5'), b:l('C8'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
+  M.S4 = {a:l('C6'), b:l('C7'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
+  M.S5 = {a:w('C2'), b:w('C3'), lbl:'Semi · 9-12', dt:'2026-07-04 16:10'};
+  M.S6 = {a:w('C1'), b:w('C4'), lbl:'Semi · 9-12', dt:'2026-07-04 15:00'};
+  M.S7 = {a:l('C2'), b:l('C3'), lbl:'Semi · 13-16',dt:'2026-07-04 16:10'};
+  M.S8 = {a:l('C1'), b:l('C4'), lbl:'Semi · 13-16',dt:'2026-07-04 15:00'};
+
+  // Finals — diumenge 5
+  M.F1  = {a:w('S1'), b:w('S2'), lbl:'FINAL · 1-2',  dt:'2026-07-05 14:00', final:'or'};
+  M.F3  = {a:l('S1'), b:l('S2'), lbl:'Places 3-4',   dt:'2026-07-05 12:50', final:'bronze'};
+  M.F5  = {a:w('S3'), b:w('S4'), lbl:'Places 5-6',   dt:'2026-07-05 10:50'};
+  M.F7  = {a:l('S3'), b:l('S4'), lbl:'Places 7-8',   dt:'2026-07-05 10:50'};
+  M.F9  = {a:w('S5'), b:w('S6'), lbl:'Places 9-10',  dt:'2026-07-05 09:40'};
+  M.F11 = {a:l('S5'), b:l('S6'), lbl:'Places 11-12', dt:'2026-07-05 09:40'};
+  M.F13 = {a:w('S7'), b:w('S8'), lbl:'Places 13-14', dt:'2026-07-05 08:30'};
+  M.F15 = {a:l('S7'), b:l('S8'), lbl:'Places 15-16', dt:'2026-07-05 08:30'};
+  M.F17 = {a:w('P9'), b:w('P10'),lbl:'Places 17-18', dt:'2026-07-04 17:30'};
+  M.F19 = {a:l('P9'), b:l('P10'),lbl:'Places 19-20', dt:'2026-07-04 18:30'};
+
+  return M;
+}
+
+// ═══════════════════════ CLASSIFICACIÓ FINAL ═══════════════════════
+function finalRanking(M){
+  const out = [];
+  const pair = (id, p) => {
+    const w = winnerCode(id, M[id].a, M[id].b);
+    const lo = loserCode(id, M[id].a, M[id].b);
+    out.push({p, code:w}); out.push({p:p+1, code:lo});
+  };
+  pair('F1',1); pair('F3',3); pair('F5',5); pair('F7',7);
+  pair('F9',9); pair('F11',11); pair('F13',13); pair('F15',15);
+  pair('F17',17); pair('F19',19);
+  return out;
+}
+
+// ═══════════════════════ RENDER ═══════════════════════
+function fmtWhen(dt){
+  if (!dt) return '';
+  const d = new Date(dt.replace(' ','T'));
+  if (isNaN(d.getTime())) return dt;
+  const dies = ['dg','dl','dt','dc','dj','dv','ds'];
+  const pad = n => String(n).padStart(2,'0');
+  return dies[d.getDay()] + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth()+1) + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function badgeHtml(code){
+  if (!code) return '<span class="badge">?</span>';
+  const t = T[code];
+  if (t.logo) return '<span class="badge"><img src="'+t.logo+'" alt="'+t.short+'"></span>';
+  return '<span class="badge">'+t.short.slice(0,3).toUpperCase()+'</span>';
+}
+function teamRow(code, score, isWin, isLose){
+  const cls = ['team'];
+  if (!code) cls.push('tbd');
+  if (code && T[code].cnt) cls.push('cnt');
+  if (isWin) cls.push('winner');
+  if (isLose) cls.push('loser');
+  const nm = code ? T[code].short : 'Per determinar';
+  return '<div class="'+cls.join(' ')+'">'+badgeHtml(code)+'<span class="nm">'+nm+'</span><span class="sc">'+(score!=null?score:'–')+'</span></div>';
+}
+function matchBox(id, m){
+  const r = getScore(id, m.a, m.b);
+  const has = r && r.s1 != null && r.s2 != null && r.finished;
+  const w1 = has && r.s1 > r.s2;
+  const w2 = has && r.s2 > r.s1;
+  const cnt = (m.a && T[m.a] && T[m.a].cnt) || (m.b && T[m.b] && T[m.b].cnt);
+  const cls = ['match'];
+  if (cnt) cls.push('has-cnt');
+  if (m.final) cls.push('is-final');
+  const when = (r && r.dt) ? r.dt : m.dt;
+  const foot = when ? '<div class="match-foot">📅 '+fmtWhen(when)+(r&&r.manual?' · ✎ manual':'')+'</div>' : '';
+  return '<div class="'+cls.join(' ')+'">'
+    + '<div class="match-h"><b>'+(m.lbl||id)+'</b><span>'+id+'</span></div>'
+    + teamRow(m.a, has?r.s1:null, w1, w2)
+    + teamRow(m.b, has?r.s2:null, w2, w1)
+    + foot + '</div>';
+}
+
+function renderGroups(){
+  const host = document.getElementById('groupsHost');
+  let h = '';
+  ['A','B','C','D'].forEach(grp => {
+    const s = groupStandings(grp);
+    h += '<div class="grp-card"><div class="grp-phase">Prèvia · places 9-20</div><h3>Grup '+grp+'</h3>';
+    h += '<table class="standings"><thead><tr><th>#</th><th>Equip</th><th class="num">PJ</th><th class="num">GF</th><th class="num">GC</th><th class="num">Pts</th></tr></thead><tbody>';
+    s.order.forEach((row, i) => {
+      const t = T[row.code];
+      const cls = [];
+      if (t.cnt) cls.push('cnt');
+      if (i === 0) cls.push('q1'); else if (i === 1) cls.push('q2');
+      h += '<tr class="'+cls.join(' ')+'"><td><span class="pos">'+(i+1)+'</span></td><td>'+t.short+'</td>'
+        + '<td class="num">'+row.pj+'</td><td class="num">'+row.gf+'</td><td class="num">'+row.gc+'</td><td class="num"><strong>'+row.pts+'</strong></td></tr>';
+    });
+    h += '</tbody></table>';
+    h += '<div class="grp-matches">';
+    GROUP_MATCHES[grp].forEach(gm => {
+      const r = getScore(gm.id, gm.a, gm.b);
+      const has = r && r.s1 != null && r.s2 != null;
+      const sc = has ? (r.s1+'–'+r.s2) : 'vs';
+      const when = (r && r.dt) ? r.dt : gm.dt;
+      h += '<div class="grp-match"><span class="gm-when">'+fmtWhen(when)+'</span>'
+        + '<span class="gm-teams"><span>'+T[gm.a].short+'</span>'
+        + '<span class="gm-sc'+(has?'':' tbd')+'">'+sc+'</span>'
+        + '<span style="text-align:right">'+T[gm.b].short+'</span></span></div>';
+    });
+    h += '</div></div>';
+  });
+  host.innerHTML = h;
+}
+
+function renderBracket(M){
+  const host = document.getElementById('bracketHost');
+  let h = '';
+  // Col 1: prèvia + places 17-20
+  h += '<div class="col"><div class="col-h">Prèvia · 8 directes</div><div class="col-sub">Divendres 3, matí.</div>';
+  h += '<div class="note"><b>No és eliminatòria:</b> tots 8 continuen a places 1-16. El resultat decideix l\'encreuament dels vuitens.</div>';
+  PREVIAS.forEach(p => h += matchBox(p.id, M[p.id]));
+  h += '<div class="phase-label">Places 17-20 (3rs de grup)</div>';
+  h += matchBox('P9', M.P9) + matchBox('P10', M.P10) + matchBox('F17', M.F17) + matchBox('F19', M.F19);
+  h += '</div>';
+  // Col 2: vuitens
+  h += '<div class="col"><div class="col-h">Vuitens</div><div class="col-sub">Divendres 3, tarda · places 1-16.</div>';
+  ['P8','P4','P7','P3','P6','P2','P5','P1'].forEach(id => h += matchBox(id, M[id]));
+  h += '</div>';
+  // Col 3: quarts
+  h += '<div class="col"><div class="col-h">Quarts</div><div class="col-sub">Dissabte 4 matí.</div>';
+  h += '<div class="phase-label">Places 1-8 (guanyadors)</div>';
+  ['C5','C6','C7','C8'].forEach(id => h += matchBox(id, M[id]));
+  h += '<div class="phase-label">Places 9-16 (perdedors)</div>';
+  ['C1','C2','C3','C4'].forEach(id => h += matchBox(id, M[id]));
+  h += '</div>';
+  // Col 4: semis
+  h += '<div class="col"><div class="col-h">Semifinals</div><div class="col-sub">Dissabte 4 tarda.</div>';
+  h += '<div class="phase-label">Places 1-4</div>'; ['S1','S2'].forEach(id => h += matchBox(id, M[id]));
+  h += '<div class="phase-label">Places 5-8</div>'; ['S3','S4'].forEach(id => h += matchBox(id, M[id]));
+  h += '<div class="phase-label">Places 9-12</div>'; ['S5','S6'].forEach(id => h += matchBox(id, M[id]));
+  h += '<div class="phase-label">Places 13-16</div>'; ['S7','S8'].forEach(id => h += matchBox(id, M[id]));
+  h += '</div>';
+  // Col 5: finals
+  h += '<div class="col"><div class="col-h">Finals · Diumenge 5</div><div class="col-sub">5 de juliol.</div>';
+  ['F1','F3','F5','F7','F9','F11','F13','F15'].forEach(id => h += matchBox(id, M[id]));
+  h += '</div>';
+  host.innerHTML = h;
+}
+
+function renderClasif(M){
+  const host = document.getElementById('clasifHost');
+  const rank = finalRanking(M);
+  let h = '<div class="clasif"><h3>Classificació 1r – 20è</h3><ol>';
+  rank.forEach(r => {
+    const podi = r.p <= 3 ? ' podi-'+r.p : '';
+    const cnt = r.code && T[r.code] && T[r.code].cnt ? ' cnt' : '';
+    const nm = r.code ? T[r.code].short : '—';
+    const tcls = r.code ? '' : ' tbd';
+    h += '<li class="'+podi+cnt+'"><span class="p">'+r.p+'è</span><span class="t'+tcls+'">'+nm+'</span></li>';
+  });
+  h += '</ol></div>';
+  host.innerHTML = h;
+}
+
+function renderAll(){
+  try {
+    const M = buildBracket();
+    renderGroups();
+    renderBracket(M);
+    renderClasif(M);
+    window.__esBracket = M;
+  } catch (e) { console.error('render espanya', e); }
+  updateStatus();
+}
+
+function updateStatus(){
+  const bar = document.getElementById('statusBar');
+  const txt = document.getElementById('statusText');
+  const nMatches = Object.keys(scorePair).filter(k => { const p = scorePair[k]; return Object.keys(p).some(kk => kk !== 'finished' && kk !== 'dt'); }).length;
+  if (leveradeReady || firebaseReady) {
+    bar.classList.add('live');
+    const parts = [];
+    if (leveradeReady) parts.push('Connectat a la federació (Leverade)');
+    else parts.push('Federació no disponible — mostrant programa');
+    const nOv = Object.keys(overrides).length;
+    if (nOv) parts.push(nOv + ' correcció' + (nOv>1?'ns':'') + ' manual' + (nOv>1?'s':''));
+    txt.textContent = parts.join(' · ');
+  } else {
+    txt.textContent = 'Carregant resultats de la federació…';
+  }
+}
+
+// ═══════════════════════ CÀRREGA LEVERADE (federació) ═══════════════════════
+const LV_TOURNAMENT = '1334843';
+async function loadLeverade(){
+  try {
+    const res = await fetch('https://api.leverade.com/tournaments/' + LV_TOURNAMENT + '?include=teams,groups.rounds.matches.results', {
+      headers: { 'Accept': 'application/vnd.api+json' }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    const inc = j.included || [];
+    const newPair = {};
+    // logos d'equip
+    inc.filter(x => x.type === 'team').forEach(t => {
+      const code = LV_TO_CODE[t.id];
+      if (code) {
+        const logo = (t.meta && t.meta.avatar && (t.meta.avatar.large || t.meta.avatar.small)) || null;
+        if (logo) T[code].logo = logo;
+      }
+    });
+    // resultats per partit
+    const results = inc.filter(x => x.type === 'result' && x.relationships.period && x.relationships.period.data === null);
+    const matches = inc.filter(x => x.type === 'match');
+    matches.forEach(m => {
+      const h = m.meta && m.meta.home_team, a = m.meta && m.meta.away_team;
+      if (!h || !a) return;
+      const key = pairKey(h, a);
+      const entry = { dt: (m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished };
+      const rs = results.filter(r => r.relationships.match.data.id === m.id);
+      rs.forEach(r => { entry[r.relationships.team.data.id] = r.attributes.value; });
+      newPair[key] = entry;
+    });
+    scorePair = newPair;
+    leveradeReady = true;
+  } catch (e) {
+    console.warn('Leverade load error', e);
+  }
+  renderAll();
+}
+
+// ═══════════════════════ CÀRREGA FIREBASE (overrides manuals) ═══════════════════════
+function initFirebase(){
+  if (!window.fbReady) { setTimeout(initFirebase, 200); return; }
+  try {
+    const r = window.fb.ref(window.fb.db, 'championship_es/cadet');
+    window.fb.onValue(r, snap => {
+      overrides = snap.val() || {};
+      firebaseReady = true;
+      renderAll();
+    });
+  } catch (e) { console.warn('Firebase init', e); }
+}
+
+window.esReload = function(){ loadLeverade(); };
+
+// arrencada
+renderAll();        // mostra el programa immediatament
+loadLeverade();
+initFirebase();
+setInterval(loadLeverade, 60000); // refresc cada minut
+</script>
+</body>
+</html>

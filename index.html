@@ -3434,6 +3434,31 @@ body.theme-juvenil .ct-link-cadet { display: none; }
 .ct-final-56 .ct-match-header { background: rgba(100,116,139,0.4); color: #e2e8f0; }
 .ct-final-78 .ct-match-header { background: rgba(71,85,105,0.45); color: #cbd5e1; }
 
+/* ───── Campionat d'Espanya Cadet · camí del Terrassa (portada) ───── */
+body.theme-juvenil .es-card { display: none; }
+.es-card .ct-link { background: #dc2626; }
+.es-card .ct-link:hover { background: #b91c1c; }
+.es-loading { padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; font-style: italic; }
+.es-path-host { margin-top: 6px; }
+.es-next {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; color: #fff;
+}
+.es-next .es-next-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.9; margin-bottom: 10px; font-weight: 700; }
+.es-next .es-next-teams { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.es-next .es-next-team { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 90px; }
+.es-next .es-next-team img { width: 48px; height: 48px; border-radius: 50%; background: #fff; padding: 3px; object-fit: contain; }
+.es-next .es-next-team .ph { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+.es-next .es-next-team .nm { font-size: 12px; font-weight: 600; text-align: center; max-width: 110px; }
+.es-next .es-next-team.cnt .nm { color: #ffd166; }
+.es-next .es-vs { font-size: 20px; font-weight: 800; opacity: 0.7; }
+.es-next .es-next-when { text-align: center; margin-top: 12px; font-size: 13px; }
+.es-next .es-next-count { display: inline-block; margin-top: 10px; padding: 7px 15px; background: rgba(255,255,255,0.15); border-radius: 20px; font-size: 12px; }
+.es-chain { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+.es-chain .ct-match { min-width: 185px; flex: 0 0 auto; }
+.es-chain-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 4px 0 8px; font-weight: 700; }
+.es-empty { padding: 14px 10px; text-align: center; font-size: 11.5px; color: #94a3b8; font-style: italic; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.10); border-radius: 8px; }
+
 @media (max-width: 900px) {
   .ct-bracket-host { grid-template-columns: 1fr; gap: 12px; }
   .ct-col { gap: 10px; }
@@ -3717,6 +3742,19 @@ body.theme-juvenil .ct-link-cadet { display: none; }
         <div id="rivals-map" style="width: 100%;"></div>
     </div>
     
+</div>
+
+<!-- 🇪🇸 CAMPIONAT D'ESPANYA CADET · CAMÍ DEL TERRASSA (auto des de Leverade) -->
+<div class="card ct-bracket-card es-card" id="esEspanyaCard">
+    <div class="ct-head">
+        <h3>🏆 Camí del Terrassa <span class="ct-sub">Campionat d'Espanya Cadet · Torremolinos 2-5 juliol</span></h3>
+        <div class="ct-head-actions">
+            <a href="campionat-espanya-cadet.html" class="ct-link">Quadre complet →</a>
+        </div>
+    </div>
+    <div id="esTerrassaPath" class="es-path-host">
+        <div class="es-loading">Carregant el recorregut del Terrassa…</div>
+    </div>
 </div>
 
 <!-- 🏆 CAMPIONAT DE CATALUNYA · QUADRE (dinàmic via Firebase) -->
@@ -22329,6 +22367,8 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       || (document.body && document.body.classList.contains('theme-juvenil') ? 'juvenil' : 'cadet');
     var container = document.getElementById('next-match-pill');
     if (!container) return;
+    // El Campionat d'Espanya (esdeveniment en curs) té prioritat sobre la pastilla quan en reclama el control
+    if (window.__esPillOwns) return;
     var results = (window.ctChampionshipData && window.ctChampionshipData[team]) || {};
     var now = new Date();
     var candidates = [];
@@ -22496,6 +22536,225 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     new MutationObserver(renderAll).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
   setInterval(renderNextMatchPill, 60000);
+})();
+</script>
+
+<!-- ───── Campionat d'Espanya Cadet · camí del Terrassa (script independent) ───── -->
+<script>
+(function () {
+  const T = {
+    ATB:{short:'Barceloneta',lv:'15854586'},CAN:{short:'Real Canoe',lv:'15840296'},BCN:{short:'C.N. Barcelona',lv:'15865276'},
+    TER:{short:'C.N. Terrassa',lv:'15860361',cnt:true},SEV:{short:'C.W. Sevilla',lv:'15827637'},SAB:{short:'C.N. Sabadell',lv:'15859682'},
+    MAL:{short:'C.D.W. Màlaga',lv:'15851150'},OLI:{short:'El Olivar',lv:'15855609'},ASK:{short:'Askartza',lv:'15841416'},
+    CAR:{short:'Carthago',lv:'15865275'},HEL:{short:'Helios',lv:'15857527'},JER:{short:'Jerez',lv:'15827643'},
+    IBA:{short:'Illes Balears',lv:'15832310'},MOR:{short:'Morvedre',lv:'15838132'},ENC:{short:'Encinas Boadilla',lv:'15823460'},
+    FER:{short:'Marina Ferrol',lv:'15859640'},TRU:{short:'Trudgeon Sestao',lv:'15823206'},ELX:{short:'Elx',lv:'15851683'},
+    LPA:{short:'Las Palmas',lv:'15846183'},LOG:{short:'Logroño',lv:'15862461'}
+  };
+  const LV_TO_CODE = {}; Object.keys(T).forEach(c => LV_TO_CODE[T[c].lv] = c);
+  const GROUPS = {A:['ASK','CAR','HEL'],B:['JER','IBA','MOR'],C:['ENC','FER','TRU'],D:['ELX','LPA','LOG']};
+  const GROUP_MATCHES = {
+    A:[{id:'gA1',a:'CAR',b:'HEL'},{id:'gA2',a:'ASK',b:'HEL'},{id:'gA3',a:'ASK',b:'CAR'}],
+    B:[{id:'gB1',a:'IBA',b:'MOR'},{id:'gB2',a:'JER',b:'MOR'},{id:'gB3',a:'JER',b:'IBA'}],
+    C:[{id:'gC1',a:'TRU',b:'FER'},{id:'gC2',a:'ENC',b:'FER'},{id:'gC3',a:'ENC',b:'TRU'}],
+    D:[{id:'gD1',a:'LPA',b:'LOG'},{id:'gD2',a:'ELX',b:'LOG'},{id:'gD3',a:'ELX',b:'LPA'}]
+  };
+  const PREVIAS = [
+    {id:'p3',a:'BCN',b:'TER',dt:'2026-07-03 09:00',lbl:'Prèvia · Partit 3'},
+    {id:'p4',a:'SAB',b:'SEV',dt:'2026-07-03 09:00'},
+    {id:'p1',a:'ATB',b:'OLI',dt:'2026-07-03 10:10'},
+    {id:'p2',a:'CAN',b:'MAL',dt:'2026-07-03 10:10'}
+  ];
+  const DT = {
+    p1:'2026-07-03 10:10',p2:'2026-07-03 10:10',p3:'2026-07-03 09:00',p4:'2026-07-03 09:00',
+    P1:'2026-07-03 20:40',P2:'2026-07-03 20:40',P3:'2026-07-03 18:20',P4:'2026-07-03 18:20',
+    P5:'2026-07-03 19:30',P6:'2026-07-03 19:30',P7:'2026-07-03 17:10',P8:'2026-07-03 17:10',
+    P9:'2026-07-03 16:00',P10:'2026-07-03 16:00',
+    C5:'2026-07-04 12:30',C6:'2026-07-04 13:40',C7:'2026-07-04 13:40',C8:'2026-07-04 12:30',
+    C1:'2026-07-04 09:00',C2:'2026-07-04 10:10',C3:'2026-07-04 10:10',C4:'2026-07-04 09:00',
+    S1:'2026-07-04 19:40',S2:'2026-07-04 20:50',S3:'2026-07-04 18:30',S4:'2026-07-04 18:30',
+    S5:'2026-07-04 16:10',S6:'2026-07-04 15:00',S7:'2026-07-04 16:10',S8:'2026-07-04 15:00',
+    F1:'2026-07-05 14:00',F3:'2026-07-05 12:50',F5:'2026-07-05 10:50',F7:'2026-07-05 10:50',
+    F9:'2026-07-05 09:40',F11:'2026-07-05 09:40',F13:'2026-07-05 08:30',F15:'2026-07-05 08:30',
+    F17:'2026-07-04 17:30',F19:'2026-07-04 18:30'
+  };
+  const LBL = {
+    p1:'Prèvia · Partit 1',p2:'Prèvia · Partit 2',p3:'Prèvia · Partit 3',p4:'Prèvia · Partit 4',
+    P3:'Vuitens · places 1-16',P7:'Vuitens · places 1-16',
+    C5:'Quarts · places 1-8',C6:'Quarts · places 1-8',C7:'Quarts · places 1-8',C8:'Quarts · places 1-8',
+    C1:'Quarts · places 9-16',C2:'Quarts · places 9-16',C3:'Quarts · places 9-16',C4:'Quarts · places 9-16',
+    S1:'Semifinal · 1-4',S2:'Semifinal · 1-4',S3:'Semifinal · 5-8',S4:'Semifinal · 5-8',
+    S5:'Semifinal · 9-12',S6:'Semifinal · 9-12',S7:'Semifinal · 13-16',S8:'Semifinal · 13-16',
+    F1:'FINAL',F3:'3r i 4t lloc',F5:'5è i 6è',F7:'7è i 8è',F9:'9è i 10è',F11:'11è i 12è',
+    F13:'13è i 14è',F15:'15è i 16è'
+  };
+
+  let scorePair = {}, overrides = {}, leveradeReady = false;
+  const pairKey = (a,b) => [a,b].sort().join('|');
+
+  function getScore(id,a,b){
+    const o = overrides[id];
+    if (o && o.score1 != null && o.score2 != null) return {s1:+o.score1, s2:+o.score2, finished:true, dt:o.scheduledAt||null, manual:true};
+    if (a && b && T[a] && T[b]) {
+      const p = scorePair[pairKey(T[a].lv, T[b].lv)];
+      if (p && p[T[a].lv] != null && p[T[b].lv] != null) return {s1:p[T[a].lv], s2:p[T[b].lv], finished:p.finished, dt:p.dt||null};
+      if (p && p.dt) return {s1:null, s2:null, finished:false, dt:p.dt};
+    }
+    return (o && o.scheduledAt) ? {s1:null, s2:null, finished:false, dt:o.scheduledAt} : null;
+  }
+  function winnerCode(id,a,b){const r=getScore(id,a,b);if(!r||r.s1==null||!r.finished||r.s1===r.s2)return null;return r.s1>r.s2?a:b;}
+  function loserCode(id,a,b){const w=winnerCode(id,a,b);return w?(w===a?b:a):null;}
+  function groupStandings(grp){const ts=GROUPS[grp];const st={};ts.forEach(c=>st[c]={code:c,gf:0,gc:0,pts:0});let all=true;
+    GROUP_MATCHES[grp].forEach(m=>{const r=getScore(m.id,m.a,m.b);if(!r||r.s1==null||!r.finished){all=false;return;}
+      st[m.a].gf+=r.s1;st[m.a].gc+=r.s2;st[m.b].gf+=r.s2;st[m.b].gc+=r.s1;
+      if(r.s1>r.s2)st[m.a].pts+=3;else st[m.b].pts+=3;});
+    const order=ts.map(c=>st[c]).sort((x,y)=>(y.pts-x.pts)||((y.gf-y.gc)-(x.gf-x.gc))||(y.gf-x.gf)||x.code.localeCompare(y.code));
+    return {order,allDone:all};}
+  function grpPos(g,p){const s=groupStandings(g);return s.allDone?s.order[p-1].code:null;}
+  function buildBracket(){const M={};PREVIAS.forEach(p=>M[p.id]={a:p.a,b:p.b});
+    const pw=id=>winnerCode(id,M[id].a,M[id].b),pl=id=>loserCode(id,M[id].a,M[id].b);
+    M.P1={a:pw('p1'),b:grpPos('D',2)};M.P2={a:pw('p2'),b:grpPos('C',2)};M.P3={a:pw('p3'),b:grpPos('B',2)};M.P4={a:pw('p4'),b:grpPos('A',2)};
+    M.P5={a:pl('p1'),b:grpPos('D',1)};M.P6={a:pl('p2'),b:grpPos('C',1)};M.P7={a:pl('p3'),b:grpPos('B',1)};M.P8={a:pl('p4'),b:grpPos('A',1)};
+    M.P9={a:grpPos('A',3),b:grpPos('D',3)};M.P10={a:grpPos('B',3),b:grpPos('C',3)};
+    const w=id=>winnerCode(id,M[id].a,M[id].b),l=id=>loserCode(id,M[id].a,M[id].b);
+    M.C5={a:w('P1'),b:w('P8')};M.C6={a:w('P2'),b:w('P7')};M.C7={a:w('P3'),b:w('P6')};M.C8={a:w('P4'),b:w('P5')};
+    M.C1={a:l('P1'),b:l('P8')};M.C2={a:l('P2'),b:l('P7')};M.C3={a:l('P3'),b:l('P6')};M.C4={a:l('P4'),b:l('P5')};
+    M.S1={a:w('C5'),b:w('C8')};M.S2={a:w('C6'),b:w('C7')};M.S3={a:l('C5'),b:l('C8')};M.S4={a:l('C6'),b:l('C7')};
+    M.S5={a:w('C2'),b:w('C3')};M.S6={a:w('C1'),b:w('C4')};M.S7={a:l('C2'),b:l('C3')};M.S8={a:l('C1'),b:l('C4')};
+    M.F1={a:w('S1'),b:w('S2')};M.F3={a:l('S1'),b:l('S2')};M.F5={a:w('S3'),b:w('S4')};M.F7={a:l('S3'),b:l('S4')};
+    M.F9={a:w('S5'),b:w('S6')};M.F11={a:l('S5'),b:l('S6')};M.F13={a:w('S7'),b:w('S8')};M.F15={a:l('S7'),b:l('S8')};
+    M.F17={a:w('P9'),b:w('P10')};M.F19={a:l('P9'),b:l('P10')};
+    return M;}
+
+  function effDt(id,m){const r=getScore(id,m.a,m.b);return (r&&r.dt)?r.dt:(DT[id]||(m&&m.dt)||null);}
+  function fmtWhen(dt){if(!dt)return '';const d=new Date(dt.replace(' ','T'));if(isNaN(d.getTime()))return dt;
+    const dies=['dg','dl','dt','dc','dj','dv','ds'];const p=n=>String(n).padStart(2,'0');
+    return dies[d.getDay()]+' '+p(d.getDate())+'/'+p(d.getMonth()+1)+' · '+p(d.getHours())+':'+p(d.getMinutes());}
+  function logoHtml(code,big){
+    if(!code)return big?'<div class="ph">?</div>':'<span class="ct-badge">?</span>';
+    const t=T[code];
+    if(big)return t.logo?('<img src="'+t.logo+'" alt="'+t.short+'">'):('<div class="ph">'+t.short.slice(0,3).toUpperCase()+'</div>');
+    return t.logo?('<span class="ct-badge"><img src="'+t.logo+'" alt="'+t.short+'"></span>'):('<span class="ct-badge">'+t.short.slice(0,3).toUpperCase()+'</span>');
+  }
+  function ctTeamRow(code,score,isWin,isLose){
+    const cls=['ct-team'];if(!code)cls.push('ct-tbd');if(code&&T[code].cnt)cls.push('ct-cnt');
+    if(isWin)cls.push('ct-winner');if(isLose)cls.push('ct-loser');
+    const nm=code?T[code].short:'Per determinar';
+    return '<div class="'+cls.join(' ')+'">'+logoHtml(code,false)+'<span class="ct-name">'+nm+'</span><span class="ct-score">'+(score!=null?score:'–')+'</span></div>';
+  }
+  function ctMatch(id,m){
+    const r=getScore(id,m.a,m.b);const has=r&&r.s1!=null&&r.s2!=null&&r.finished;
+    const w1=has&&r.s1>r.s2,w2=has&&r.s2>r.s1;
+    const cnt=(m.a&&T[m.a]&&T[m.a].cnt)||(m.b&&T[m.b]&&T[m.b].cnt);
+    const cls=['ct-match'];if(cnt)cls.push('ct-has-cnt');if(id==='F1')cls.push('ct-final');
+    const when=effDt(id,m);
+    return '<div class="'+cls.join(' ')+'">'
+      +'<div class="ct-match-header"><span class="ct-id">'+(LBL[id]||id)+'</span><span>'+(r&&r.manual?'✎':'')+'</span></div>'
+      +ctTeamRow(m.a,has?r.s1:null,w1,w2)+ctTeamRow(m.b,has?r.s2:null,w2,w1)
+      +(when?'<div class="ct-match-footer">📅 '+fmtWhen(when)+'</div>':'')+'</div>';
+  }
+
+  function terrassaMatches(M){
+    const ids=Object.keys(M).filter(id=>M[id].a==='TER'||M[id].b==='TER');
+    return ids.map(id=>({id,m:M[id],dt:effDt(id,M[id])}))
+      .sort((x,y)=>{const a=x.dt?new Date(x.dt.replace(' ','T')).getTime():Infinity,b=y.dt?new Date(y.dt.replace(' ','T')).getTime():Infinity;return a-b;});
+  }
+
+  let pillOwned=false;
+  function renderPill(){
+    const container=document.getElementById('next-match-pill');
+    if(!container)return;
+    const isCadet=!(document.body&&document.body.classList.contains('theme-juvenil'));
+    let M; try{M=buildBracket();}catch(e){M=null;}
+    const path=M?terrassaMatches(M):[];
+    const next=path.find(x=>{const r=getScore(x.id,x.m.a,x.m.b);return !(r&&r.finished);});
+    if(!isCadet||!next){
+      window.__esPillOwns=false;
+      if(pillOwned){pillOwned=false;try{if(window.renderCntNextMatchFromBracket)window.renderCntNextMatchFromBracket();}catch(e){}}
+      return;
+    }
+    window.__esPillOwns=true; pillOwned=true;
+    const m=next.m;const opp=m.a==='TER'?m.b:m.a;const when=effDt(next.id,m);
+    const tHtml=code=>{
+      if(!code)return '<div style="opacity:0.6;font-style:italic;font-size:12px;width:90px;text-align:center;">Per determinar</div>';
+      const t=T[code];
+      const img=t.logo?('<img src="'+t.logo+'" style="width:50px;height:50px;border-radius:50%;background:#fff;padding:3px;object-fit:contain;">')
+        :('<div style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;">'+t.short.slice(0,3).toUpperCase()+'</div>');
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;">'+img+'<div style="font-size:12px;font-weight:600;'+(t.cnt?'color:#ffd166;':'')+'max-width:100px;text-align:center;">'+t.short+'</div></div>';
+    };
+    let countHtml='';
+    if(when){const d=new Date(when.replace(' ','T'));const diff=d-new Date();
+      if(diff>0){const days=Math.floor(diff/86400000),hrs=Math.floor((diff%86400000)/3600000),min=Math.floor((diff%3600000)/60000);
+        countHtml='<div style="margin-top:10px;padding:8px 15px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;"><span style="font-size:12px;">⏱️ Falten <strong>'+(days>0?days+'d '+hrs+'h '+min+'m':hrs+'h '+min+'m')+'</strong></span></div>';}}
+    container.innerHTML=
+      '<div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">'+(LBL[next.id]||'Prèvia')+' · Campionat d\'Espanya</div>'
+      +'<div style="display:flex;align-items:center;justify-content:center;gap:18px;">'+tHtml('TER')+'<div style="font-size:22px;font-weight:800;opacity:0.7;">vs</div>'+tHtml(opp)+'</div>'
+      +(when?'<div style="margin-top:12px;font-size:13px;">📅 '+fmtWhen(when)+'</div>':'')
+      +'<div style="margin-top:6px;font-size:12px;opacity:0.85;">📍 Torremolinos</div>'
+      +countHtml;
+  }
+
+  function render(){
+    try{renderPill();}catch(e){console.warn('es pill',e);}
+    const host=document.getElementById('esTerrassaPath');
+    if(!host)return;
+    let M; try{M=buildBracket();}catch(e){console.warn('es build',e);return;}
+    const path=terrassaMatches(M);
+    if(!path.length){host.innerHTML='<div class="es-empty">El recorregut del Terrassa apareixerà aquí quan comenci el campionat.</div>';return;}
+    // proper partit = primer sense resultat final
+    let next=path.find(x=>{const r=getScore(x.id,x.m.a,x.m.b);return !(r&&r.finished);});
+    let html='';
+    if(next){
+      const m=next.m;const opp=m.a==='TER'?m.b:m.a;
+      const terBig=logoHtml('TER',true);const oppBig=logoHtml(opp,true);
+      const when=effDt(next.id,m);
+      let countHtml='';
+      if(when){const d=new Date(when.replace(' ','T'));const diff=d-new Date();
+        if(diff>0){const days=Math.floor(diff/86400000),hrs=Math.floor((diff%86400000)/3600000),min=Math.floor((diff%3600000)/60000);
+          countHtml='<div class="es-next-count">⏱️ Falten <strong>'+(days>0?days+'d '+hrs+'h '+min+'m':hrs+'h '+min+'m')+'</strong></div>';}}
+      html+='<div class="es-next"><div class="es-next-tag">⚡ Pròxim partit · '+(LBL[next.id]||'Prèvia')+'</div>'
+        +'<div class="es-next-teams">'
+        +'<div class="es-next-team cnt">'+terBig+'<div class="nm">C.N. Terrassa</div></div>'
+        +'<div class="es-vs">vs</div>'
+        +'<div class="es-next-team'+(opp&&T[opp]&&T[opp].cnt?' cnt':'')+'">'+oppBig+'<div class="nm">'+(opp?T[opp].short:'Per determinar')+'</div></div>'
+        +'</div>'
+        +(when?'<div class="es-next-when">📅 '+fmtWhen(when)+' · 📍 Torremolinos</div>':'')
+        +countHtml+'</div>';
+    }
+    html+='<div class="es-chain-label">Recorregut complet</div>';
+    html+='<div class="es-chain">'+path.map(x=>ctMatch(x.id,x.m)).join('')+'</div>';
+    host.innerHTML=html;
+  }
+
+  const LV_TOURNAMENT='1334843';
+  async function loadLeverade(){
+    try{
+      const res=await fetch('https://api.leverade.com/tournaments/'+LV_TOURNAMENT+'?include=teams,groups.rounds.matches.results',{headers:{'Accept':'application/vnd.api+json'}});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const j=await res.json();const inc=j.included||[];
+      inc.filter(x=>x.type==='team').forEach(t=>{const c=LV_TO_CODE[t.id];
+        if(c){const lo=t.meta&&t.meta.avatar&&(t.meta.avatar.large||t.meta.avatar.small);if(lo)T[c].logo=lo;}});
+      const results=inc.filter(x=>x.type==='result'&&x.relationships.period&&x.relationships.period.data===null);
+      const matches=inc.filter(x=>x.type==='match');const np={};
+      matches.forEach(m=>{const h=m.meta&&m.meta.home_team,a=m.meta&&m.meta.away_team;if(!h||!a)return;
+        const e={dt:m.attributes.datetime||m.attributes.date||null,finished:!!m.attributes.finished};
+        results.filter(r=>r.relationships.match.data.id===m.id).forEach(r=>e[r.relationships.team.data.id]=r.attributes.value);
+        np[pairKey(h,a)]=e;});
+      scorePair=np;leveradeReady=true;
+    }catch(e){console.warn('es Leverade',e);}
+    render();
+  }
+  function initFirebase(){
+    if(!window.firebaseReady){setTimeout(initFirebase,200);return;}
+    try{window.firebaseOnValue(window.firebaseRef(window.firebaseDB,'championship_es/cadet'),snap=>{overrides=snap.val()||{};render();});}
+    catch(e){console.warn('es firebase',e);}
+  }
+
+  render(); loadLeverade(); initFirebase();
+  setInterval(render,60000); setInterval(loadLeverade,120000);
+  // reacciona al canvi de tema (cadet ↔ juvenil) per cedir/recuperar la pastilla
+  if(document.body){ new MutationObserver(render).observe(document.body,{attributes:true,attributeFilter:['class']}); }
+  window.addEventListener('load',render);
 })();
 </script>
 </body>
