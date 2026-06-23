@@ -22345,15 +22345,34 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   let scorePair = {}, overrides = {}, leveradeReady = false;
   const pairKey = (a,b) => [a,b].sort().join('|');
 
+  // ── Hores ──────────────────────────────────────────────
+  // Leverade i els overrides (admin → toISOString) donen l'hora en UTC.
+  // L'esquelet (DT/PREVIAS) ja està en hora local de Madrid.
+  // Normalitzem tota hora UTC a hora de paret de Madrid "YYYY-MM-DD HH:MM:SS".
+  function utcToMadrid(s){
+    if(!s) return s;
+    let iso = String(s).replace(' ','T');
+    if(!/[Zz]$/.test(iso) && !/[+\-]\d{2}:\d{2}$/.test(iso)) iso += 'Z'; // sense zona → és UTC
+    const d = new Date(iso);
+    if(isNaN(d.getTime())) return s;
+    return d.toLocaleString('sv-SE',{timeZone:'Europe/Madrid'}); // "YYYY-MM-DD HH:MM:SS"
+  }
+  // Una hora de Madrid (CEST = +02:00 durant el torneig de juliol) → instant real (per comptes enrere)
+  function toInstant(dt){
+    if(!dt) return null;
+    const d = new Date(String(dt).replace(' ','T')+'+02:00');
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   function getScore(id,a,b){
     const o = overrides[id];
-    if (o && o.score1 != null && o.score2 != null) return {s1:+o.score1, s2:+o.score2, finished:true, dt:o.scheduledAt||null, manual:true};
+    if (o && o.score1 != null && o.score2 != null) return {s1:+o.score1, s2:+o.score2, finished:true, dt:utcToMadrid(o.scheduledAt)||null, manual:true};
     if (a && b && T[a] && T[b]) {
       const p = scorePair[pairKey(T[a].lv, T[b].lv)];
       if (p && p[T[a].lv] != null && p[T[b].lv] != null) return {s1:p[T[a].lv], s2:p[T[b].lv], finished:p.finished, dt:p.dt||null};
       if (p && p.dt) return {s1:null, s2:null, finished:false, dt:p.dt};
     }
-    return (o && o.scheduledAt) ? {s1:null, s2:null, finished:false, dt:o.scheduledAt} : null;
+    return (o && o.scheduledAt) ? {s1:null, s2:null, finished:false, dt:utcToMadrid(o.scheduledAt)} : null;
   }
   function winnerCode(id,a,b){const r=getScore(id,a,b);if(!r||r.s1==null||!r.finished||r.s1===r.s2)return null;return r.s1>r.s2?a:b;}
   function loserCode(id,a,b){const w=winnerCode(id,a,b);return w?(w===a?b:a):null;}
@@ -22380,9 +22399,13 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     return M;}
 
   function effDt(id,m){const r=getScore(id,m.a,m.b);return (r&&r.dt)?r.dt:(DT[id]||(m&&m.dt)||null);}
-  function fmtWhen(dt){if(!dt)return '';const d=new Date(dt.replace(' ','T'));if(isNaN(d.getTime()))return dt;
-    const dies=['dg','dl','dt','dc','dj','dv','ds'];const p=n=>String(n).padStart(2,'0');
-    return dies[d.getDay()]+' '+p(d.getDate())+'/'+p(d.getMonth()+1)+' · '+p(d.getHours())+':'+p(d.getMinutes());}
+  // dt ja és hora de paret (Madrid). Mostrem els números tal qual, sense dependre de la zona del navegador.
+  function fmtWhen(dt){if(!dt)return '';
+    const m=String(dt).replace('T',' ').match(/^(\d{4})-(\d{2})-(\d{2})[ ](\d{2}):(\d{2})/);
+    if(!m)return dt;
+    const dies=['dg','dl','dt','dc','dj','dv','ds'];
+    const wd=new Date(Date.UTC(+m[1],+m[2]-1,+m[3])).getUTCDay();
+    return dies[wd]+' '+m[3]+'/'+m[2]+' · '+m[4]+':'+m[5];}
   function logoHtml(code,big){
     if(!code)return big?'<div class="ph">?</div>':'<span class="ct-badge">?</span>';
     const t=T[code];
@@ -22436,7 +22459,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       return '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;">'+img+'<div style="font-size:12px;font-weight:600;'+(t.cnt?'color:#ffd166;':'')+'max-width:100px;text-align:center;">'+t.short+'</div></div>';
     };
     let countHtml='';
-    if(when){const d=new Date(when.replace(' ','T'));const diff=d-new Date();
+    if(when){const d=toInstant(when);const diff=d?(d-new Date()):0;
       if(diff>0){const days=Math.floor(diff/86400000),hrs=Math.floor((diff%86400000)/3600000),min=Math.floor((diff%3600000)/60000);
         countHtml='<div style="margin-top:10px;padding:8px 15px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;"><span style="font-size:12px;">⏱️ Falten <strong>'+(days>0?days+'d '+hrs+'h '+min+'m':hrs+'h '+min+'m')+'</strong></span></div>';}}
     container.innerHTML=
@@ -22462,7 +22485,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       const terBig=logoHtml('TER',true);const oppBig=logoHtml(opp,true);
       const when=effDt(next.id,m);
       let countHtml='';
-      if(when){const d=new Date(when.replace(' ','T'));const diff=d-new Date();
+      if(when){const d=toInstant(when);const diff=d?(d-new Date()):0;
         if(diff>0){const days=Math.floor(diff/86400000),hrs=Math.floor((diff%86400000)/3600000),min=Math.floor((diff%3600000)/60000);
           countHtml='<div class="es-next-count">⏱️ Falten <strong>'+(days>0?days+'d '+hrs+'h '+min+'m':hrs+'h '+min+'m')+'</strong></div>';}}
       html+='<div class="es-next"><div class="es-next-tag">⚡ Pròxim partit · '+(LBL[next.id]||'Prèvia')+'</div>'
@@ -22490,7 +22513,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
       const results=inc.filter(x=>x.type==='result'&&x.relationships.period&&x.relationships.period.data===null);
       const matches=inc.filter(x=>x.type==='match');const np={};
       matches.forEach(m=>{const h=m.meta&&m.meta.home_team,a=m.meta&&m.meta.away_team;if(!h||!a)return;
-        const e={dt:m.attributes.datetime||m.attributes.date||null,finished:!!m.attributes.finished};
+        const e={dt:utcToMadrid(m.attributes.datetime||m.attributes.date||null),finished:!!m.attributes.finished};
         results.filter(r=>r.relationships.match.data.id===m.id).forEach(r=>e[r.relationships.team.data.id]=r.attributes.value);
         np[pairKey(h,a)]=e;});
       scorePair=np;leveradeReady=true;

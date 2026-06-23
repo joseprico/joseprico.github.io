@@ -269,6 +269,16 @@ let facilityName = {};   // facility id -> nom curt del camp (p.ex. "Campo I")
 let leveradeReady = false, firebaseReady = false;
 
 function pairKey(lv1, lv2){ return [lv1, lv2].sort().join('|'); }
+// Leverade i els overrides (admin → toISOString) donen l'hora en UTC; l'esquelet ja és hora de Madrid.
+// Normalitzem qualsevol hora UTC a hora de paret de Madrid "YYYY-MM-DD HH:MM:SS".
+function utcToMadrid(s){
+  if (!s) return s;
+  let iso = String(s).replace(' ', 'T');
+  if (!/[Zz]$/.test(iso) && !/[+\-]\d{2}:\d{2}$/.test(iso)) iso += 'Z'; // sense zona → és UTC
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleString('sv-SE', { timeZone: 'Europe/Madrid' });
+}
 // "Piscina Virgen del Carmen - Campo I" -> "Campo I"
 function shortCampo(name){
   if (!name) return '';
@@ -281,7 +291,7 @@ function getScore(matchId, a, b){
   // 1) override manual (Firebase)
   const o = overrides[matchId];
   if (o && o.score1 != null && o.score2 != null) {
-    return { s1:Number(o.score1), s2:Number(o.score2), finished:true, dt:o.scheduledAt||null, manual:true };
+    return { s1:Number(o.score1), s2:Number(o.score2), finished:true, dt:utcToMadrid(o.scheduledAt)||null, manual:true };
   }
   // 2) Leverade per parella d'equips
   if (a && b && T[a] && T[b]) {
@@ -291,7 +301,7 @@ function getScore(matchId, a, b){
     }
     if (p && p.dt) return { s1:null, s2:null, finished:false, dt:p.dt, campo:p.campo||null }; // programat, sense marcador
   }
-  return (o && o.scheduledAt) ? { s1:null, s2:null, finished:false, dt:o.scheduledAt } : null;
+  return (o && o.scheduledAt) ? { s1:null, s2:null, finished:false, dt:utcToMadrid(o.scheduledAt) } : null;
 }
 function winnerCode(matchId, a, b){
   const r = getScore(matchId, a, b);
@@ -402,13 +412,14 @@ function finalRanking(M){
 }
 
 // ═══════════════════════ RENDER ═══════════════════════
+// dt ja és hora de paret (Madrid); mostrem els números tal qual, sense dependre de la zona del navegador.
 function fmtWhen(dt){
   if (!dt) return '';
-  const d = new Date(dt.replace(' ','T'));
-  if (isNaN(d.getTime())) return dt;
+  const m = String(dt).replace('T',' ').match(/^(\d{4})-(\d{2})-(\d{2})[ ](\d{2}):(\d{2})/);
+  if (!m) return dt;
   const dies = ['dg','dl','dt','dc','dj','dv','ds'];
-  const pad = n => String(n).padStart(2,'0');
-  return dies[d.getDay()] + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth()+1) + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const wd = new Date(Date.UTC(+m[1], +m[2]-1, +m[3])).getUTCDay();
+  return dies[wd] + ' ' + m[3] + '/' + m[2] + ' · ' + m[4] + ':' + m[5];
 }
 function badgeHtml(code){
   if (!code) return '<span class="badge">?</span>';
@@ -586,7 +597,7 @@ async function loadLeverade(){
       if (!h || !a) return;
       const key = pairKey(h, a);
       const fac = m.relationships && m.relationships.facility && m.relationships.facility.data;
-      const entry = { dt: (m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished, campo: (fac && facilityName[fac.id]) || null };
+      const entry = { dt: utcToMadrid(m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished, campo: (fac && facilityName[fac.id]) || null };
       const rs = results.filter(r => r.relationships.match.data.id === m.id);
       rs.forEach(r => { entry[r.relationships.team.data.id] = r.attributes.value; });
       newPair[key] = entry;

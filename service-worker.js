@@ -1,5 +1,5 @@
 // Service Worker per CN Terrassa - Versió sense caché de JSON externs
-const CACHE_NAME = 'cnt-v3';
+const CACHE_NAME = 'cnt-v4';
 
 // Només recursos locals del repo CNT
 const urlsToCache = [
@@ -13,7 +13,7 @@ const urlsToCache = [
 
 // Instal·lació
 self.addEventListener('install', event => {
-  console.log('[SW] Instal·lant v3...');
+  console.log('[SW] Instal·lant v4...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -29,7 +29,7 @@ self.addEventListener('install', event => {
 
 // Activació
 self.addEventListener('activate', event => {
-  console.log('[SW] Activant v3...');
+  console.log('[SW] Activant v4...');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
@@ -157,4 +157,4 @@ self.addEventListener('fetch', event => {
   );
 });
 
-console.log('[SW] Service Worker v3 carregat - JSON externs NO interceptats');
+console.log('[SW] Service Worker v4 carregat - JSON externs NO interceptats');
