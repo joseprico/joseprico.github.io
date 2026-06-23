@@ -263,11 +263,18 @@ const PREVIAS = [
 
 // ═══════════════════════ ESTAT ═══════════════════════
 // scoreByPair: "lvId1|lvId2" (ordenat) -> {a:codeAlta? } guardem per parella ordenada amb marcadors per lv id
-let scorePair = {};      // key = sorted lv pair -> {[lvId]:gols, finished:bool, dt:string}
+let scorePair = {};      // key = sorted lv pair -> {[lvId]:gols, finished:bool, dt:string, campo:string}
 let overrides = {};      // matchId -> {score1,score2,scheduledAt} (Firebase, prioritari)
+let facilityName = {};   // facility id -> nom curt del camp (p.ex. "Campo I")
 let leveradeReady = false, firebaseReady = false;
 
 function pairKey(lv1, lv2){ return [lv1, lv2].sort().join('|'); }
+// "Piscina Virgen del Carmen - Campo I" -> "Campo I"
+function shortCampo(name){
+  if (!name) return '';
+  const parts = name.split(' - ');
+  return (parts.length > 1 ? parts[parts.length - 1] : name).trim();
+}
 
 // Retorna {s1,s2,finished,dt} per a un partit entre codes a i b (orientat a a→s1, b→s2). null si desconegut.
 function getScore(matchId, a, b){
@@ -280,9 +287,9 @@ function getScore(matchId, a, b){
   if (a && b && T[a] && T[b]) {
     const p = scorePair[pairKey(T[a].lv, T[b].lv)];
     if (p && p[T[a].lv] != null && p[T[b].lv] != null) {
-      return { s1:p[T[a].lv], s2:p[T[b].lv], finished:p.finished, dt:p.dt||null };
+      return { s1:p[T[a].lv], s2:p[T[b].lv], finished:p.finished, dt:p.dt||null, campo:p.campo||null };
     }
-    if (p && p.dt) return { s1:null, s2:null, finished:false, dt:p.dt }; // programat, sense marcador
+    if (p && p.dt) return { s1:null, s2:null, finished:false, dt:p.dt, campo:p.campo||null }; // programat, sense marcador
   }
   return (o && o.scheduledAt) ? { s1:null, s2:null, finished:false, dt:o.scheduledAt } : null;
 }
@@ -428,7 +435,8 @@ function matchBox(id, m){
   if (cnt) cls.push('has-cnt');
   if (m.final) cls.push('is-final');
   const when = (r && r.dt) ? r.dt : m.dt;
-  const foot = when ? '<div class="match-foot">📅 '+fmtWhen(when)+(r&&r.manual?' · ✎ manual':'')+'</div>' : '';
+  const campo = r && r.campo ? ' · 📍 '+r.campo : '';
+  const foot = when ? '<div class="match-foot">📅 '+fmtWhen(when)+campo+(r&&r.manual?' · ✎ manual':'')+'</div>' : '';
   return '<div class="'+cls.join(' ')+'">'
     + '<div class="match-h"><b>'+(m.lbl||id)+'</b><span>'+id+'</span></div>'
     + teamRow(m.a, has?r.s1:null, w1, w2)
@@ -458,7 +466,8 @@ function renderGroups(){
       const has = r && r.s1 != null && r.s2 != null;
       const sc = has ? (r.s1+'–'+r.s2) : 'vs';
       const when = (r && r.dt) ? r.dt : gm.dt;
-      h += '<div class="grp-match"><span class="gm-when">'+fmtWhen(when)+'</span>'
+      const campo = r && r.campo ? ' · 📍 '+r.campo : '';
+      h += '<div class="grp-match"><span class="gm-when">'+fmtWhen(when)+campo+'</span>'
         + '<span class="gm-teams"><span>'+T[gm.a].short+'</span>'
         + '<span class="gm-sc'+(has?'':' tbd')+'">'+sc+'</span>'
         + '<span style="text-align:right">'+T[gm.b].short+'</span></span></div>';
@@ -550,13 +559,17 @@ function updateStatus(){
 const LV_TOURNAMENT = '1334843';
 async function loadLeverade(){
   try {
-    const res = await fetch('https://api.leverade.com/tournaments/' + LV_TOURNAMENT + '?include=teams,groups.rounds.matches.results', {
+    const res = await fetch('https://api.leverade.com/tournaments/' + LV_TOURNAMENT + '?include=teams,groups.rounds.matches.results,groups.rounds.matches.facility', {
       headers: { 'Accept': 'application/vnd.api+json' }
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const j = await res.json();
     const inc = j.included || [];
     const newPair = {};
+    // camps (facilities): id -> nom curt ("Campo I" / "Campo II")
+    inc.filter(x => x.type === 'facility').forEach(f => {
+      facilityName[f.id] = shortCampo(f.attributes && f.attributes.name);
+    });
     // logos d'equip
     inc.filter(x => x.type === 'team').forEach(t => {
       const code = LV_TO_CODE[t.id];
@@ -572,7 +585,8 @@ async function loadLeverade(){
       const h = m.meta && m.meta.home_team, a = m.meta && m.meta.away_team;
       if (!h || !a) return;
       const key = pairKey(h, a);
-      const entry = { dt: (m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished };
+      const fac = m.relationships && m.relationships.facility && m.relationships.facility.data;
+      const entry = { dt: (m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished, campo: (fac && facilityName[fac.id]) || null };
       const rs = results.filter(r => r.relationships.match.data.id === m.id);
       rs.forEach(r => { entry[r.relationships.team.data.id] = r.attributes.value; });
       newPair[key] = entry;

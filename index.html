@@ -3573,6 +3573,7 @@ body.theme-juvenil .es-card { display: none; }
         </ol>
     </div>
 </div>
+<!-- Modal de selecció d'equip desactivat: l'app és només Cadet. Es manté l'element ocult perquè el JS hi fa referència. -->
 <div id="teamSelectionModal" style="
     position: fixed;
     top: 0;
@@ -3580,7 +3581,7 @@ body.theme-juvenil .es-card { display: none; }
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.95);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
@@ -3630,23 +3631,6 @@ body.theme-juvenil .es-card { display: none; }
     <div style="font-size: 12px; color: #fed7aa; margin-top: 8px; font-weight: 600;">Temporada 25-26</div>
 </button>
             
-            <button onclick="selectTeam('juvenil')" style="
-    padding: 30px 20px;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    border: 3px solid #60a5fa;
-    border-radius: 12px;
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5);
-" onmouseover="this.style.background='linear-gradient(135deg, #2563eb, #1d4ed8)'; this.style.transform='translateY(-3px) scale(1.05)'; this.style.boxShadow='0 8px 30px rgba(59, 130, 246, 0.7)'" 
-   onmouseout="this.style.background='linear-gradient(135deg, #3b82f6, #2563eb)'; this.style.transform='none'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.5)'">
-    <div style="font-size: 48px; margin-bottom: 10px;">🏊‍♂️</div>
-    JUVENIL
-    <div style="font-size: 12px; color: #dbeafe; margin-top: 8px; font-weight: 600;">Temporada 25-26</div>
-</button>
         </div>
         
         <p style="font-size: 11px; color: #94a3b8; margin-top: 20px;">
@@ -3669,9 +3653,6 @@ body.theme-juvenil .es-card { display: none; }
         </div>
     </div>
     <p id="coachName" style="font-size: 16px; color: #fde047; margin-top: 8px; font-weight: 600;"></p>
-    <button onclick="changeTeam()" class="btn" style="background: #8b5cf6; padding: 8px 16px; font-size: 14px; margin-top: 10px;">
-        🔄 Canviar Equip
-    </button>
 </div>
 	
         <!-- TABS SEMPRE VISIBLES -->
@@ -3686,7 +3667,6 @@ body.theme-juvenil .es-card { display: none; }
   <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
   <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
   <button class="tab" onclick="showTab('individual')">👤 Individual</button>
-    <button class="tab" onclick="showTab('rivalsTab')">📊 Anàlisi dels Rivals</button>
   <button class="tab" onclick="showTab('actawpTab')">🌐 FCN ACTAWP</button> 
 </div>
         </div>
@@ -3716,9 +3696,9 @@ body.theme-juvenil .es-card { display: none; }
 	<!-- 🏆 ÚLTIMS PARTITS JUGATS -->
 <div id="ultims-partits-resum" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;"></div>
 	
- <!-- ⭐ PASTILLES: Pròxim Partit + Anàlisi Rival -->
-<div id="pastilles-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-    
+ <!-- ⭐ PASTILLA: Pròxim Partit -->
+<div id="pastilles-grid" style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+
     <!-- Pastilla 1: Pròxim Partit -->
     <div class="card" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -3733,15 +3713,7 @@ body.theme-juvenil .es-card { display: none; }
         </div>
     </div>
     
-    <!-- Pastilla 2: Anàlisi del Rival -->
-    <div id="rivals-map-pill" class="card" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 0; overflow: hidden;">
-        <div style="padding: 15px 15px 0 15px;">
-            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 600;">📊 ANÀLISI DEL RIVAL</div>
-        </div>
-	
-        <div id="rivals-map" style="width: 100%;"></div>
-    </div>
-    
+
 </div>
 
 <!-- 🇪🇸 CAMPIONAT D'ESPANYA CADET · CAMÍ DEL TERRASSA (auto des de Leverade) -->
@@ -4435,51 +4407,6 @@ body.theme-juvenil .es-card { display: none; }
 	
 </div>
 <!-- 📊 PESTANYA ESTUDI RIVALS -->
-<div id="rivalsTab" class="hidden">
-    <div class="card" style="margin-bottom: 20px;">
-        <h2 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-            📊 Estudi de Rivals
-            <span style="font-size: 12px; background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-weight: normal;">
-                Temporada 25/26
-            </span>
-        </h2>
-        <p style="color: #64748b; font-size: 14px;">Anàlisi complet dels rivals de la lliga</p>
-    </div>
-
-    <!-- Secció 1: Visió General -->
-    <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">🏆 Visió General de la Lliga</h3>
-        <div id="rivals-overview" style="overflow-x: auto;">
-            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
-        </div>
-    </div>
-
- 
-    <!-- Secció 3: Comparativa -->
-    <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">📈 Comparativa d'Equips</h3>
-        <div id="teams-comparison">
-            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
-        </div>
-    </div>
-
-    <!-- Secció 4: Anàlisi Detallat per Rival -->
-    <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">🔍 Anàlisi Detallat per Rival - Click per detall</h3>
-        <div id="rivals-detailed">
-            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
-        </div>
-    </div>
-	
-	   <!-- Secció 5: Top Golejadors -->
-    <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 15px; font-size: 16px;">⭐ Top Golejadors de la Lliga (Dades de la federació) Nota: Poden no coincidir amb les dades de l'aplicació</h3>
-        <div id="league-top-scorers">
-            <div style="text-align: center; color: #64748b; padding: 20px;">Carregant dades...</div>
-        </div>
-    </div>
-	
-</div>
 <!-- TAB: WEB FEDERACIÓ -->
 <div id="federacionTab" class="hidden">
     <div class="card">
@@ -6087,9 +6014,13 @@ function listenForLiveMatch(team = 'juvenil') {
 }
 // ✅ Mostrar banner de l'altre equip
 function showOtherTeamBanner(otherTeam, isFinished) {
+    // App cadet-only: no mostrem mai el banner de l'altre equip (juvenil).
+    hideOtherTeamBanner();
+    return;
+    // eslint-disable-next-line no-unreachable
     const banner = document.getElementById('otherTeamLiveBanner');
     const text = document.getElementById('otherTeamText');
-    
+
     if (!banner || !text) return;
     
     const teamEmoji = otherTeam === 'cadet' ? '⬛' : '🟦';
@@ -7477,10 +7408,6 @@ function showTab(tabName) {
         setTimeout(() => {
             initializePlayerSelector();
         }, 100);
-        
-    } else if (tabName === 'rivalsTab') {
-        document.getElementById('rivalsTab')?.classList.remove('hidden');
-        loadRivalsStudy();
         
     } else if (tabName === 'actawpTab') {
         document.getElementById('actawpTab')?.classList.remove('hidden');
@@ -15577,7 +15504,9 @@ function getQuarterEndTime(quarterStartTimes, quarterRealEndTimes, quarter) {
     return quarterStartTimes[quarter] + (QUARTER_DURATION * 1000);
 }
 // ✅ GESTIÓ DE SELECCIÓ D'EQUIP
-let selectedTeam = localStorage.getItem('selectedTeam') || null;
+// App cadet-only: sempre forcem l'equip Cadet (sense modal de selecció ni canvi d'equip).
+let selectedTeam = 'cadet';
+localStorage.setItem('selectedTeam', 'cadet');
 
 function selectTeam(team) {
     console.log('🔍 Team seleccionat:', team);
