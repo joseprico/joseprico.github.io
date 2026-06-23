@@ -3440,6 +3440,23 @@ body.theme-juvenil .es-card { display: none; }
 .es-card .ct-link:hover { background: #b91c1c; }
 .es-loading { padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; font-style: italic; }
 .es-path-host { margin-top: 6px; }
+.es-fullbracket-btn {
+  display: block;
+  margin: 16px auto 4px;
+  max-width: 480px;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+  text-align: center;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(220,38,38,0.40);
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.es-fullbracket-btn:hover { transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 7px 22px rgba(220,38,38,0.55); }
 .es-next {
   background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
   border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; color: #fff;
@@ -3667,7 +3684,6 @@ body.theme-juvenil .es-card { display: none; }
   <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
   <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
   <button class="tab" onclick="showTab('individual')">👤 Individual</button>
-  <button class="tab" onclick="showTab('actawpTab')">🌐 FCN ACTAWP</button> 
 </div>
         </div>
 
@@ -3678,44 +3694,9 @@ body.theme-juvenil .es-card { display: none; }
             </div>
 
             <div id="matchesView" class="hidden">
-			          <!-- 📅 ÚLTIMA ACTUALITZACIÓ ACTAWP -->
-    <div style="margin-bottom: 15px; padding: 12px 16px; background: rgba(34, 211, 238, 0.08); border-radius: 8px; border-left: 3px solid #22d3ee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 18px;">📡</span>
-            <div>
-                <div style="color: #bae6fd; font-size: 11px; font-weight: 600; opacity: 0.8;">DADES FCN ACTAWP</div>
-                <div style="color: #93c5fd; font-size: 13px; margin-top: 2px;">
-                    Última actualització: <span id="lastUpdateTimeHome" style="font-weight: bold; color: #22d3ee;">Carregant...</span>
-                </div>
-            </div>
-        </div>
-        <span id="recentUpdateBadgeHome" style="display: none; background: #10b981; color: white; padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold;">
-            🟢 Actualitzat
-        </span>
-    </div>
 	<!-- 🏆 ÚLTIMS PARTITS JUGATS -->
 <div id="ultims-partits-resum" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;"></div>
 	
- <!-- ⭐ PASTILLA: Pròxim Partit -->
-<div id="pastilles-grid" style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
-
-    <!-- Pastilla 1: Pròxim Partit -->
-    <div class="card" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 14px; opacity: 0.9; font-weight: 600;">⚡ PRÒXIM PARTIT</h3>
-            <button class="btn" onclick="showTab('actawpTab')" style="background: rgba(255,255,255,0.2); padding: 4px 10px; font-size: 11px; color: white;">
-                Veure tot →
-            </button>
-        </div>
-		
-        <div id="next-match-pill" style="text-align: center;">
-            <div style="color: #bfdbfe; font-size: 12px;">Carregant...</div>
-        </div>
-    </div>
-    
-
-</div>
-
 <!-- 🇪🇸 CAMPIONAT D'ESPANYA CADET · CAMÍ DEL TERRASSA (auto des de Leverade) -->
 <div class="card ct-bracket-card es-card" id="esEspanyaCard">
     <div class="ct-head">
@@ -3727,20 +3708,7 @@ body.theme-juvenil .es-card { display: none; }
     <div id="esTerrassaPath" class="es-path-host">
         <div class="es-loading">Carregant el recorregut del Terrassa…</div>
     </div>
-</div>
-
-<!-- 🏆 CAMPIONAT DE CATALUNYA · QUADRE (dinàmic via Firebase) -->
-<div class="card ct-bracket-card">
-    <div class="ct-head">
-        <h3>🏆 Camí del Terrassa <span class="ct-sub">Campionat de Catalunya · Fase final 25-26</span></h3>
-        <div class="ct-head-actions">
-            <a href="campionat-catalunya-cadet.html" class="ct-link ct-link-cadet">Quadre complet →</a>
-            <a href="campionat-catalunya-juvenil.html" class="ct-link ct-link-juvenil">Quadre complet →</a>
-        </div>
-    </div>
-    <div id="ctVenue" class="ct-venue"></div>
-    <div id="ctBracketCadet" class="ct-bracket-host ct-cadet"></div>
-    <div id="ctBracketJuvenil" class="ct-bracket-host ct-juvenil"></div>
+    <a href="campionat-espanya-cadet.html" class="es-fullbracket-btn">📋 Veure el quadre complet i tots els resultats →</a>
 </div>
 
 <!-- ANTIC BRACKET ESTÀTIC (eliminat) -->
@@ -4447,141 +4415,6 @@ body.theme-juvenil .es-card { display: none; }
     </div>
 </div>
   
-<!-- 2. AFEGIR AQUEST DIV DESPRÉS DE LES ALTRES TABS -->
-<div id="actawpTab" class="hidden">
-    <div class="card">
-        <h2 class="section-title">📊 Dades Oficials ACTAWP</h2>
-        <p style="color: #bae6fd; margin-bottom: 10px;">
-    Estadístiques i calendari oficial de la Federació Catalana de Natació
-</p>
-<p style="color: #93c5fd; font-size: 14px; margin-bottom: 20px; font-style: italic;">
-    🔄 Dades extretes directament de la Federació Catalana de Natació • Actualitzades automàticament
-</p>
-       <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px; flex-wrap: wrap;">
-    <p style="color: #93c5fd; font-size: 13px; margin: 0;">
-        📅 Última actualització: <span id="lastUpdateTime" style="font-weight: bold; color: #22d3ee;">Carregant...</span>
-    </p>
-    <span id="recentUpdateBadge" style="display: none; background: #ef4444; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; animation: pulse 2s infinite;">
-        🔴 Actualitzat recentment
-    </span>
-</div> 
-        <div id="actawpLoading" style="text-align: center; padding: 40px;">
-            <div style="font-size: 48px;">⏳</div>
-            <p>Carregant dades d'ACTAWP...</p>
-        </div>
-        
-        <div id="actawpContent" style="display: none;">
-            
-            
-            <!-- PRÒXIMS PARTITS -->
-            <div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-			   <h3 class="section-title">📅 Pròxims Partits</h3>
-                <div id="actawp-upcoming-matches">
-                    <p style="color: #bae6fd;">No hi ha pròxims partits programats</p>
-                </div>
-            </div>
-            
-            <!-- ÚLTIMS RESULTATS -->
-            <div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-                <h3 class="section-title">🏆 Últims Resultats</h3>
-                <div id="actawp-last-results">
-                    <p style="color: #bae6fd;">No hi ha resultats recents</p>
-                </div>
-            </div>
-           <!-- AFEGIR DESPRÉS DELS "ÚLTIMS RESULTATS" -->
-
-<!-- CLASSIFICACIÓ FASE 2 -->
-<div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-    <h3 class="section-title">🏆 Classificació Fase 3</h3>
-    <p style="color: #bae6fd; margin-bottom: 15px; font-size: 14px;">
-        Classificació oficial de la tercera fase de la lliga
-    </p>
-    <div id="actawp-ranking-container">
-        <p style="text-align: center; color: #bae6fd;">Carregant classificació...</p>
-    </div>
-</div>
-<!-- ESTADÍSTIQUES DE L'EQUIP -->
-            <div class="card" style="background: rgba(0,0,0,0.3);">
-                <h3 class="section-title">📈 Estadístiques de la Federació</h3>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Punts</div>
-                        <div class="stat-value" id="actawp-points">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Partits Jugats</div>
-                        <div class="stat-value" id="actawp-matches-played">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Victories</div>
-                        <div class="stat-value" style="color: #4ade80;" id="actawp-wins">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Empats</div>
-                        <div class="stat-value" style="color: #fbbf24;" id="actawp-draws">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Derrotes</div>
-                        <div class="stat-value" style="color: #ef4444;" id="actawp-losses">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Gols a Favor</div>
-                        <div class="stat-value" style="color: #22d3ee;" id="actawp-goals-for">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Gols en Contra</div>
-                        <div class="stat-value" style="color: #fb923c;" id="actawp-goals-against">-</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Diferència</div>
-                        <div class="stat-value" id="actawp-goal-diff">-</div>
-                    </div>
-                </div>
-            </div>
-            <!-- COMPARATIVA AMB LES NOSTRES DADES -->
-            <div class="card" style="background: rgba(0,0,0,0.3); margin-top: 20px;">
-                <h3 class="section-title">🔍 Comparativa de Jugadors</h3>
-                <p style="color: #bae6fd; margin-bottom: 15px; font-size: 14px;">
-                    Comparació entre les estadístiques locals i les oficials d'ACTAWP
-                </p>
-                <div id="actawp-comparison-table"></div>
-            </div>
-        </div>
-    </div>
-<div class="card" style="background: rgba(0,0,0,0.3); margin-top: 30px;">
-    <h3 class="section-title">🌐 Enllaços Directes ACTAWP</h3>
-    
-    <!-- Cadet -->
-    <div style="margin-bottom: 30px; padding: 20px; background: rgba(34, 211, 238, 0.1); border-radius: 12px; border: 2px solid rgba(34, 211, 238, 0.3);">
-        <h3 style="color: #22d3ee; font-size: 22px; margin-bottom: 15px;">
-            🏊 Cadet - Didac Cobacho
-        </h3>
-        <p style="color: #bae6fd; margin-bottom: 15px; font-size: 14px;">
-            Consulta el calendari, resultats, classificació i estadístiques de l'equip Cadet.
-        </p>
-        <a href="https://actawp.natacio.cat/ca/team/15621224" target="_blank" rel="noopener noreferrer">
-            <button class="btn" style="background: #06b6d4; padding: 15px 30px; font-size: 16px; width: 100%; max-width: 400px;">
-                🌐 Obrir Web Cadet
-            </button>
-        </a>
-    </div>
-    
-    <!-- Juvenil -->
-    <div style="padding: 20px; background: rgba(34, 211, 238, 0.1); border-radius: 12px; border: 2px solid rgba(34, 211, 238, 0.3);">
-        <h3 style="color: #22d3ee; font-size: 22px; margin-bottom: 15px;">
-            🏊 Juvenil - Jordi Busquets
-        </h3>
-        <p style="color: #bae6fd; margin-bottom: 15px; font-size: 14px;">
-            Consulta el calendari, resultats, classificació i estadístiques de l'equip Juvenil.
-        </p>
-        <a href="https://actawp.natacio.cat/es/team/15621223" target="_blank" rel="noopener noreferrer">
-            <button class="btn" style="background: #06b6d4; padding: 15px 30px; font-size: 16px; width: 100%; max-width: 400px;">
-                🌐 Obrir Web Juvenil
-            </button>
-        </a>
-    </div>
-</div>
-</div>     
 <!-- ============================================
      🔴 VISTA EN DIRECTE - AFEGIR ARA!
      ============================================ -->
@@ -7407,15 +7240,6 @@ function showTab(tabName) {
         document.getElementById('individualTab')?.classList.remove('hidden');
         setTimeout(() => {
             initializePlayerSelector();
-        }, 100);
-        
-    } else if (tabName === 'actawpTab') {
-        document.getElementById('actawpTab')?.classList.remove('hidden');
-        setTimeout(() => {
-            if (actawpData) {
-                displayActawpData();
-				loadUltimsResultatsMini();
-            }
         }, 100);
     }
 }
@@ -15537,7 +15361,7 @@ function selectTeam(team) {
 
 async function changeTeam() {
     // Actualitzar si estem al tab ACTAWP
-    if (!document.getElementById('actawpTab').classList.contains('hidden')) {
+    if (document.getElementById('actawpTab') && !document.getElementById('actawpTab').classList.contains('hidden')) {
         await checkLastUpdate();
     }
     
