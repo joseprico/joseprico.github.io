@@ -346,53 +346,60 @@ function buildBracket(){
   const pw = id => winnerCode(id, M[id].a, M[id].b);
   const pl = id => loserCode(id, M[id].a, M[id].b);
 
+  // ── Etiquetes de procedència (es mostren mentre l'equip encara no està determinat) ──
+  const ord  = n => n===1 ? '1r' : n===2 ? '2n' : n===3 ? '3r' : n+'è';
+  const gpos = (grp,pos) => ord(pos)+' Grup '+grp;
+  const prevLbl = id => (PREVIAS.find(p => p.id === id) || {}).lbl || id;
+  const gw = id => 'Guanyador ' + ((M[id] && M[id].lbl) || id);   // guanyador d'una eliminatòria ja construïda
+  const gl = id => 'Perdedor '  + ((M[id] && M[id].lbl) || id);
+
   // Vuitens (places 1-16) — divendres tarda
-  M.P1 = {a:pw('p1'), b:grpPos('D',2), lbl:'Vuitè 1', dt:'2026-07-03 20:40'};
-  M.P2 = {a:pw('p2'), b:grpPos('C',2), lbl:'Vuitè 2', dt:'2026-07-03 20:40'};
-  M.P3 = {a:pw('p3'), b:grpPos('B',2), lbl:'Vuitè 3', dt:'2026-07-03 18:20'};
-  M.P4 = {a:pw('p4'), b:grpPos('A',2), lbl:'Vuitè 4', dt:'2026-07-03 18:20'};
-  M.P5 = {a:pl('p1'), b:grpPos('D',1), lbl:'Vuitè 5', dt:'2026-07-03 19:30'};
-  M.P6 = {a:pl('p2'), b:grpPos('C',1), lbl:'Vuitè 6', dt:'2026-07-03 19:30'};
-  M.P7 = {a:pl('p3'), b:grpPos('B',1), lbl:'Vuitè 7', dt:'2026-07-03 17:10'};
-  M.P8 = {a:pl('p4'), b:grpPos('A',1), lbl:'Vuitè 8', dt:'2026-07-03 17:10'};
+  M.P1 = {a:pw('p1'), b:grpPos('D',2), aFrom:'Guanyador '+prevLbl('p1'), bFrom:gpos('D',2), lbl:'Vuitè 1', dt:'2026-07-03 20:40'};
+  M.P2 = {a:pw('p2'), b:grpPos('C',2), aFrom:'Guanyador '+prevLbl('p2'), bFrom:gpos('C',2), lbl:'Vuitè 2', dt:'2026-07-03 20:40'};
+  M.P3 = {a:pw('p3'), b:grpPos('B',2), aFrom:'Guanyador '+prevLbl('p3'), bFrom:gpos('B',2), lbl:'Vuitè 3', dt:'2026-07-03 18:20'};
+  M.P4 = {a:pw('p4'), b:grpPos('A',2), aFrom:'Guanyador '+prevLbl('p4'), bFrom:gpos('A',2), lbl:'Vuitè 4', dt:'2026-07-03 18:20'};
+  M.P5 = {a:pl('p1'), b:grpPos('D',1), aFrom:'Perdedor '+prevLbl('p1'),  bFrom:gpos('D',1), lbl:'Vuitè 5', dt:'2026-07-03 19:30'};
+  M.P6 = {a:pl('p2'), b:grpPos('C',1), aFrom:'Perdedor '+prevLbl('p2'),  bFrom:gpos('C',1), lbl:'Vuitè 6', dt:'2026-07-03 19:30'};
+  M.P7 = {a:pl('p3'), b:grpPos('B',1), aFrom:'Perdedor '+prevLbl('p3'),  bFrom:gpos('B',1), lbl:'Vuitè 7', dt:'2026-07-03 17:10'};
+  M.P8 = {a:pl('p4'), b:grpPos('A',1), aFrom:'Perdedor '+prevLbl('p4'),  bFrom:gpos('A',1), lbl:'Vuitè 8', dt:'2026-07-03 17:10'};
   // Places 17-20 (3rs de grup)
-  M.P9  = {a:grpPos('A',3), b:grpPos('D',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
-  M.P10 = {a:grpPos('B',3), b:grpPos('C',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
+  M.P9  = {a:grpPos('A',3), b:grpPos('D',3), aFrom:gpos('A',3), bFrom:gpos('D',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
+  M.P10 = {a:grpPos('B',3), b:grpPos('C',3), aFrom:gpos('B',3), bFrom:gpos('C',3), lbl:'Places 17-20', dt:'2026-07-03 16:00'};
 
   const w = id => winnerCode(id, M[id].a, M[id].b);
   const l = id => loserCode(id, M[id].a, M[id].b);
 
   // Quarts — dissabte 4
-  M.C5 = {a:w('P1'), b:w('P8'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
-  M.C6 = {a:w('P2'), b:w('P7'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
-  M.C7 = {a:w('P3'), b:w('P6'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
-  M.C8 = {a:w('P4'), b:w('P5'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
-  M.C1 = {a:l('P1'), b:l('P8'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
-  M.C2 = {a:l('P2'), b:l('P7'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
-  M.C3 = {a:l('P3'), b:l('P6'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
-  M.C4 = {a:l('P4'), b:l('P5'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
+  M.C5 = {a:w('P1'), b:w('P8'), aFrom:gw('P1'), bFrom:gw('P8'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
+  M.C6 = {a:w('P2'), b:w('P7'), aFrom:gw('P2'), bFrom:gw('P7'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
+  M.C7 = {a:w('P3'), b:w('P6'), aFrom:gw('P3'), bFrom:gw('P6'), lbl:'Quart · 1-8', dt:'2026-07-04 13:40'};
+  M.C8 = {a:w('P4'), b:w('P5'), aFrom:gw('P4'), bFrom:gw('P5'), lbl:'Quart · 1-8', dt:'2026-07-04 12:30'};
+  M.C1 = {a:l('P1'), b:l('P8'), aFrom:gl('P1'), bFrom:gl('P8'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
+  M.C2 = {a:l('P2'), b:l('P7'), aFrom:gl('P2'), bFrom:gl('P7'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
+  M.C3 = {a:l('P3'), b:l('P6'), aFrom:gl('P3'), bFrom:gl('P6'), lbl:'Quart · 9-16', dt:'2026-07-04 10:10'};
+  M.C4 = {a:l('P4'), b:l('P5'), aFrom:gl('P4'), bFrom:gl('P5'), lbl:'Quart · 9-16', dt:'2026-07-04 09:00'};
 
   // Semifinals — dissabte 4
-  M.S1 = {a:w('C5'), b:w('C8'), lbl:'Semi · 1-4',  dt:'2026-07-04 19:40'};
-  M.S2 = {a:w('C6'), b:w('C7'), lbl:'Semi · 1-4',  dt:'2026-07-04 20:50'};
-  M.S3 = {a:l('C5'), b:l('C8'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
-  M.S4 = {a:l('C6'), b:l('C7'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
-  M.S5 = {a:w('C2'), b:w('C3'), lbl:'Semi · 9-12', dt:'2026-07-04 16:10'};
-  M.S6 = {a:w('C1'), b:w('C4'), lbl:'Semi · 9-12', dt:'2026-07-04 15:00'};
-  M.S7 = {a:l('C2'), b:l('C3'), lbl:'Semi · 13-16',dt:'2026-07-04 16:10'};
-  M.S8 = {a:l('C1'), b:l('C4'), lbl:'Semi · 13-16',dt:'2026-07-04 15:00'};
+  M.S1 = {a:w('C5'), b:w('C8'), aFrom:gw('C5'), bFrom:gw('C8'), lbl:'Semi · 1-4',  dt:'2026-07-04 19:40'};
+  M.S2 = {a:w('C6'), b:w('C7'), aFrom:gw('C6'), bFrom:gw('C7'), lbl:'Semi · 1-4',  dt:'2026-07-04 20:50'};
+  M.S3 = {a:l('C5'), b:l('C8'), aFrom:gl('C5'), bFrom:gl('C8'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
+  M.S4 = {a:l('C6'), b:l('C7'), aFrom:gl('C6'), bFrom:gl('C7'), lbl:'Semi · 5-8',  dt:'2026-07-04 18:30'};
+  M.S5 = {a:w('C2'), b:w('C3'), aFrom:gw('C2'), bFrom:gw('C3'), lbl:'Semi · 9-12', dt:'2026-07-04 16:10'};
+  M.S6 = {a:w('C1'), b:w('C4'), aFrom:gw('C1'), bFrom:gw('C4'), lbl:'Semi · 9-12', dt:'2026-07-04 15:00'};
+  M.S7 = {a:l('C2'), b:l('C3'), aFrom:gl('C2'), bFrom:gl('C3'), lbl:'Semi · 13-16',dt:'2026-07-04 16:10'};
+  M.S8 = {a:l('C1'), b:l('C4'), aFrom:gl('C1'), bFrom:gl('C4'), lbl:'Semi · 13-16',dt:'2026-07-04 15:00'};
 
   // Finals — diumenge 5
-  M.F1  = {a:w('S1'), b:w('S2'), lbl:'FINAL · 1-2',  dt:'2026-07-05 14:00', final:'or'};
-  M.F3  = {a:l('S1'), b:l('S2'), lbl:'Places 3-4',   dt:'2026-07-05 12:50', final:'bronze'};
-  M.F5  = {a:w('S3'), b:w('S4'), lbl:'Places 5-6',   dt:'2026-07-05 10:50'};
-  M.F7  = {a:l('S3'), b:l('S4'), lbl:'Places 7-8',   dt:'2026-07-05 10:50'};
-  M.F9  = {a:w('S5'), b:w('S6'), lbl:'Places 9-10',  dt:'2026-07-05 09:40'};
-  M.F11 = {a:l('S5'), b:l('S6'), lbl:'Places 11-12', dt:'2026-07-05 09:40'};
-  M.F13 = {a:w('S7'), b:w('S8'), lbl:'Places 13-14', dt:'2026-07-05 08:30'};
-  M.F15 = {a:l('S7'), b:l('S8'), lbl:'Places 15-16', dt:'2026-07-05 08:30'};
-  M.F17 = {a:w('P9'), b:w('P10'),lbl:'Places 17-18', dt:'2026-07-04 17:30'};
-  M.F19 = {a:l('P9'), b:l('P10'),lbl:'Places 19-20', dt:'2026-07-04 18:30'};
+  M.F1  = {a:w('S1'), b:w('S2'), aFrom:gw('S1'), bFrom:gw('S2'), lbl:'FINAL · 1-2',  dt:'2026-07-05 14:00', final:'or'};
+  M.F3  = {a:l('S1'), b:l('S2'), aFrom:gl('S1'), bFrom:gl('S2'), lbl:'Places 3-4',   dt:'2026-07-05 12:50', final:'bronze'};
+  M.F5  = {a:w('S3'), b:w('S4'), aFrom:gw('S3'), bFrom:gw('S4'), lbl:'Places 5-6',   dt:'2026-07-05 10:50'};
+  M.F7  = {a:l('S3'), b:l('S4'), aFrom:gl('S3'), bFrom:gl('S4'), lbl:'Places 7-8',   dt:'2026-07-05 10:50'};
+  M.F9  = {a:w('S5'), b:w('S6'), aFrom:gw('S5'), bFrom:gw('S6'), lbl:'Places 9-10',  dt:'2026-07-05 09:40'};
+  M.F11 = {a:l('S5'), b:l('S6'), aFrom:gl('S5'), bFrom:gl('S6'), lbl:'Places 11-12', dt:'2026-07-05 09:40'};
+  M.F13 = {a:w('S7'), b:w('S8'), aFrom:gw('S7'), bFrom:gw('S8'), lbl:'Places 13-14', dt:'2026-07-05 08:30'};
+  M.F15 = {a:l('S7'), b:l('S8'), aFrom:gl('S7'), bFrom:gl('S8'), lbl:'Places 15-16', dt:'2026-07-05 08:30'};
+  M.F17 = {a:w('P9'), b:w('P10'),aFrom:gw('P9'), bFrom:gw('P10'),lbl:'Places 17-18', dt:'2026-07-04 17:30'};
+  M.F19 = {a:l('P9'), b:l('P10'),aFrom:gl('P9'), bFrom:gl('P10'),lbl:'Places 19-20', dt:'2026-07-04 18:30'};
 
   return M;
 }
@@ -427,13 +434,13 @@ function badgeHtml(code){
   if (t.logo) return '<span class="badge"><img src="'+t.logo+'" alt="'+t.short+'"></span>';
   return '<span class="badge">'+t.short.slice(0,3).toUpperCase()+'</span>';
 }
-function teamRow(code, score, isWin, isLose){
+function teamRow(code, score, isWin, isLose, fromLbl){
   const cls = ['team'];
   if (!code) cls.push('tbd');
   if (code && T[code].cnt) cls.push('cnt');
   if (isWin) cls.push('winner');
   if (isLose) cls.push('loser');
-  const nm = code ? T[code].short : 'Per determinar';
+  const nm = code ? T[code].short : (fromLbl || 'Per determinar');
   return '<div class="'+cls.join(' ')+'">'+badgeHtml(code)+'<span class="nm">'+nm+'</span><span class="sc">'+(score!=null?score:'–')+'</span></div>';
 }
 function matchBox(id, m){
@@ -450,8 +457,8 @@ function matchBox(id, m){
   const foot = when ? '<div class="match-foot">📅 '+fmtWhen(when)+campo+(r&&r.manual?' · ✎ manual':'')+'</div>' : '';
   return '<div class="'+cls.join(' ')+'">'
     + '<div class="match-h"><b>'+(m.lbl||id)+'</b><span>'+id+'</span></div>'
-    + teamRow(m.a, has?r.s1:null, w1, w2)
-    + teamRow(m.b, has?r.s2:null, w2, w1)
+    + teamRow(m.a, has?r.s1:null, w1, w2, m.aFrom)
+    + teamRow(m.b, has?r.s2:null, w2, w1, m.bFrom)
     + foot + '</div>';
 }
 

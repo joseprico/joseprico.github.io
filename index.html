@@ -3480,6 +3480,37 @@ body.theme-juvenil .es-card { display: none; }
   .ct-bracket-host { grid-template-columns: 1fr; gap: 12px; }
   .ct-col { gap: 10px; }
 }
+
+/* ───── Pestanya Campionat d'Espanya ───── */
+.tab.tab-espanya { background: linear-gradient(135deg, #dc2626, #991b1b); color: #fff; border-color: #dc2626; }
+.tab.tab-espanya.active { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 14px rgba(220,38,38,0.45); }
+.es-stats-loading { text-align: center; color: #94a3b8; font-style: italic; }
+.es-hero {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+  border-radius: 14px; padding: 20px; margin-bottom: 18px; color: #fff;
+  box-shadow: 0 6px 22px rgba(220,38,38,0.30);
+}
+.es-hero h2 { margin: 0 0 4px; font-size: 20px; }
+.es-hero .es-hero-sub { font-size: 13px; opacity: 0.92; }
+.es-results-list { display: flex; flex-direction: column; gap: 8px; }
+.es-result-row {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px;
+  background: rgba(0,0,0,0.18); border-radius: 10px; padding: 10px 14px;
+  border-left: 4px solid #475569;
+}
+.es-result-row.win { border-left-color: #22c55e; }
+.es-result-row.loss { border-left-color: #ef4444; }
+.es-result-row.draw { border-left-color: #fbbf24; }
+.es-result-row .es-r-date { font-size: 11px; color: #94a3b8; min-width: 70px; }
+.es-result-row .es-r-rival { font-weight: 600; color: #f1f5f9; }
+.es-result-row .es-r-score { font-weight: 800; font-size: 16px; color: #fde047; white-space: nowrap; }
+.es-result-row .es-r-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.es-result-row.win .es-r-badge { background: rgba(34,197,94,0.2); color: #4ade80; }
+.es-result-row.loss .es-r-badge { background: rgba(239,68,68,0.2); color: #f87171; }
+.es-result-row.draw .es-r-badge { background: rgba(251,191,36,0.2); color: #fbbf24; }
+.es-empty-big { text-align: center; padding: 30px 16px; }
+.es-empty-big .es-empty-icon { font-size: 46px; margin-bottom: 12px; }
+.es-empty-big p { color: #bae6fd; font-size: 14px; line-height: 1.7; }
     </style>
  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H8JDTNNK0Z"></script>
 <script>
@@ -3684,6 +3715,7 @@ body.theme-juvenil .es-card { display: none; }
   <button class="tab" onclick="showTab('titular')">👥 Titularitat</button>
   <button class="tab" onclick="showTab('tiempo')">⏱️ Temps de Joc</button>
   <button class="tab" onclick="showTab('individual')">👤 Individual</button>
+  <button class="tab tab-espanya" onclick="showTab('espanya')">🏆 Camp. Espanya</button>
 </div>
         </div>
 
@@ -4780,6 +4812,11 @@ body.theme-juvenil .es-card { display: none; }
     </div>
 	
 </div>
+
+        <!-- TAB: CAMPIONAT D'ESPANYA -->
+        <div id="espanyaTab" class="hidden">
+            <div class="es-stats-loading card">Carregant estadístiques del Campionat d'Espanya…</div>
+        </div>
 
         <!-- TAB: TITULARIDAD -->
 <!-- TAB: TITULARIDAD -->
@@ -7191,6 +7228,7 @@ function showTab(tabName) {
     document.getElementById('titularTab')?.classList.add('hidden');
     document.getElementById('tiempoTab')?.classList.add('hidden');
     document.getElementById('individualTab')?.classList.add('hidden');
+    document.getElementById('espanyaTab')?.classList.add('hidden');
     document.getElementById('federacionTab')?.classList.add('hidden');
 	document.getElementById('rivalsTab')?.classList.add('hidden');
     document.getElementById('actawpTab')?.classList.add('hidden');
@@ -7241,8 +7279,368 @@ function showTab(tabName) {
         setTimeout(() => {
             initializePlayerSelector();
         }, 100);
+
+    } else if (tabName === 'espanya') {
+        document.getElementById('espanyaTab')?.classList.remove('hidden');
+        setTimeout(() => {
+            displayEspanyaStats();
+        }, 100);
     }
 }
+// ═══════════════════════ CAMPIONAT D'ESPANYA · estadístiques filtrades ═══════════════════════
+// Considerem partits del Campionat d'Espanya els penjats a partir de l'1-7-2026.
+const ES_CUTOFF_DATE = new Date('2026-07-01T00:00:00');
+
+function getEspanyaMatches() {
+    return (allMatches || []).filter(m => {
+        const d = new Date(m.data);
+        return !isNaN(d.getTime()) && d >= ES_CUTOFF_DATE;
+    }).sort((a, b) => new Date(a.data) - new Date(b.data)); // cronològic
+}
+
+function displayEspanyaStats() {
+    const host = document.getElementById('espanyaTab');
+    if (!host) return;
+
+    const matches = getEspanyaMatches();
+
+    // ── Estat buit ──
+    if (matches.length === 0) {
+        host.innerHTML = `
+            <div class="es-hero">
+                <h2>🏆 Campionat d'Espanya Cadet 2026</h2>
+                <div class="es-hero-sub">Torremolinos · 2-5 de juliol</div>
+            </div>
+            <div class="card es-empty-big">
+                <div class="es-empty-icon">📊</div>
+                <p>
+                    Encara no hi ha partits del Campionat d'Espanya.<br>
+                    Les estadístiques apareixeran aquí automàticament a partir dels partits
+                    penjats des de l'<strong>1 de juliol de 2026</strong>.
+                </p>
+                <a href="campionat-espanya-cadet.html" class="es-fullbracket-btn">
+                    📋 Veure el quadre complet i tots els resultats →
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    // ── Resum d'equip ──
+    const wins   = matches.filter(m => m.scoreCNT > m.scoreRival).length;
+    const losses = matches.filter(m => m.scoreCNT < m.scoreRival).length;
+    const draws  = matches.filter(m => m.scoreCNT === m.scoreRival).length;
+    const gf = matches.reduce((s, m) => s + (m.scoreCNT || 0), 0);
+    const gc = matches.reduce((s, m) => s + (m.scoreRival || 0), 0);
+    const avgGf = (gf / matches.length).toFixed(1);
+    const avgGc = (gc / matches.length).toFixed(1);
+
+    // ── Agregació per jugador ──
+    const ps = {};
+    const appearances = {};
+    matches.forEach((match, idx) => {
+        (match.jugadors || []).forEach(j => {
+            const name = (j.nom || '').trim();
+            if (!name) return;
+            if (!ps[name]) {
+                ps[name] = {
+                    num: j.numero, name,
+                    gols: 0, exclusions: 0, penaltyMissed: 0, parades: 0,
+                    assistencies: 0, infraccions2m: 0, contrafaltes: 0,
+                    robatoris: 0, perdues: 0, xutsFallats: 0, blocks: 0,
+                    faltesRebudes: 0, golsRebuts: 0, partidos: 0,
+                    goalTypes: { 'h+': 0, penalty: 0, contra: 0, boya: 0, normal: 0 },
+                    exclusionTypes: { normal: 0, penalty: 0 },
+                    paradeTypes: { corner: 0, rebuig: 0, atrapa: 0, penal: 0 }
+                };
+                appearances[name] = new Set();
+            }
+            const e = j.estadistiques || {};
+            const p = ps[name];
+            p.num = j.numero;
+            appearances[name].add(idx);
+            p.gols += e.gols || 0;
+            p.exclusions += e.exclusions || 0;
+            p.penaltyMissed += e.penaltyMissed || 0;
+            p.parades += e.parades || 0;
+            p.assistencies += e.assistencies || 0;
+            p.infraccions2m += e.infraccions2m || 0;
+            p.contrafaltes += e.contrafaltes || 0;
+            p.robatoris += e.robatoris || 0;
+            p.perdues += e.perdues || 0;
+            p.xutsFallats += e.xutsFallats || 0;
+            p.blocks += (e.blocks || e.blocatges || 0);
+            p.faltesRebudes += e.faltesRebudes || 0;
+            p.golsRebuts += e.golsRebuts || 0;
+            if (e.goalTypes) Object.keys(p.goalTypes).forEach(t => p.goalTypes[t] += e.goalTypes[t] || 0);
+            if (e.exclusionTypes) Object.keys(p.exclusionTypes).forEach(t => p.exclusionTypes[t] += e.exclusionTypes[t] || 0);
+            if (e.paradeTypes) Object.keys(p.paradeTypes).forEach(t => p.paradeTypes[t] += e.paradeTypes[t] || 0);
+        });
+    });
+    Object.keys(ps).forEach(n => ps[n].partidos = appearances[n].size);
+
+    // ── Temps de joc (si hi ha dades) ──
+    const timeByPlayer = {};
+    let hasTimeData = false;
+    matches.forEach(match => {
+        if (match.playerWaterChanges && match.playerWaterChanges.length > 0 && match.quarterStartTimes
+            && typeof calculateMatchPlayingTimes === 'function') {
+            hasTimeData = true;
+            const pt = calculateMatchPlayingTimes(match);
+            Object.values(pt).forEach(t => {
+                const key = t.name ? t.name.trim() : ('#' + t.num);
+                timeByPlayer[key] = (timeByPlayer[key] || 0) + (t.totalTime || 0);
+            });
+        }
+    });
+
+    // ── Valoració MVP per jugador ──
+    const players = Object.values(ps).map(p => {
+        const valor = (typeof calculatePlayerValue === 'function') ? calculatePlayerValue(p) : 0;
+        const temps = timeByPlayer[p.name] || 0;
+        return { ...p, valor, valorMitja: p.partidos > 0 ? valor / p.partidos : 0, temps };
+    });
+
+    const fmtTime = (typeof formatPlayingTime === 'function')
+        ? formatPlayingTime
+        : (s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`);
+
+    // ── Top golejadors / MVP ──
+    const topScorers = players.filter(p => p.gols > 0).sort((a, b) => b.gols - a.gols).slice(0, 8);
+    const mvp = [...players].sort((a, b) => b.valor - a.valor).slice(0, 5);
+
+    // ── Totals d'equip (tipus de gol / exclusions) ──
+    const goalTot = { 'h+': 0, penalty: 0, contra: 0, boya: 0, normal: 0 };
+    let excNormal = 0, excPenalty = 0;
+    players.forEach(p => {
+        Object.keys(goalTot).forEach(t => goalTot[t] += p.goalTypes[t] || 0);
+        excNormal += p.exclusionTypes.normal || 0;
+        excPenalty += p.exclusionTypes.penalty || 0;
+    });
+    const goalLabels = { normal: 'Normal', 'h+': 'Home +', contra: 'Contraatac', boya: 'Boia', penalty: 'Penalty' };
+
+    // ── Porters ──
+    const gks = players.filter(p => p.num === 1 || p.num === 13 || p.parades > 0).sort((a, b) => a.num - b.num);
+
+    // ── Render ──
+    const dieswd = ['dg','dl','dt','dc','dj','dv','ds'];
+    const fmtDate = ds => {
+        const d = new Date(ds);
+        if (isNaN(d.getTime())) return ds || '';
+        return dieswd[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+    };
+
+    const resultsHTML = matches.map(m => {
+        const win = m.scoreCNT > m.scoreRival, loss = m.scoreCNT < m.scoreRival;
+        const cls = win ? 'win' : loss ? 'loss' : 'draw';
+        const badge = win ? 'VICTÒRIA' : loss ? 'DERROTA' : 'EMPAT';
+        const loc = (m.matchLocation === 'away') ? '✈️' : '🏠';
+        return `<div class="es-result-row ${cls}">
+            <div class="es-r-date">${fmtDate(m.data)}</div>
+            <div class="es-r-rival">${loc} ${m.rivalTeam || 'Rival'}</div>
+            <div class="es-r-score">${m.scoreCNT}–${m.scoreRival}</div>
+            <div class="es-r-badge">${badge}</div>
+        </div>`;
+    }).join('');
+
+    const tableRows = players.sort((a, b) => (a.num || 99) - (b.num || 99)).map(p => `
+        <tr>
+            <td style="text-align:center;font-weight:700;">${p.num ?? ''}</td>
+            <td style="text-align:left;">${p.name}</td>
+            <td style="text-align:center;">${p.partidos}</td>
+            <td style="text-align:center;color:#fde047;font-weight:700;">${p.gols}</td>
+            <td style="text-align:center;">${p.assistencies}</td>
+            <td style="text-align:center;">${p.robatoris}</td>
+            <td style="text-align:center;">${p.blocks}</td>
+            <td style="text-align:center;">${p.faltesRebudes}</td>
+            <td style="text-align:center;">${p.parades || ''}</td>
+            <td style="text-align:center;color:#f87171;">${p.exclusions}</td>
+            <td style="text-align:center;color:#fb923c;">${p.perdues}</td>
+            ${hasTimeData ? `<td style="text-align:center;color:#a5b4fc;">${p.temps ? fmtTime(p.temps) : '–'}</td>` : ''}
+            <td style="text-align:center;font-weight:700;color:#22d3ee;">${p.valor.toFixed(1)}</td>
+        </tr>
+    `).join('');
+
+    const topScorersHTML = topScorers.map((p, i) => {
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        return `<div class="top-scorer-item">
+            <div class="player-info">
+                <div class="rank ${rankClass}">${i + 1}</div>
+                <div class="player-num">${p.num}</div>
+                <div class="player-name">${p.name}</div>
+            </div>
+            <div style="font-size:24px;font-weight:bold;color:#fde047;">${p.gols} 🥅🏐</div>
+        </div>`;
+    }).join('') || '<p style="color:#94a3b8;text-align:center;">Encara no hi ha gols.</p>';
+
+    const medals = ['🥇','🥈','🥉'];
+    const mvpHTML = mvp.filter(p => p.valor > 0).map((p, i) => `
+        <div class="info-item" style="text-align:left;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">${i < 3 ? medals[i] : '#' + (i+1)}</span>
+                <div>
+                    <div style="font-weight:bold;color:#fff;">${p.num}. ${p.name}</div>
+                    <div style="font-size:11px;color:#bae6fd;">Valor total: <strong style="color:#22d3ee;">${p.valor.toFixed(1)}</strong> · ${p.partidos} partits</div>
+                </div>
+            </div>
+        </div>
+    `).join('') || '<p style="color:#94a3b8;">—</p>';
+
+    const goalBreakHTML = Object.keys(goalTot).filter(t => goalTot[t] > 0).map(t => `
+        <div class="breakdown-item">
+            <div class="breakdown-label">${goalLabels[t]}</div>
+            <div class="breakdown-value">${goalTot[t]}</div>
+        </div>
+    `).join('') || '<p style="color:#94a3b8;">—</p>';
+
+    const gkHTML = gks.length ? gks.map(g => {
+        const totSaves = g.parades || 0;
+        const conceded = g.golsRebuts || 0;
+        const pct = (totSaves + conceded) > 0 ? ((totSaves / (totSaves + conceded)) * 100).toFixed(1) : null;
+        return `<div class="info-item">
+            <div class="info-label">${g.num}. ${g.name}</div>
+            <div class="info-value">${totSaves} <span style="font-size:12px;color:#bae6fd;">parades</span></div>
+            ${conceded ? `<div style="font-size:11px;color:#94a3b8;">${conceded} gols rebuts${pct ? ` · ${pct}% aturades` : ''}</div>` : ''}
+        </div>`;
+    }).join('') : '<p style="color:#94a3b8;">Sense dades de porteria.</p>';
+
+    host.innerHTML = `
+        <div class="es-hero">
+            <h2>🏆 Campionat d'Espanya Cadet 2026</h2>
+            <div class="es-hero-sub">Torremolinos · 2-5 de juliol · ${matches.length} partit${matches.length === 1 ? '' : 's'} disputat${matches.length === 1 ? '' : 's'}</div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">📋 Resum</h2>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Partits</div><div class="info-value">${matches.length}</div></div>
+                <div class="info-item"><div class="info-label">Victòries</div><div class="info-value win">${wins}</div></div>
+                <div class="info-item"><div class="info-label">Derrotes</div><div class="info-value loss">${losses}</div></div>
+                <div class="info-item"><div class="info-label">Empats</div><div class="info-value draw">${draws}</div></div>
+                <div class="info-item"><div class="info-label">Gols a favor</div><div class="info-value">${gf}</div></div>
+                <div class="info-item"><div class="info-label">Gols en contra</div><div class="info-value">${gc}</div></div>
+                <div class="info-item"><div class="info-label">Mitjana a favor</div><div class="info-value">${avgGf}</div></div>
+                <div class="info-item"><div class="info-label">Mitjana en contra</div><div class="info-value">${avgGc}</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">⚽ Resultats del Campionat</h2>
+            <div class="es-results-list">${resultsHTML}</div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">📊 Gols a favor i en contra per partit</h2>
+            <canvas id="esResultsChart" style="max-height: 280px;"></canvas>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🏅 Ranking MVP del Campionat</h2>
+            <div class="info-grid">${mvpHTML}</div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">📈 Estadístiques per Jugador</h2>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table class="comparison-table">
+                    <thead><tr>
+                        <th>#</th><th style="text-align:left;">Jugador</th><th>PJ</th><th>Gols</th>
+                        <th>Assist</th><th>Rob</th><th>Block</th><th>FR</th><th>Parad</th>
+                        <th>Exc</th><th>Pèrd</th>${hasTimeData ? '<th>Temps</th>' : ''}<th>Valor</th>
+                    </tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🥅 Top Golejadors</h2>
+            <div class="top-scorers">${topScorersHTML}</div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🍩 Distribució de gols per jugador</h2>
+            <canvas id="esGoalsDistChart" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🎯 Desglossament de gols (tipus)</h2>
+            <div class="stats-breakdown">${goalBreakHTML}</div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🟥 Exclusions CN Terrassa</h2>
+            <div class="stats-breakdown">
+                <div class="breakdown-item"><div class="breakdown-label">Normals</div><div class="breakdown-value">${excNormal}</div></div>
+                <div class="breakdown-item"><div class="breakdown-label">Penalties</div><div class="breakdown-value">${excPenalty}</div></div>
+                <div class="breakdown-item"><div class="breakdown-label">Total</div><div class="breakdown-value">${excNormal + excPenalty}</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">🧤 Porters</h2>
+            <div class="info-grid">${gkHTML}</div>
+        </div>
+
+        <div class="card" style="text-align:center;">
+            <a href="campionat-espanya-cadet.html" class="es-fullbracket-btn">
+                📋 Veure el quadre complet i tots els resultats →
+            </a>
+        </div>
+    `;
+
+    // ── Gràfics ──
+    renderEspanyaCharts(matches, players);
+}
+
+function renderEspanyaCharts(matches, players) {
+    if (typeof Chart === 'undefined') return;
+
+    // Gols a favor / en contra per partit
+    const rCtx = document.getElementById('esResultsChart');
+    if (rCtx) {
+        if (window.esResultsChartInstance) window.esResultsChartInstance.destroy();
+        const labels = matches.map(m => (m.rivalTeam || 'Rival').slice(0, 12));
+        window.esResultsChartInstance = new Chart(rCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'A favor', data: matches.map(m => m.scoreCNT || 0), backgroundColor: 'rgba(34,197,94,0.7)' },
+                    { label: 'En contra', data: matches.map(m => m.scoreRival || 0), backgroundColor: 'rgba(239,68,68,0.7)' }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                    y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                }
+            }
+        });
+    }
+
+    // Distribució de gols per jugador
+    const gCtx = document.getElementById('esGoalsDistChart');
+    if (gCtx) {
+        if (window.esGoalsDistChartInstance) window.esGoalsDistChartInstance.destroy();
+        const scorers = players.filter(p => p.gols > 0).sort((a, b) => b.gols - a.gols);
+        const palette = ['#ef4444','#f97316','#f59e0b','#fde047','#84cc16','#22c55e','#14b8a6','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#fb7185','#a3e635','#34d399'];
+        window.esGoalsDistChartInstance = new Chart(gCtx, {
+            type: 'doughnut',
+            data: {
+                labels: scorers.map(p => `${p.num}. ${p.name}`),
+                datasets: [{ data: scorers.map(p => p.gols), backgroundColor: scorers.map((_, i) => palette[i % palette.length]) }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { color: '#e2e8f0', font: { size: 11 } } } }
+            }
+        });
+    }
+}
+
  function displayMatchData() {
     document.getElementById('scoreCNT').textContent = currentMatch.scoreCNT || 0;
     document.getElementById('scoreRival').textContent = currentMatch.scoreRival || 0;
