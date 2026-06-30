@@ -117,6 +117,9 @@
   .grp-match .gm-teams{flex:1;display:flex;justify-content:space-between;gap:8px}
   .grp-match .gm-sc{font-weight:800;color:var(--foam)}
   .grp-match .gm-sc.tbd{color:var(--muted);font-weight:400}
+  a.grp-match{text-decoration:none;border-radius:6px;transition:background .15s}
+  a.grp-match:hover{background:rgba(255,255,255,.06)}
+  a.grp-match .gm-rfen{color:var(--foam);font-size:10px;opacity:.7}
 
   /* ---- Bracket ---- */
   .bracket{display:flex;gap:18px;overflow-x:auto;padding:6px 0 18px;align-items:flex-start}
@@ -146,6 +149,8 @@
   .team.cnt .badge{box-shadow:0 0 0 2px var(--terrassa)}
   .team.cnt.winner{background:rgba(255,93,115,.16)}
   .match-foot{padding:4px 10px;font-size:10px;color:var(--muted);background:rgba(0,0,0,.18);text-align:center;border-top:1px solid rgba(255,255,255,.08)}
+  .rfen-link{display:inline-flex;align-items:center;gap:3px;margin-top:3px;font-size:9.5px;font-weight:600;color:var(--foam);text-decoration:none;text-transform:uppercase;letter-spacing:.04em;opacity:.85}
+  .rfen-link:hover{opacity:1;text-decoration:underline}
 
   /* ---- Classificació final ---- */
   .clasif{background:rgba(0,0,0,.2);border:1px solid #123f60;border-radius:12px;padding:14px 16px;max-width:420px}
@@ -443,6 +448,14 @@ function teamRow(code, score, isWin, isLose, fromLbl){
   const nm = code ? T[code].short : (fromLbl || 'Per determinar');
   return '<div class="'+cls.join(' ')+'">'+badgeHtml(code)+'<span class="nm">'+nm+'</span><span class="sc">'+(score!=null?score:'–')+'</span></div>';
 }
+// URL de la fitxa oficial del partit a la web de la RFEN (només si Leverade ja l'ha creat).
+function rfenMatchUrl(a, b){
+  if (a && b && T[a] && T[b]) {
+    const p = scorePair[pairKey(T[a].lv, T[b].lv)];
+    if (p && p.mid) return 'https://wp.rfen.es/tournament/' + LV_TOURNAMENT + '/match/' + p.mid + '/results';
+  }
+  return null;
+}
 function matchBox(id, m){
   const r = getScore(id, m.a, m.b);
   const has = r && r.s1 != null && r.s2 != null && r.finished;
@@ -454,7 +467,9 @@ function matchBox(id, m){
   if (m.final) cls.push('is-final');
   const when = (r && r.dt) ? r.dt : m.dt;
   const campo = r && r.campo ? ' · 📍 '+r.campo : '';
-  const foot = when ? '<div class="match-foot">📅 '+fmtWhen(when)+campo+(r&&r.manual?' · ✎ manual':'')+'</div>' : '';
+  const rfenUrl = rfenMatchUrl(m.a, m.b);
+  const rfenLink = rfenUrl ? '<br><a class="rfen-link" href="'+rfenUrl+'" target="_blank" rel="noopener">🌐 Veure a la RFEN ↗</a>' : '';
+  const foot = (when || rfenUrl) ? '<div class="match-foot">'+(when ? '📅 '+fmtWhen(when)+campo+(r&&r.manual?' · ✎ manual':'') : '')+rfenLink+'</div>' : '';
   return '<div class="'+cls.join(' ')+'">'
     + '<div class="match-h"><b>'+(m.lbl||id)+'</b><span>'+id+'</span></div>'
     + teamRow(m.a, has?r.s1:null, w1, w2, m.aFrom)
@@ -485,10 +500,13 @@ function renderGroups(){
       const sc = has ? (r.s1+'–'+r.s2) : 'vs';
       const when = (r && r.dt) ? r.dt : gm.dt;
       const campo = r && r.campo ? ' · 📍 '+r.campo : '';
-      h += '<div class="grp-match"><span class="gm-when">'+fmtWhen(when)+campo+'</span>'
+      const url = rfenMatchUrl(gm.a, gm.b);
+      const tag = url ? 'a' : 'div';
+      const attrs = url ? ' href="'+url+'" target="_blank" rel="noopener" title="Veure a la RFEN"' : '';
+      h += '<'+tag+' class="grp-match"'+attrs+'><span class="gm-when">'+fmtWhen(when)+campo+'</span>'
         + '<span class="gm-teams"><span>'+T[gm.a].short+'</span>'
         + '<span class="gm-sc'+(has?'':' tbd')+'">'+sc+'</span>'
-        + '<span style="text-align:right">'+T[gm.b].short+'</span></span></div>';
+        + '<span style="text-align:right">'+T[gm.b].short+(url?' <span class="gm-rfen">↗</span>':'')+'</span></span></'+tag+'>';
     });
     h += '</div></div>';
   });
@@ -604,7 +622,7 @@ async function loadLeverade(){
       if (!h || !a) return;
       const key = pairKey(h, a);
       const fac = m.relationships && m.relationships.facility && m.relationships.facility.data;
-      const entry = { dt: utcToMadrid(m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished, campo: (fac && facilityName[fac.id]) || null };
+      const entry = { mid: m.id, dt: utcToMadrid(m.attributes.datetime || m.attributes.date || null), finished: !!m.attributes.finished, campo: (fac && facilityName[fac.id]) || null };
       const rs = results.filter(r => r.relationships.match.data.id === m.id);
       rs.forEach(r => { entry[r.relationships.team.data.id] = r.attributes.value; });
       newPair[key] = entry;
