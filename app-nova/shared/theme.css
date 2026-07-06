@@ -1,0 +1,257 @@
+/* ============================================================
+   CN Terrassa Waterpolo · App v2 · Sistema de disseny
+   Estil: net i minimalista (light), accent per categoria.
+   Compartit entre app d'entrada de dades i app principal.
+   ============================================================ */
+
+:root {
+  /* Superfícies i text (light) */
+  --bg:           #f4f6f9;
+  --surface:      #ffffff;
+  --surface-2:    #f8fafc;
+  --border:       #e6eaf0;
+  --text:         #1e293b;
+  --text-muted:   #64748b;
+  --text-faint:   #94a3b8;
+
+  /* Accent (per defecte; se sobreescriu per categoria) */
+  --accent:       #0891b2;
+  --accent-soft:  #e0f5fa;
+  --accent-text:  #ffffff;
+
+  /* Semàntics */
+  --success:      #16a34a;
+  --success-soft: #dcfce7;
+  --danger:       #dc2626;
+  --danger-soft:  #fee2e2;
+  --warn:         #d97706;
+  --warn-soft:    #fef3c7;
+
+  /* Formes */
+  --radius:       14px;
+  --radius-sm:    10px;
+  --radius-lg:    20px;
+  --shadow:       0 1px 3px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.05);
+  --shadow-lg:    0 8px 30px rgba(15,23,42,.10);
+
+  --space:        16px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Accent per categoria (aplica al <body> o contenidor) */
+.cat-alevi    { --accent:#16a34a; --accent-soft:#dcfce7; }  /* verd */
+.cat-infantil { --accent:#d97706; --accent-soft:#fef3c7; }  /* taronja */
+.cat-cadet    { --accent:#475569; --accent-soft:#e2e8f0; }  /* gris pissarra */
+.cat-juvenil  { --accent:#0891b2; --accent-soft:#e0f5fa; }  /* cian */
+.cat-absolut  { --accent:#dc2626; --accent-soft:#fee2e2; }  /* vermell */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* ---------- Layout ---------- */
+.app        { max-width: 720px; margin: 0 auto; min-height: 100vh; padding-bottom: 96px; }
+.container  { padding: 0 var(--space); }
+.stack      { display: flex; flex-direction: column; gap: 12px; }
+.row        { display: flex; align-items: center; gap: 10px; }
+.row.between{ justify-content: space-between; }
+.grow       { flex: 1; }
+
+/* ---------- Capçalera ---------- */
+.appbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px var(--space);
+  display: flex; align-items: center; gap: 12px;
+}
+.appbar .title  { font-weight: 700; font-size: 1.05rem; }
+.appbar .subtitle { color: var(--text-muted); font-size: .82rem; }
+.appbar .accent-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent);
+}
+.iconbtn {
+  border: none; background: transparent; color: var(--text-muted);
+  width: 40px; height: 40px; border-radius: 10px; font-size: 1.2rem;
+  cursor: pointer;
+}
+.iconbtn:hover { background: var(--surface-2); }
+
+/* ---------- Targetes ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space);
+}
+.card.pad-lg { padding: 20px; }
+.card-title { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em;
+              color: var(--text-faint); font-weight: 600; margin-bottom: 10px; }
+
+/* Targeta clicable (selecció de categoria) */
+.tile {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+  cursor: pointer; transition: transform .12s ease, box-shadow .12s ease;
+}
+.tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.tile .tile-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; font-size: 1.4rem; flex: none;
+}
+.tile .tile-main   { flex: 1; }
+.tile .tile-name   { font-weight: 700; }
+.tile .tile-sub    { color: var(--text-muted); font-size: .84rem; }
+.tile .tile-chev   { color: var(--text-faint); }
+
+/* ---------- Botons ---------- */
+.btn {
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); border-radius: var(--radius-sm);
+  padding: 12px 16px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  transition: background .12s, transform .06s;
+}
+.btn:active { transform: scale(.98); }
+.btn:hover  { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.btn.primary:hover { filter: brightness(.95); background: var(--accent); }
+.btn.success { background: var(--success); color:#fff; border-color:transparent; }
+.btn.danger  { background: var(--danger);  color:#fff; border-color:transparent; }
+.btn.ghost   { background: transparent; border-color: transparent; color: var(--text-muted); }
+.btn.block   { width: 100%; }
+.btn.lg      { padding: 16px; font-size: 1.05rem; }
+.btn:disabled{ opacity:.5; cursor: not-allowed; }
+
+/* Botons d'acció grans (GOL / EXCL...) */
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.action-btn {
+  border: none; border-radius: var(--radius); padding: 18px 12px;
+  font-size: 1.1rem; font-weight: 700; cursor: pointer; color: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: transform .06s;
+}
+.action-btn:active { transform: scale(.97); }
+.action-btn .emoji { font-size: 1.5rem; }
+.action-btn.goal { background: var(--success); }
+.action-btn.excl { background: var(--warn); }
+.action-btn.pen  { background: var(--danger); }
+.action-btn.save { background: var(--accent); }
+
+/* ---------- Marcador ---------- */
+.scoreboard {
+  display: flex; align-items: stretch; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px;
+}
+.scoreboard .team { flex: 1; text-align: center; }
+.scoreboard .team .name  { font-size: .82rem; color: var(--text-muted);
+                           font-weight: 600; text-transform: uppercase; letter-spacing:.03em; }
+.scoreboard .team .score { font-size: 2.6rem; font-weight: 800; line-height: 1; color: var(--text); }
+.scoreboard .team.cnt .score { color: var(--accent); }
+.scoreboard .sep { width: 1px; background: var(--border); }
+
+/* Selector de quart */
+.quarters { display: flex; gap: 8px; }
+.quarters .q {
+  flex: 1; text-align: center; padding: 10px 0; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface);
+  font-weight: 700; color: var(--text-muted); cursor: pointer;
+}
+.quarters .q.active { background: var(--accent); color: #fff; border-color: transparent; }
+
+/* ---------- Llista de jugadors ---------- */
+.player-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+}
+.player-row.selectable { cursor: pointer; }
+.player-row.selectable:hover { background: var(--surface-2); }
+.player-row .num {
+  width: 34px; height: 34px; border-radius: 9px; flex: none;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; font-weight: 800; font-size: .95rem;
+}
+.player-row .pname { flex: 1; font-weight: 600; }
+.player-row .tally { color: var(--text-muted); font-size: .9rem; letter-spacing: 1px; }
+
+/* ---------- Registre d'accions ---------- */
+.log-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .9rem;
+}
+.log-item:last-child { border-bottom: none; }
+.log-item .q-badge { font-size: .72rem; font-weight: 700; color: var(--text-faint);
+                     background: var(--surface-2); border-radius: 6px; padding: 2px 6px; }
+.log-item .undo { margin-left: auto; color: var(--danger); cursor: pointer;
+                  background: none; border: none; font-size: 1rem; }
+
+/* ---------- Formularis ---------- */
+label.field { display: block; margin-bottom: 12px; }
+label.field .lab { display:block; font-size:.82rem; color: var(--text-muted);
+                   font-weight:600; margin-bottom:6px; }
+input, select, textarea {
+  width: 100%; padding: 12px 14px; font-size: 1rem; font-family: var(--font);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.seg { display: flex; gap: 8px; }
+.seg .opt {
+  flex: 1; text-align: center; padding: 12px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-weight: 600;
+}
+.seg .opt.active { background: var(--accent); color:#fff; border-color: transparent; }
+
+/* ---------- Barra inferior fixa ---------- */
+.bottombar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 12px var(--space); display: flex; gap: 10px;
+  max-width: 720px; margin: 0 auto;
+}
+
+/* ---------- Diàleg / full inferior ---------- */
+.sheet-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.4); z-index: 40;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  background: var(--surface); width: 100%; max-width: 720px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px var(--space) 28px;
+  box-shadow: var(--shadow-lg); animation: sheetup .18s ease;
+}
+@keyframes sheetup { from { transform: translateY(30px); opacity:.6; } to { transform:none; opacity:1; } }
+.sheet .sheet-title { font-weight: 700; margin-bottom: 14px; }
+.chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 10px; }
+.chip {
+  padding: 12px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); text-align: center; cursor: pointer; font-weight: 700;
+}
+.chip:hover { background: var(--surface-2); }
+.chip .chip-sub { display:block; font-size:.72rem; color: var(--text-muted); font-weight: 500; }
+
+/* ---------- Utilitats ---------- */
+.muted { color: var(--text-muted); }
+.center { text-align: center; }
+.mt { margin-top: 16px; } .mt-lg { margin-top: 24px; }
+.hidden { display: none !important; }
+.pill { display:inline-block; padding:3px 10px; border-radius:999px; font-size:.75rem;
+        font-weight:700; background: var(--accent-soft); color: var(--accent); }
+.pill.live { background: var(--danger-soft); color: var(--danger); }
+.empty { text-align:center; color: var(--text-faint); padding: 40px 20px; }
+.empty .big { font-size: 2.5rem; margin-bottom: 8px; }

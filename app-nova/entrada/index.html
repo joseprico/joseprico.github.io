@@ -1,0 +1,3769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CN Terrassa - Estadísticas</title>
+<!-- ============================================
+     FIREBASE SDK - AFEGIR AIXÒ ARA!
+     ============================================ -->
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+    import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    // ⚠️ SUBSTITUEIX AMB LA TEVA CONFIGURACIÓ DE FIREBASE
+    const firebaseConfig = {
+  apiKey: "AIzaSyCmJwgJvh10LcpPjeWhLbN5EDYeHT3tAoU",
+  authDomain: "cnt-wp-stats-bb7dc.firebaseapp.com",
+  databaseURL: "https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cnt-wp-stats-bb7dc",
+  storageBucket: "cnt-wp-stats-bb7dc.firebasestorage.app",
+  messagingSenderId: "3430713575",
+  appId: "1:3430713575:web:d580671a5d19049b187a42",
+  measurementId: "G-VZVL8MZV4K"
+};
+
+    // Inicialitzar Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const fsdb = getFirestore(app);
+    window.publishMatchToFirestore = async function(match, teamId){ const id = match.id || match.matchID; if(!id) return; const clean = JSON.parse(JSON.stringify(Object.assign({}, match, {teamId: teamId, lastUpdate: Date.now()}))); await setDoc(doc(fsdb,'matches',id), clean); console.log('☁️ Publicat a Firestore:', id); };
+    
+    // Exposar globalment
+    window.firebaseDB = database;
+    window.firebaseRef = ref;
+    window.firebaseSet = set;
+    window.firebaseOnValue = onValue;
+    window.firebaseUpdate = update;
+    window.firebaseReady = true;
+    
+    console.log('🔥 Firebase OK!');
+</script>	
+<style>
+/* ============================================================
+   CN Terrassa · Entrada de dades v2 · Tema LIGHT minimalista
+   (mateixos noms de classe que l'app original, re-skin clar)
+   ============================================================ */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --surface-2:#f8fafc; --border:#e6eaf0;
+  --text:#1e293b; --muted:#64748b; --faint:#94a3b8;
+  --accent:#0891b2; --accent-soft:#e0f5fa;
+  --green:#16a34a; --red:#dc2626; --blue:#2563eb; --amber:#d97706; --purple:#7c3aed; --teal:#0d9488;
+  --radius:14px; --radius-sm:10px;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.05);
+}
+/* accent per categoria */
+.cat-alevi{--accent:#16a34a;--accent-soft:#dcfce7;}
+.cat-infantil{--accent:#d97706;--accent-soft:#fef3c7;}
+.cat-cadet{--accent:#475569;--accent-soft:#e2e8f0;}
+.cat-juvenil{--accent:#0891b2;--accent-soft:#e0f5fa;}
+.cat-absolut{--accent:#dc2626;--accent-soft:#fee2e2;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{overflow-x:hidden;width:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;width:100%;max-width:100vw;position:relative;-webkit-font-smoothing:antialiased;}
+.container{max-width:1024px;margin:0 auto;padding:8px;padding-top:92px;padding-bottom:88px;box-sizing:border-box;width:100%;}
+
+/* Capçalera / marcador */
+.header-fixed{position:fixed;top:0;left:0;right:0;background:var(--surface);box-shadow:0 2px 12px rgba(15,23,42,.08);border-bottom:3px solid var(--accent);z-index:1000;padding:8px 0;}
+.scoreboard{max-width:1024px;margin:0 auto;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.team-score{flex:1;text-align:center;}
+.team-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:1px;text-transform:uppercase;letter-spacing:.03em;}
+.score-display{font-size:30px;font-weight:900;color:var(--text);line-height:1;}
+.team-score:first-child .score-display{color:var(--accent);}
+.score-separator{font-size:18px;font-weight:bold;color:var(--faint);}
+.temps-mort-compact{font-size:9px;color:var(--muted);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.btn-mini{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);width:20px;height:20px;border-radius:6px;font-weight:700;cursor:pointer;line-height:1;}
+.btn-mini:active{transform:scale(.9);}
+
+/* Cronòmetre */
+.quarter-timer{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:80px;}
+.quarter-label{font-size:11px;font-weight:bold;color:var(--accent);letter-spacing:1px;}
+.timer-display{font-size:24px;font-weight:900;color:var(--text);font-family:'Courier New',monospace;letter-spacing:1px;}
+.timer-status{height:8px;width:8px;border-radius:50%;background:transparent;}
+.timer-status.recording{background:#ef4444;animation:pulse-record 1.5s infinite;}
+@keyframes pulse-record{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.2);}}
+
+/* Targetes */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:var(--shadow);width:100%;max-width:100%;box-sizing:border-box;}
+
+/* Botons */
+.btn{padding:10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:bold;transition:all .15s;touch-action:manipulation;background:var(--surface);color:var(--text);}
+.btn:active{transform:scale(.96);}
+.btn:hover{background:var(--surface-2);}
+.btn-red{background:var(--red);color:#fff;border-color:transparent;}
+.btn-green{background:var(--green);color:#fff;border-color:transparent;}
+.btn-blue{background:var(--blue);color:#fff;border-color:transparent;}
+.btn-yellow{background:var(--amber);color:#fff;border-color:transparent;}
+.btn-red:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{filter:brightness(.95);}
+
+/* Tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;}
+.tab{padding:10px;font-size:14px;background:var(--surface-2);color:var(--muted);border:1px solid var(--border);}
+.tab.active{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(15,23,42,.12);}
+
+/* Graella de jugadors */
+.players-grid.compact-grid,#playersList.compact-grid,#rivalPlayersList.compact-grid{display:grid !important;grid-template-columns:repeat(2,1fr) !important;gap:6px !important;width:100% !important;}
+.compact-player,.player-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px;width:100% !important;max-width:100% !important;min-width:0 !important;box-sizing:border-box !important;display:flex !important;flex-direction:column !important;}
+.compact-player > div:last-child{display:flex !important;gap:2px !important;width:100% !important;}
+.compact-player > div:last-child button{flex:1 !important;min-width:0 !important;padding:4px 1px !important;}
+
+.player-number{background:var(--accent);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:9px;flex-shrink:0;}
+.player-number.rival{background:var(--red);}
+.player-number.active-player{background:var(--green);box-shadow:0 0 8px rgba(22,163,74,.5);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px rgba(22,163,74,.5);}50%{box-shadow:0 0 16px rgba(22,163,74,.8);}}
+
+/* Noms de jugador (light) */
+.player-name-input,.compact-name{flex:1;padding:2px;font-size:7px;background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);min-width:0;max-width:100%;}
+.player-name-input:focus,.compact-name:focus{outline:none;border-color:var(--accent);}
+/* Coloració per exclusions (es manté, molt útil) */
+.player-name-input.exc-1,.compact-name.exc-1{background:#fde68a;color:#78350f;font-weight:bold;border-color:#f59e0b;}
+.player-name-input.exc-2,.compact-name.exc-2{background:#fdba74;color:#7c2d12;font-weight:bold;border-color:#ea580c;}
+.player-name-input.exc-3,.compact-name.exc-3{background:#dc2626;color:#7f1d1d;font-weight:bold;border-color:#dc2626;}
+.player-number.exc-1{background:#f59e0b;}
+.player-number.exc-2{background:#ea580c;}
+.player-number.exc-3{background:#dc2626;}
+
+/* Inputs */
+.input{width:100%;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;}
+.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.input::placeholder{color:var(--faint);}
+textarea.input{min-height:80px;font-family:inherit;resize:vertical;}
+
+.actions-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.lineup-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.lineup-btn{padding:10px;font-size:13px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.lineup-btn.selected{background:var(--green);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(22,197,94,.3);}
+.lineup-counter{text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px;}
+.period-row{display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.period-label{font-weight:bold;font-size:14px;}
+.period-score{font-size:20px;font-weight:bold;color:var(--accent);}
+h2{font-size:18px;font-weight:bold;margin-bottom:12px;color:var(--text);}
+h3{color:var(--text);}
+.hidden{display:none;}
+label{display:block;font-size:11px;font-weight:600;margin-bottom:4px;color:var(--muted);}
+svg{display:inline-block;vertical-align:middle;}
+.btn-small{padding:1px;min-width:18px;}
+.icon-sm{width:14px;height:14px;}
+
+/* Modals (light) */
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.5);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal.show{display:flex;}
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(15,23,42,.25);color:var(--text);}
+.modal-title{font-size:18px;font-weight:bold;margin-bottom:15px;text-align:center;color:var(--text);}
+.modal-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;}
+.modal-btn{padding:12px;font-size:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-weight:bold;cursor:pointer;transition:all .15s;}
+.modal-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+
+/* Zones de gol */
+.goal-zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px;}
+.goal-zone{background:var(--surface-2);border:2px solid var(--border);border-radius:6px;padding:12px 8px;text-align:center;font-size:11px;font-weight:bold;cursor:pointer;transition:all .15s;color:var(--text);}
+.goal-zone:hover{background:#dcfce7;border-color:var(--green);}
+.goal-zone.selected{background:var(--green);border-color:#15803d;color:#fff;}
+.field-zone[onclick*="'2m-"]{background:#fee2e2;border-color:#fecaca;}
+.field-zone[onclick*="'2m-"]:hover{background:#fecaca;border-color:#ef4444;}
+.field-zone[onclick*="'5m-"]{background:#fef3c7;border-color:#fde68a;}
+.field-zone[onclick*="'5m-"]:hover{background:#fde68a;border-color:#f59e0b;}
+.field-zone[onclick*="'+6m-"]{background:#dbeafe;border-color:#bfdbfe;}
+.field-zone[onclick*="'+6m-"]:hover{background:#bfdbfe;border-color:#3b82f6;}
+
+/* Estat GitHub */
+.github-status{padding:8px;border-radius:6px;margin-bottom:12px;font-size:12px;text-align:center;}
+.github-status.success{background:#dcfce7;border:1px solid #22c55e;color:#166534;}
+.github-status.error{background:#fee2e2;border:1px solid #ef4444;color:#991b1b;}
+.github-status.warning{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;}
+
+/* Barra de desfer */
+.undo-section{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--accent);padding:8px 12px;z-index:999;box-shadow:0 -2px 12px rgba(15,23,42,.08);}
+.undo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.undo-title{font-size:10px;font-weight:bold;color:var(--accent);}
+.undo-clear{font-size:9px;color:var(--red);background:none;border:none;padding:2px 6px;cursor:pointer;}
+.actions-list{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.action-item{background:var(--surface-2);padding:6px 10px;border-radius:6px;font-size:9px;white-space:nowrap;display:flex;align-items:center;gap:6px;border:1px solid var(--border);color:var(--text);}
+.action-icon{font-size:12px;}
+.undo-btn{background:var(--red);color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:8px;font-weight:bold;cursor:pointer;flex-shrink:0;}
+.quarter-info{background:var(--accent-soft);padding:2px 8px;border-radius:4px;font-size:10px;color:var(--accent);font-weight:bold;border:1px solid var(--accent);}
+
+/* Avís aigua */
+.water-warning{display:none;position:fixed;top:118px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:bold;z-index:1001;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:90%;text-align:center;}
+@keyframes slideDown{from{top:70px;opacity:0;}to{top:118px;opacity:1;}}
+
+/* Selector d'equip (nou) */
+.team-bar{max-width:1024px;margin:0 auto 4px;padding:0 12px;display:flex;align-items:center;gap:8px;}
+.team-select{flex:1;padding:6px 10px;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);}
+
+@media (max-width:480px){.container{padding:6px !important;padding-top:92px !important;padding-bottom:88px !important;}}
+@media (min-width:768px){#playersList.compact-grid,#rivalPlayersList.compact-grid{grid-template-columns:repeat(4,1fr) !important;}.quarter-timer{min-width:80px;}}
+@media (min-width:1024px){#playersList.compact-grid,#rivalPlayersList.compact-grid{grid-template-columns:repeat(4,1fr) !important;}}
+
+/* Indicador Firebase */
+.firebase-indicator{position:fixed;top:10px;right:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);transition:all .3s;border:1px solid var(--border);}
+.firebase-indicator.connected{background:#dcfce7;border-color:#22c55e;color:#166534;}
+.firebase-indicator.disconnected{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+.firebase-indicator.syncing{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+.firebase-dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+.firebase-dot.pulse{animation:firebase-pulse 1.5s infinite;}
+@keyframes firebase-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
+</style>
+</head>
+<body>
+<!-- ============================================
+     🔥 INDICADOR FIREBASE - AFEGIR ARA!
+     ============================================ -->
+<div id="firebaseIndicator" class="firebase-indicator disconnected">
+    <div class="firebase-dot"></div>
+    <span id="firebaseStatus">Connectant...</span>
+</div>
+   <div class="header-fixed">
+        <div style="position: absolute; top: 5px; right: 15px; font-size: 9px; color: #94a3b8; font-style: italic;">by Josep Rico</div>
+        <div class="scoreboard">
+    <div class="team-score">
+        <div class="team-label">CN TERRASSA</div>
+        <div class="score-display" id="scoreCNT">0</div>
+        <div class="temps-mort-compact">
+            <button class="btn-mini" onclick="updateTempsMortCNT(-1)">-</button>
+            <span id="tempsMortCNT">0</span> TM
+            <button class="btn-mini" onclick="updateTempsMortCNT(1)">+</button>
+        </div>
+    </div>
+    
+    <!-- ✅ CRONÒMETRE NOU AL CENTRE -->
+    <div class="quarter-timer">
+        <div class="quarter-label" id="quarterLabel">Q1</div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        <div class="timer-status" id="timerStatus"></div>
+    </div>
+    
+    <div class="team-score">
+        <div class="team-label" id="rivalTeamLabel">RIVAL</div>
+        <div class="score-display" id="scoreRival">0</div>
+        <div class="temps-mort-compact">
+            <button class="btn-mini" onclick="updateTempsMortRival(-1)">-</button>
+            <span id="tempsMortRival">0</span> TM
+            <button class="btn-mini" onclick="updateTempsMortRival(1)">+</button>
+        </div>
+    </div>
+</div>
+    </div>
+
+    <div id="goalModal" class="modal">
+    <div class="modal-content">
+        <!-- PASO 1: Seleccionar tipo de gol -->
+        <div id="goalTypeStep">
+            <div class="modal-title">Tipo de Gol</div>
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="showGoalZoneStep('normal')">Normal</button>
+                <button class="modal-btn" onclick="showGoalZoneStep('h+')">H+</button>
+                <button class="modal-btn" onclick="showGoalZoneStep('penalty')">Penalty</button>
+                <button class="modal-btn" onclick="showGoalZoneStep('contra')">Contra</button>
+                <button class="modal-btn" onclick="showGoalZoneStep('boya')">Boya</button>
+            </div>
+        </div>
+        <!-- Modal Assistència -->
+<div id="assistModal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Hi ha hagut assistència?</h3>
+        <select id="assistPlayerSelect" style="width: 100%; padding: 12px; margin: 15px 0; font-size: 16px; border-radius: 8px; border: 2px solid #0ea5e9; background: rgba(255,255,255,0.2); color: white;">
+            <option value="">-- Sense assistència --</option>
+        </select>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="confirmAssist()" class="btn btn-blue" style="flex: 1; padding: 15px; font-size: 16px;">
+                ✅ Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+<!-- PASO 2: Seleccionar zona del camp (oculto inicialmente) -->
+        <div id="fieldZoneStep" style="display: none;">
+            <div class="modal-title">¿Desde dónde se marcó?</div>
+            
+            <!-- Indicador de porteria rival -->
+            <div style="text-align: center; margin: 10px 0 15px 0; padding: 8px; background: rgba(239, 68, 68, 0.2); border-radius: 8px; border: 2px solid #ef4444;">
+                <div style="font-size: 20px; margin-bottom: 4px;">🥅</div>
+                <div style="font-size: 11px; font-weight: bold; color: #dc2626;">PORTERIA RIVAL</div>
+            </div>
+            
+            <!-- Zona 2 metros -->
+            <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; opacity: 0.8; text-align: center;">📍 A 2 METRES</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('2m-left')">⬅️ Esquerra</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('2m-center')">🎯 Centre</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('2m-right')">➡️ Dreta</button>
+            </div>
+            
+            <!-- Dins de 6 metros -->
+            <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; opacity: 0.8; text-align: center;">📍 DINS DE 6 METRES</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('5m-left')">⬅️ Esquerra</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('5m-center')">🎯 Centre</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('5m-right')">➡️ Dreta</button>
+            </div>
+            
+            <!-- Zona +6 metros -->
+            <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; opacity: 0.8; text-align: center;">📍 FORA DE 6M</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('+6m-left')">⬅️ Esquerra</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('+6m-center')">🎯 Centre</button>
+                <button class="modal-btn" style="flex: 1;" onclick="selectFieldZone('+6m-right')">➡️ Dreta</button>
+            </div>
+        </div>
+        <!-- PASO 3: Seleccionar zona (oculto inicialmente) -->
+        <div id="goalZoneStep" style="display: none;">
+            <div class="modal-title">¿Dónde entró el gol?</div>
+            <div class="goal-zone-grid">
+                <div class="goal-zone" onclick="selectGoalZone('top-left')">⬆️ Izq.</div>
+                <div class="goal-zone" onclick="selectGoalZone('top-center')">⬆️ Centro</div>
+                <div class="goal-zone" onclick="selectGoalZone('top-right')">⬆️ Der.</div>
+                <div class="goal-zone" onclick="selectGoalZone('mid-left')">➡️ Izq.</div>
+                <div class="goal-zone" onclick="selectGoalZone('mid-center')">🎯 Centro</div>
+                <div class="goal-zone" onclick="selectGoalZone('mid-right')">⬅️ Der.</div>
+                <div class="goal-zone" onclick="selectGoalZone('bottom-left')">⬇️ Izq.</div>
+                <div class="goal-zone" onclick="selectGoalZone('bottom-center')">⬇️ Centro</div>
+                <div class="goal-zone" onclick="selectGoalZone('bottom-right')">⬇️ Der.</div>
+            </div>
+        </div>
+        
+        <button class="btn btn-red" style="width: 100%; margin-top: 12px;" onclick="closeGoalModal()">Cancelar</button>
+    </div>
+</div>
+<div id="exclusionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">Tipo de Exclusión</div>
+        
+        <!-- Selector només visible per exclusions rivals -->
+        <div id="cntPlayerSelector" style="margin-bottom: 10px; display: none;">
+            <label style="font-size: 12px; margin-bottom: 5px; display: block;">Falta sobre jugador CNT:</label>
+            <select id="cntPlayerSelect" class="input" style="padding: 8px;">
+                <option value="">Sense especificar</option>
+            </select>
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="modal-btn" onclick="selectExclusionType('normal')">Exclusión</button>
+            <button class="modal-btn" onclick="selectExclusionType('penalty')">Penalty</button>
+        </div>
+        <button class="btn btn-red" style="width: 100%;" onclick="closeExclusionModal()">Cancelar</button>
+    </div>
+</div>
+	<div id="saveModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">Tipus de Parada</div>
+        <div class="modal-buttons">
+            <button class="modal-btn" onclick="selectSaveType('corner')">Corner</button>
+            <button class="modal-btn" onclick="selectSaveType('rebuig')">Rebuig</button>
+            <button class="modal-btn" onclick="selectSaveType('atrapa')">Atrapa</button>
+			<button class="modal-btn" onclick="selectSaveType('penal')">Penal</button>
+        </div>
+        <button class="btn btn-red" style="width: 100%;" onclick="closeSaveModal()">Cancelar</button>
+    </div>
+</div>
+<div id="actionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">Tipus d'Acció</div>
+        <div class="modal-buttons">
+            <button class="modal-btn" onclick="selectActionType('2metres')">📏 2 Metres</button>
+            <button class="modal-btn" onclick="selectActionType('robatori')">🛡️ Robatori</button>
+            <button class="modal-btn" onclick="selectActionType('perdua')">❌ Pèrdua</button>
+			<button class="modal-btn" onclick="selectActionType('xut')">🚫 Xut Fallat</button>
+			<button class="modal-btn" onclick="selectActionType('block')">🚫 Block</button>
+			<button class="modal-btn" onclick="selectActionType('contrafalta')">⚠️ Contrafalta</button>
+			<button class="modal-btn" onclick="selectActionType('penaltymissed')">❌ Penal Fallat</button>
+        </div>
+        <button class="btn btn-red" style="width: 100%;" onclick="closeActionModal()">Cancelar</button>
+    </div>
+</div>
+	    <div id="penaltyMissedModal" class="modal"><div class="modal-content" style="max-width: 400px;" id="penaltyModalContent"></div></div>
+    
+    <div id="waterWarning" class="water-warning">⚠️ Has de tenir exactament 7 jugadors DINS!</div>
+	<div id="playersInWaterBar" style="position: fixed; top: 75px; left: 0; right: 0; background: rgba(34, 197, 94, 0.9); padding: 4px 8px; text-align: center; z-index: 998; display: none;">
+    <div style="font-size: 8px; color: white; margin-bottom: 2px;">DINS:</div>
+    <div id="playersInWaterList" style="font-size: 12px; font-weight: bold; color: white; line-height: 1;"></div>
+</div>
+<div id="superioritatIndicator" style="display: none; position: fixed; top: 150px; left: 50%; transform: translateX(-50%); z-index: 1001; animation: slideDown 0.3s ease-out;"></div>
+
+    <div class="container">
+       <div class="team-bar" style="margin-bottom:10px;">
+           <span style="font-size:12px;font-weight:700;color:var(--muted)">🏊 Categoria</span>
+           <select id="teamSelect" class="team-select" onchange="changeTeam(this.value)">
+               <option value="alevi">Aleví</option>
+               <option value="infantil">Infantil</option>
+               <option value="cadet">Cadet</option>
+               <option value="juvenil">Juvenil</option>
+               <option value="absolut">Absolut</option>
+           </select>
+           <button id="easyToggle" onclick="toggleEasyMode()" class="btn" style="padding:6px 10px;font-size:12px;">⚡ Mode fàcil: OFF</button>
+       </div>
+               <div class="card tabs">
+            <button class="btn tab active" onclick="showView('stats')">CNT</button>
+            <button class="btn tab" onclick="showView('rival')">Rival</button>
+            <button class="btn tab" onclick="showView('lineups')">Alineaciones</button>
+        </div>
+        <div id="statsView"><div class="card"><h2>CN TERRASSA</h2><div class="players-grid" id="playersList"></div></div></div>
+        <div id="rivalView" class="hidden"><div class="card"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;"><h2 style="margin: 0; flex: 1;"><input type="text" class="input" id="rivalTeamInput" placeholder="Nombre del rival" onchange="updateRivalTeam()" style="font-size: 18px; font-weight: bold; padding: 4px 8px;"></h2></div><div class="players-grid" id="rivalPlayersList"></div><div style="margin-top: 16px; padding-top: 16px; border-top: 2px solid rgba(255,255,255,0.2);"><label>Ubicación del partido</label><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"><button class="btn lineup-btn" id="locationHome" onclick="setLocation('home')">🏠 Casa</button><button class="btn lineup-btn" id="locationAway" onclick="setLocation('away')">✈️ Fuera</button></div></div></div></div>
+        <div id="lineupsView" class="hidden"><div id="lineupsContainer"></div></div>
+        
+        <div id="configView" class="hidden"><div class="card"><h2>Configuración GitHub</h2><div id="githubStatus"></div><div style="margin-bottom: 12px;"><label>Token de GitHub</label><input type="password" class="input" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" onchange="saveGithubConfig()"><p style="font-size: 10px; color: #64748b; margin-top: 4px;">Crea un token en: Settings → Developer settings → Personal access tokens</p></div><div style="margin-bottom: 12px;"><label>Usuario/Repositorio</label><input type="text" class="input" id="githubRepo" value="joseprico/cnt_cadet_25-26" onchange="saveGithubConfig()"></div><div style="margin-bottom: 12px;"><label>Rama</label><input type="text" class="input" id="githubBranch" value="main" onchange="saveGithubConfig()"></div><button class="btn btn-blue" onclick="testGithubConnection()">Probar conexión</button></div></div>
+        
+        <div class="card"><h2>Observacions</h2><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"><textarea class="input" id="observacions" placeholder="Anotaciones..." style="min-height: 100px;"></textarea><div><div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px">🟥 Exclusions per equip</div><div id="exclusionsSummary" style="margin-bottom:8px"></div>
+		<button class="btn btn-green" style="width: 100%; margin-bottom: 8px;" onclick="rotacioCompleta()">🔄 Rotació Completa (6x6)</button>
+		<div id="penaltyMissedSummary" style="display:none"></div></div></div></div>
+        <div class="card"><h2>Marcadores por Periodo</h2><div id="periodScores"></div></div>
+        <div class="card"><h2>⏱️ Temps de joc <span style="font-size:11px;color:var(--muted);font-weight:400">(estimat)</span></h2><div style="font-size:12px;color:var(--muted);margin-bottom:8px">🔄 Es calcula automàticament en finalitzar cada quart.</div><div style="overflow-x:auto"><div id="playingTimesBox"><div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">Encara no hi ha temps calculat. Finalitza un quart i apareixerà aquí.</div></div></div><p style="font-size:11px;color:var(--muted);margin-top:8px">ℹ️ El temps real de cada quart s'escala als 8:00 oficials (el rellotge de water-polo es para). Finalitza els quarts per a un càlcul precís.</p></div>
+       <div class="actions-grid">
+    <button class="btn btn-green" onclick="uploadToGithub()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>GitHub</button>
+    <button class="btn btn-yellow" onclick="exportData()">💾 Guardar</button>
+    <label class="btn btn-blue" style="cursor: pointer;"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Importar<input type="file" accept=".json" onchange="importData(event)" style="display: none;"></label>
+    <button class="btn btn-blue" onclick="showView('config')">⚙️ Config</button>
+    <button class="btn btn-red" onclick="resetAll()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Reset</button>
+</div>
+        <div class="undo-section"><div class="undo-header"><div class="undo-title">↩️ ÚLTIMAS ACCIONES</div><button class="undo-clear" onclick="clearHistory()">Limpiar</button></div><div class="actions-list" id="actionsList"><div style="font-size: 9px; color: #94a3b8; padding: 6px;">No hay acciones recientes</div></div></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+	// ============================================
+// 🔥 VARIABLES FIREBASE
+// ============================================
+let firebaseConnected = false;
+let currentMatchRef = null;
+let isLocalUpdate = false; // Flag per evitar loops
+let firebaseSyncEnabled = false;
+let currentMatchID = null;
+/* ===== Multi-categoria (v2) ===== */
+const SEASON_V2='2026-27';
+const TEAMS_CFG={alevi:{nom:'Aleví',accent:'cat-alevi'},infantil:{nom:'Infantil',accent:'cat-infantil'},cadet:{nom:'Cadet',accent:'cat-cadet'},juvenil:{nom:'Juvenil',accent:'cat-juvenil'},absolut:{nom:'Absolut',accent:'cat-absolut'}};
+const CADET_ROSTER=[{num:1,name:'DAVID CASADO'},{num:2,name:'SAMUEL DIAZ'},{num:3,name:'MAX CEREZO'},{num:4,name:'POL RICO'},{num:5,name:'OLIVER HERRERA'},{num:6,name:'NIL CARDENAS'},{num:7,name:'LLATZER PEREZ'},{num:8,name:'YAHEL MUÑOZ'},{num:9,name:'IVAN GALLEGO'},{num:10,name:'ADAY ACUÑA'},{num:11,name:'HECTOR DIOS'},{num:12,name:'BIEL COBACHO'},{num:13,name:'GUILLEM POLEY'},{num:14,name:'PAU VELASCO'}];
+function defaultRoster(team){ if(team==='cadet') return CADET_ROSTER.map(p=>({...p})); return Array.from({length:14},(_,i)=>({num:i+1,name:''})); }
+let currentTeam=localStorage.getItem('cntv2_currentTeam')||'cadet';
+function teamRoster(team){ const s=localStorage.getItem('cntv2_roster_'+team); return s?JSON.parse(s):defaultRoster(team); }
+function changeTeam(t){ if(t===currentTeam) return; if(!confirm('Canviar a '+((TEAMS_CFG[t]&&TEAMS_CFG[t].nom)||t)+'? Es carregaran les dades de la categoria.')){ const s=document.getElementById('teamSelect'); if(s)s.value=currentTeam; return; } localStorage.setItem('cntv2_currentTeam',t); location.reload(); }
+let players=teamRoster(currentTeam);
+let easyMode = localStorage.getItem('cntv2_easy')==='1';
+function toggleEasyMode(){ easyMode=!easyMode; localStorage.setItem('cntv2_easy', easyMode?'1':'0'); const b=document.getElementById('easyToggle'); if(b){ b.textContent = easyMode?'⚡ Mode fàcil: ON':'⚡ Mode fàcil: OFF'; b.style.background=easyMode?'var(--accent)':'var(--surface)'; b.style.color=easyMode?'#fff':'var(--text)'; } renderCompactView(); }
+function quickGoal(playerNum, isRival){
+    const currentQuarter=getCurrentQuarter(); const timestamp=Date.now(); let playerName='';
+    if(isRival){
+        playerName=rivalStats[playerNum].name||('Rival '+(playerNum+1));
+        if(!rivalStats[playerNum].goalTypes)rivalStats[playerNum].goalTypes={normal:0,'h+':0,penalty:0,contra:0,boya:0};
+        rivalStats[playerNum].gols++; rivalStats[playerNum].goalTypes.normal++;
+        chronologicalActions.push({timestamp:timestamp,quarter:currentQuarter,type:'goal',goalType:'normal',team:'rival',playerNum:playerNum,playerName:playerName});
+    } else {
+        const player=players.find(p=>p.num===playerNum); playerName=player?player.name:('Jugador '+playerNum);
+        if(!stats[playerNum].goalTypes)stats[playerNum].goalTypes={normal:0,'h+':0,penalty:0,contra:0,boya:0};
+        stats[playerNum].gols++; stats[playerNum].goalTypes.normal++;
+        chronologicalActions.push({timestamp:timestamp,quarter:currentQuarter,type:'goal',goalType:'normal',team:'cnt',playerNum:playerNum,playerName:playerName});
+    }
+    addToHistory({type:'gol',playerNum:playerNum,isRival:isRival,goalType:'normal',text:playerName+': Gol'});
+    renderCompactView(); updateScores(); updateQuarterInfo(); saveToLocalStorage();
+}
+let stats={},rivalStats=[],lineups={q1:[],q2:[],q3:[],q4:[]},periodScores={q1:{cnt:0,rival:0},q2:{cnt:0,rival:0},q3:{cnt:0,rival:0},q4:{cnt:0,rival:0}},tempsMortCNT=0,tempsMortRival=0,rivalTeam='',matchLocation='home',observacions='',currentGoalContext=null,currentExclusionContext=null,currentSaveContext=null,currentActionContext=null,actionsHistory=[],compactMode=true,chronologicalActions=[];
+let githubConfig={token:'',repo:'joseprico/cnt_cadet_25-26',branch:'main'};
+let playersInWater=new Set();
+let quarterStartTimes={q1:null,q2:null,q3:null,q4:null};
+let quarterRealEndTimes={q1:null,q2:null,q3:null,q4:null};
+let playerWaterChanges=[];
+// ============================================
+// 🔥 ACTUALITZAR INDICADOR FIREBASE
+// ============================================
+function updateFirebaseIndicator(status) {
+    const indicator = document.getElementById('firebaseIndicator');
+    const dot = indicator?.querySelector('.firebase-dot');
+    const text = document.getElementById('firebaseStatus');
+    
+    if (!indicator || !text) return;
+    
+    indicator.className = `firebase-indicator ${status}`;
+    
+    if (status === 'connected') {
+        dot?.classList.add('pulse');
+        text.textContent = '🔥';
+    } else if (status === 'syncing') {
+        dot?.classList.add('pulse');
+        text.textContent = '⏳ Sincronitzant';
+    } else {
+        dot?.classList.remove('pulse');
+        text.textContent = '❌ Offline';
+    }
+}
+// ============================================
+// 🔥 CONNECTAR A FIREBASE
+// ============================================
+function connectToFirebase() {
+    if (!window.firebaseReady) {
+        console.warn('⚠️ Firebase SDK no carregat encara');
+        return;
+    }
+    
+    try {
+        // Generar Match ID basat en data i rival
+        const dateStr = new Date().toISOString().split('T')[0];
+        const rivalSlug = (rivalTeam || 'rival').toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '');
+        
+        currentMatchID = `cnt_${currentTeam}_${dateStr}_${rivalSlug}`;
+        
+        // Referència al partit a Firebase
+        currentMatchRef = window.firebaseRef(window.firebaseDB, `matches/${currentMatchID}`);
+        
+        // 🔥 LISTENER per si altres dispositius volen veure
+        // (però no modificarem res, només llegim)
+        window.firebaseOnValue(currentMatchRef, (snapshot) => {
+            if (!isLocalUpdate && snapshot.exists()) {
+                console.log('📥 Dades de Firebase disponibles');
+            }
+            firebaseConnected = true;
+            firebaseSyncEnabled = true;
+            updateFirebaseIndicator('connected');
+            isLocalUpdate = false;
+        }, (error) => {
+            console.error('❌ Error Firebase:', error);
+            firebaseConnected = false;
+            updateFirebaseIndicator('disconnected');
+        });
+        
+        console.log('✅ Firebase connectat:', currentMatchID);
+        
+    } catch (error) {
+        console.error('❌ Error connectant Firebase:', error);
+        firebaseConnected = false;
+        updateFirebaseIndicator('disconnected');
+    }
+}
+// ============================================
+// 🔥 SINCRONITZAR AMB FIREBASE
+// ============================================
+function syncToFirebase() {
+    if (!firebaseSyncEnabled || !currentMatchRef || !firebaseConnected) {
+        console.log('💾 Només localStorage (Firebase no disponible)');
+        return;
+    }
+    
+    try {
+        isLocalUpdate = true;
+        updateFirebaseIndicator('syncing');
+        
+        // Generar les dades del partit
+        const matchData = {
+            matchID: currentMatchID,
+            temporada: SEASON_V2+' '+currentTeam.toUpperCase(),
+            equip: 'CN TERRASSA',
+            data: new Date().toISOString(),
+            scoreCNT: Object.values(stats).reduce((sum, s) => sum + s.gols, 0),
+            scoreRival: rivalStats.reduce((sum, p) => sum + p.gols, 0),
+            rivalTeam: rivalTeam,
+            matchLocation: matchLocation,
+            lineups: lineups,
+            periodScores: periodScores,
+            tempsMortCNT: tempsMortCNT,
+            tempsMortRival: tempsMortRival,
+            quarterStartTimes: quarterStartTimes,
+            quarterRealEndTimes: quarterRealEndTimes,
+            playersInWater: Array.from(playersInWater),
+            playerWaterChanges: playerWaterChanges,
+            jugadors: players.map(p => ({
+                numero: p.num,
+                nom: p.name,
+                estadistiques: stats[p.num]
+            })),
+            rivalStats: rivalStats,
+            chronologicalActions: chronologicalActions || [],
+            observacions: document.getElementById('observacions')?.value || '',
+            lastUpdate: Date.now()
+        };
+        
+        // 🔥 ENVIAR A FIREBASE
+        window.firebaseSet(currentMatchRef, matchData)
+            .then(() => {
+                console.log('✅ Sincronitzat amb Firebase');
+                updateFirebaseIndicator('connected');
+            })
+            .catch((error) => {
+                console.error('❌ Error sincronitzant:', error);
+                updateFirebaseIndicator('disconnected');
+            });
+            
+    } catch (error) {
+        console.error('❌ Error en syncToFirebase:', error);
+        updateFirebaseIndicator('disconnected');
+    }
+}
+
+function confirmEndMatch() {
+    const score = `${currentMatch.scoreCNT || 0} - ${currentMatch.scoreRival || 0}`;
+    
+    if (confirm(`Segur que vols finalitzar el partit?\n\nMarcador: ${score}\n\nEs descarregarà el JSON automàticament.`)) {
+        endQuarter('q4');
+        //finalizeMatch();
+    }
+}
+function calculatePlayingTimeForMatch(){
+    const result={};
+    const quarterDuration=480;
+    
+    players.forEach(p=>{
+        const times={q1:0,q2:0,q3:0,q4:0,total:0};
+        const playerChanges=playerWaterChanges.filter(c=>c.playerNum===p.num);
+        
+        ['q1','q2','q3','q4'].forEach(quarter=>{
+            const qChanges=playerChanges.filter(c=>c.quarter===quarter);
+            if(qChanges.length===0){
+                times[quarter]=0;
+                return;
+            }
+            
+            qChanges.sort((a,b)=>a.timestamp-b.timestamp);
+            
+            let timeInWater=0;
+            let lastInTime=null;
+            const quarterStartTime=quarterStartTimes[quarter];
+            
+            if(!quarterStartTime){
+                times[quarter]=0;
+                return;
+            }
+            
+            // ✅ Processar els canvis dins del forEach
+            qChanges.forEach(change=>{
+                if(change.action==='in'){
+                    lastInTime=change.timestamp;
+                } else if(change.action==='out'&&lastInTime!==null){
+                    timeInWater+=(change.timestamp-lastInTime)/1000;
+                    lastInTime=null;
+                }
+            });
+            
+            // ✅ Usar el temps real de finalització si existeix
+            if(lastInTime!==null){
+                const quarterEndTime = quarterRealEndTimes[quarter] || 
+                                      (quarterStartTime + quarterDuration * 1000);
+                timeInWater+=(quarterEndTime-lastInTime)/1000;
+            }
+            
+            times[quarter]=Math.round(timeInWater);
+        });
+        
+        times.total=times.q1+times.q2+times.q3+times.q4;
+        result[p.num]={name:p.name,times:times};
+    });
+    
+    return result;
+}
+function init() {
+    document.body.className=(TEAMS_CFG[currentTeam]&&TEAMS_CFG[currentTeam].accent)||'';
+    var _ts=document.getElementById('teamSelect'); if(_ts)_ts.value=currentTeam;
+    var _eb=document.getElementById('easyToggle'); if(_eb&&easyMode){_eb.textContent='⚡ Mode fàcil: ON'; _eb.style.background='var(--accent)'; _eb.style.color='#fff';}
+    if(document.getElementById('playingTimesBox')) renderPlayingTimes();
+    loadFromLocalStorage();
+    loadGithubConfig();
+    
+    if(Object.keys(stats).length === 0) {
+        players.forEach(p => {
+            stats[p.num] = {
+                exclusions: 0,
+                gols: 0,
+                penaltyMissed: 0,
+                goalTypes: {
+                    normal: 0,
+                    'h+': 0,
+                    penalty: 0,
+                    contra: 0,
+                    boya: 0
+                },
+                exclusionTypes: {
+                    normal: 0,
+                    penalty: 0
+                },
+                parades: 0,
+                paradeTypes: {
+                    corner: 0,
+                    rebuig: 0,
+                    atrapa: 0,
+                    penal: 0
+                },
+                assistencies: 0,
+                robatoris: 0,
+                perdues: 0,
+                xutsFallats: 0,
+                blocks: 0,
+				contrafaltes: 0,
+                faltesRebudes: 0,
+                golsRebuts: 0,  // ✅ NOU
+                golsRebutsZones: {}  // ✅ NOU
+            };
+        });
+    }
+    
+    if(rivalStats.length === 0) {
+        for(let i = 1; i <= 14; i++) {
+            rivalStats.push({
+                num: i,
+                name: '',
+                exclusions: 0,
+                gols: 0,
+                penaltyMissed: 0,
+                goalTypes: {
+                    normal: 0,
+                    'h+': 0,
+                    penalty: 0,
+                    contra: 0,
+                    boya: 0
+                },
+                exclusionTypes: {
+                    normal: 0,
+                    penalty: 0
+                }
+            });
+        }
+    }
+    
+    compactMode = true; // ✅ SEMPRE COMPACTA
+    renderCompactView(); // ✅ RENDERITZAR COMPACTA
+    //renderCompactView();
+    renderLineups();
+    renderPeriodScores();
+    updateScores();
+    updatePenaltyMissedSummary();
+    renderHistory();
+    updateQuarterInfo();
+	 // 🔥 AFEGIR AIXÒ AL FINAL DE LA FUNCIÓ INIT
+    // Esperar que Firebase estigui llest
+    setTimeout(() => {
+        if (window.firebaseReady) {
+            connectToFirebase();
+            updateFirebaseIndicator('connected');
+        } else {
+            console.warn('⚠️ Firebase no disponible');
+            updateFirebaseIndicator('disconnected');
+        }
+    }, 1000);
+}
+function openPenaltyMissedModal(){const c=document.getElementById('penaltyModalContent');if(!c)return;c.innerHTML=`<div class="modal-title">❌ Penalty Fallado - ¿Quién?</div><div style="max-height:400px;overflow-y:auto;margin-bottom:15px"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${players.map(p=>`<button class="modal-btn" onclick="selectPenaltyMissedPlayer(${p.num},false)">${p.num}. ${p.name.split(' ')[0]}</button>`).join('')}</div><div style="margin-top:12px;padding-top:12px;border-top:2px solid rgba(255,255,255,0.2)"><div style="font-size:12px;margin-bottom:8px;color:#dc2626">Rival:</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${rivalStats.map((r,i)=>`<button class="modal-btn" onclick="selectPenaltyMissedPlayer(${i},true)">${r.name||'Rival '+(i+1)}</button>`).join('')}</div></div></div><button class="btn btn-red" style="width:100%" onclick="closePenaltyMissedModal()">Cancelar</button>`;document.getElementById('penaltyMissedModal').classList.add('show')}
+function closePenaltyMissedModal(){document.getElementById('penaltyMissedModal').classList.remove('show')}
+function selectPenaltyMissedPlayer(n,isR){const currentQuarter=getCurrentQuarter();const timestamp=Date.now();let playerName='';if(isR){playerName=rivalStats[n].name||`Rival ${n+1}`;rivalStats[n].penaltyMissed=(rivalStats[n].penaltyMissed||0)+1;chronologicalActions.push({timestamp:timestamp,quarter:currentQuarter,type:'penalty-missed',team:'rival',playerNum:n,playerName:playerName})}else{const player=players.find(p=>p.num===n);playerName=player?player.name:`Jugador ${n}`;stats[n].penaltyMissed=(stats[n].penaltyMissed||0)+1;chronologicalActions.push({timestamp:timestamp,quarter:currentQuarter,type:'penalty-missed',team:'cnt',playerNum:n,playerName:playerName})}updatePenaltyMissedSummary();saveToLocalStorage();closePenaltyMissedModal()}
+function updatePenaltyMissedSummary(){const c=document.getElementById('penaltyMissedSummary');if(!c)return;const s=[];players.forEach(p=>{const m=stats[p.num]?.penaltyMissed||0;if(m>0)s.push(`${p.num}. ${p.name.split(' ')[0]}: ${m}`)});rivalStats.forEach((r,i)=>{const m=r.penaltyMissed||0;if(m>0){const n=r.name||`Rival ${i+1}`;s.push(`<span style="color:#dc2626">${n}: ${m}</span>`)}});c.innerHTML=s.length===0?'<span style="color:#cbd5e1">No hay penaltis fallados</span>':s.join('<br>')}
+function syncToFirestore(){
+    if(!window.publishMatchToFirestore || window._fsEnabled===false) return;
+    const dateStr=new Date().toISOString().split('T')[0];
+    const rivalSlug=(rivalTeam||'rival').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+    const id='cnt_'+currentTeam+'_'+dateStr+'_'+rivalSlug;
+    const md=Object.assign({}, generateMatchData(), {id:id, teamId:currentTeam});
+    window.publishMatchToFirestore(md, currentTeam)
+        .then(function(){ window._fsEnabled=true; })
+        .catch(function(e){ if(window._fsEnabled===undefined) console.warn('Firestore no actiu (activa a la consola):', e.message); window._fsEnabled=false; });
+}
+function saveToLocalStorage(){
+    localStorage.setItem('cntv2_data_'+currentTeam,JSON.stringify({
+        stats,
+        rivalStats,
+        lineups,
+        periodScores,
+        tempsMortCNT,
+        tempsMortRival,
+        rivalTeam,
+        matchLocation,
+        observacions:document.getElementById('observacions')?.value||'',
+        players:players.map(p=>({num:p.num,name:p.name})),
+        actionsHistory:actionsHistory,
+        chronologicalActions:chronologicalActions,
+        playersInWater:Array.from(playersInWater),
+        quarterStartTimes:quarterStartTimes,
+        quarterRealEndTimes:quarterRealEndTimes,
+        playerWaterChanges:playerWaterChanges
+    }));
+    
+    // 🔥 AFEGIR AQUESTA LÍNIA AL FINAL!
+    syncToFirebase();
+    syncToFirestore();
+}
+function openActionModal(n, inc) {
+    if (inc < 0) {
+        // Si és decrementar, triem automàticament l'últim tipus registrat
+        decrementLastAction(n);
+        return;
+    }
+    currentActionContext = { playerNum: n };
+    document.getElementById('actionModal').classList.add('show');
+}
+
+function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('show');
+    currentActionContext = null;
+}
+
+function selectActionType(type) {
+    if (!currentActionContext) return;
+    const { playerNum } = currentActionContext;
+    
+    const player = players.find(p => p.num === playerNum);
+    const playerName = player ? player.name : `Jugador ${playerNum}`;
+    const currentQuarter = getCurrentQuarter();
+    const timestamp = Date.now();
+    
+    // Incrementar el comptador corresponent
+    if (type === 'penaltymissed') {
+        stats[playerNum].penaltyMissed = (stats[playerNum].penaltyMissed||0)+1;
+        chronologicalActions.push({timestamp:timestamp,quarter:currentQuarter,type:'penalty-missed',team:'cnt',playerNum:playerNum,playerName:playerName});
+        renderCompactView(); updateExclusionsSummary(); saveToLocalStorage(); closeActionModal(); return;
+    }
+    if (type === '2metres') {
+        stats[playerNum].infraccions2m = (stats[playerNum].infraccions2m || 0) + 1;
+    } else if (type === 'robatori') {
+        stats[playerNum].robatoris = (stats[playerNum].robatoris || 0) + 1;
+    } else if (type === 'perdua') {
+        stats[playerNum].perdues = (stats[playerNum].perdues || 0) + 1;
+    } else if (type === 'xut') {
+        stats[playerNum].xutsFallats = (stats[playerNum].xutsFallats || 0) + 1;
+    } else if (type === 'block') {
+        stats[playerNum].blocks = (stats[playerNum].blocks || 0) + 1;
+    } else if (type === 'contrafalta') {
+		stats[playerNum].contrafaltes = (stats[playerNum].contrafaltes || 0) + 1;
+	} 
+    
+    chronologicalActions.push({
+        timestamp: timestamp,
+        quarter: currentQuarter,
+        type: 'action',
+        actionType: type,
+        team: 'cnt',
+        playerNum: playerNum,
+        playerName: playerName
+    });
+    
+    const actionTypeText = type === '2metres' ? '📏 2 Metres' : 
+                           type === 'robatori' ? '🛡️ Robatori' : 
+                           type === 'perdua' ? '❌ Pèrdua' :
+                           type === 'xut' ? '🚫 Xut Fallat' :
+                           type === 'block' ? '🚫 Block' :
+						   type === 'contrafalta' ? '⚠️ Contrafalta' : '';
+    
+    addToHistory({
+        type: 'action',
+        playerNum: playerNum,
+        isRival: false,
+        actionType: type,
+        text: `${playerName}: ${actionTypeText}`
+    });
+    
+    // ✅ ACTUALITZACIÓ IMMEDIATA ABANS DE RENDERITZAR
+    const totalActions = getTotalActions(playerNum);
+    const actionsElement = document.getElementById(`actions-${playerNum}`);
+    if (actionsElement) {
+        actionsElement.textContent = totalActions;
+    }
+    
+    // Renderitzar després
+    renderCompactView();
+    
+    saveToLocalStorage();
+    closeActionModal();
+}
+
+function decrementLastAction(n) {
+    const lastAction = [...chronologicalActions]
+        .reverse()
+        .find(a => a.type === 'action' && a.playerNum === n);
+    
+    if (lastAction) {
+        const type = lastAction.actionType;
+        if (type === '2metres' && stats[n].infraccions2m > 0) {
+            stats[n].infraccions2m--;
+        } else if (type === 'robatori' && stats[n].robatoris > 0) {
+            stats[n].robatoris--;
+        } else if (type === 'perdua' && stats[n].perdues > 0) {
+            stats[n].perdues--;
+        } else if (type === 'xut' && stats[n].xutsFallats > 0) {
+            stats[n].xutsFallats--;
+        } else if (type === 'block' && stats[n].blocks > 0) {
+            stats[n].blocks--;
+        }	else if (type === 'contrafalta' && stats[n].contrafaltes > 0) {
+			stats[n].contrafaltes--;
+		}
+    } else {
+        // Si no trobem cap, decrementem en ordre
+        if (stats[n].infraccions2m > 0) {
+            stats[n].infraccions2m--;
+        } else if (stats[n].robatoris > 0) {
+            stats[n].robatoris--;
+        } else if (stats[n].perdues > 0) {
+            stats[n].perdues--;
+        } else if (stats[n].xutsFallats > 0) {
+            stats[n].xutsFallats--;
+        } else if (stats[n].blocks > 0) {
+            stats[n].blocks--;
+        } else if (stats[n].contrafaltes > 0) {
+			stats[n].contrafaltes--;
+		}
+    }
+    
+    if (compactMode) {
+        renderCompactView();
+    } else {
+        renderCompactView();
+    }
+    
+    updateScores();
+    saveToLocalStorage();
+}
+
+function getTotalActions(playerNum) {
+    const total = (stats[playerNum]?.infraccions2m || 0) + 
+                  (stats[playerNum]?.robatoris || 0) + 
+                  (stats[playerNum]?.perdues || 0) +
+                  (stats[playerNum]?.xutsFallats || 0) +
+                  (stats[playerNum]?.blocks || 0);
+    
+    console.log(`📊 getTotalActions(${playerNum}):`, total, {
+        infraccions2m: stats[playerNum]?.infraccions2m,
+        robatoris: stats[playerNum]?.robatoris,
+        perdues: stats[playerNum]?.perdues,
+        xutsFallats: stats[playerNum]?.xutsFallats,
+        blocks: stats[playerNum]?.blocks
+    });
+    
+    return total;
+}
+
+
+function loadFromLocalStorage(){
+    try{
+        const s=localStorage.getItem('cntv2_data_'+currentTeam);
+        if(s){
+            const d=JSON.parse(s);
+            if(d.stats)stats=d.stats;
+            if(d.rivalStats)rivalStats=d.rivalStats;
+            if(d.lineups)lineups=d.lineups;
+            if(d.periodScores)periodScores=d.periodScores;
+            if(d.tempsMortCNT!==undefined)tempsMortCNT=d.tempsMortCNT;
+            if(d.tempsMortRival!==undefined)tempsMortRival=d.tempsMortRival;
+            if(d.rivalTeam)rivalTeam=d.rivalTeam;
+			if(d.rivalTeam){
+    rivalTeam=d.rivalTeam;
+    document.getElementById('rivalTeamInput').value=rivalTeam;
+    document.getElementById('rivalTeamLabel').textContent=rivalTeam;
+}
+            if(d.matchLocation)matchLocation=d.matchLocation;
+            if(d.observacions)observacions=d.observacions;
+            if(d.players){
+                d.players.forEach(p=>{
+                    const pl=players.find(pl=>pl.num===p.num);
+                    if(pl)pl.name=p.name;
+                });
+            }
+            
+            // ✅ AFEGIR AQUESTES LÍNIES:
+            if(d.actionsHistory)actionsHistory=d.actionsHistory;
+            if(d.chronologicalActions)chronologicalActions=d.chronologicalActions;
+            if(d.playersInWater)playersInWater=new Set(d.playersInWater);
+            if(d.quarterStartTimes)quarterStartTimes=d.quarterStartTimes;
+            if(d.quarterRealEndTimes)quarterRealEndTimes=d.quarterRealEndTimes;  // ⭐ AQUESTA ÉS LA CLAU!
+            if(d.playerWaterChanges)playerWaterChanges=d.playerWaterChanges;
+            if(o)o.value=observacions;
+            if(matchLocation==='home'){
+                document.getElementById('locationHome')?.classList.add('selected');
+            }else{
+                document.getElementById('locationAway')?.classList.add('selected');
+            }
+        }
+		// ✅ Reiniciar cronòmetre si hi ha un quarter actiu
+        const currentQuarter = getCurrentQuarter();
+        if (quarterStartTimes[currentQuarter] && !quarterRealEndTimes[currentQuarter]) {
+            startQuarterTimer();
+        }
+    }catch(e){
+        console.error('Error:',e);
+    }
+}
+
+// ============================================
+// DETECCIÓ DE SUPERIORITAT
+// ============================================
+function checkSuperioritat() {
+    const now = Date.now();
+    const last60s = chronologicalActions.filter(a => now - a.timestamp < 60000); // Últims 60s
+    
+    // Comptar exclusions actives (últims 20 segons)
+    const last20s = chronologicalActions.filter(a => now - a.timestamp < 20000);
+    
+    const cntExclusions = last20s.filter(a => 
+        a.type === 'exclusion' && a.team === 'cnt'
+    ).length;
+    
+    const rivalExclusions = last20s.filter(a => 
+        a.type === 'exclusion' && a.team === 'rival'
+    ).length;
+    
+    return {
+        cntSuperior: rivalExclusions > cntExclusions,
+        rivalSuperior: cntExclusions > rivalExclusions,
+        cntExclusions: cntExclusions,
+        rivalExclusions: rivalExclusions
+    };
+}
+
+function showSuperioritatIndicator() {
+    const superiority = checkSuperioritat();
+    const indicator = document.getElementById('superioritatIndicator');
+    
+    if (!indicator) return;
+    
+    if (superiority.cntSuperior) {
+        indicator.innerHTML = `
+            <div style="background: rgba(34, 197, 94, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);">
+                <span style="font-size: 18px;">💪</span>
+                <span>SUPERIORITAT CNT!</span>
+                <span style="font-size: 12px; opacity: 0.9;">(Rival amb ${superiority.rivalExclusions} exclusió${superiority.rivalExclusions > 1 ? 'ns' : ''})</span>
+            </div>
+        `;
+        indicator.style.display = 'block';
+    } else if (superiority.rivalSuperior) {
+        indicator.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.9); padding: 8px 16px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+                <span style="font-size: 18px;">⚠️</span>
+                <span>INFERIORITAT!</span>
+                <span style="font-size: 12px; opacity: 0.9;">(CNT amb ${superiority.cntExclusions} exclusió${superiority.cntExclusions > 1 ? 'ns' : ''})</span>
+            </div>
+        `;
+        indicator.style.display = 'block';
+    } else {
+        indicator.style.display = 'none';
+    }
+    
+    // Amagar després de 5 segons
+    if (superiority.cntSuperior || superiority.rivalSuperior) {
+        setTimeout(() => {
+            if (indicator) indicator.style.display = 'none';
+        }, 5000);
+    }
+}
+
+
+let selectedGoalZone = null; // Afegir aquesta variable
+let selectedGoalType = null; // Afegir aquesta variable
+let selectedFieldZone = null; // NOVA variable per zona del camp
+
+function openGoalModal(n, isR, inc) {
+    if (inc < 0) {
+        if (isR) {
+            updateRivalStat(n, 'gols', inc);
+        } else {
+            updateStat(n, 'gols', inc);
+        }
+        return;
+    }
+    
+    currentGoalContext = {playerNum: n, isRival: isR};
+    selectedGoalType = null;
+    selectedGoalZone = null;
+    selectedFieldZone = null;  // ← AFEGEIX AQUESTA LÍNIA
+    
+    // Mostrar paso 1, ocultar paso 2 i 3
+    document.getElementById('goalTypeStep').style.display = 'block';
+    document.getElementById('fieldZoneStep').style.display = 'none';  // ← AFEGEIX AQUESTA LÍNIA
+    document.getElementById('goalZoneStep').style.display = 'none';
+    
+    document.getElementById('goalModal').classList.add('show');
+}
+function closeGoalModal() {
+    document.getElementById('goalModal').classList.remove('show');
+    // Reset
+    document.getElementById('goalTypeStep').style.display = 'block';
+    document.getElementById('fieldZoneStep').style.display = 'none';  // ← AFEGEIX AQUESTA LÍNIA
+    document.getElementById('goalZoneStep').style.display = 'none';
+    currentGoalContext = null;
+    selectedGoalType = null;
+    selectedGoalZone = null;
+    selectedFieldZone = null;  // ← AFEGEIX AQUESTA LÍNIA
+}
+
+// PASO 1 → PASO 2 (zona del camp)
+function showGoalZoneStep(goalType) {
+    selectedGoalType = goalType;
+    
+    // Mostrar el paso de zona del camp
+    document.getElementById('goalTypeStep').style.display = 'none';
+    document.getElementById('fieldZoneStep').style.display = 'block';
+    document.getElementById('goalZoneStep').style.display = 'none';
+    
+    // Resetear selección visual
+    document.querySelectorAll('.field-zone').forEach(z => z.classList.remove('selected'));
+}
+// PASO 2 → PASO 3 (zona de la porteria)
+function selectFieldZone(zone) {
+    selectedFieldZone = zone;
+    
+    // Actualitzar visual
+    document.querySelectorAll('.field-zone').forEach(z => z.classList.remove('selected'));
+    event.target.classList.add('selected');
+    
+    // Mostrar el paso de zones de porteria
+    document.getElementById('fieldZoneStep').style.display = 'none';
+    document.getElementById('goalZoneStep').style.display = 'block';
+    
+    // Resetear selección visual
+    document.querySelectorAll('.goal-zone').forEach(z => z.classList.remove('selected'));
+}
+function selectGoalZone(zone) {
+console.log('=== selectGoalZone ===');
+    console.log('Zona clicada:', zone);
+    console.log('selectedGoalType actual:', selectedGoalType);
+    console.log('currentGoalContext:', currentGoalContext);
+    selectedGoalZone = zone;
+	// Actualitzar visual
+    document.querySelectorAll('.goal-zone').forEach(z => z.classList.remove('selected'));
+    event.target.classList.add('selected');
+    console.log('selectedGoalZone després d\'assignar:', selectedGoalZone);
+    console.log('Ara cridaré selectGoalType amb:', selectedGoalType);
+    // Al seleccionar zona, registrar el gol y cerrar
+    selectGoalType(selectedGoalType);
+}
+
+function selectGoalType(t) {
+    console.log('=== DINS selectGoalType ===');
+    console.log('Paràmetre t rebut:', t);
+    console.log('selectedGoalZone global:', selectedGoalZone);
+    
+    if (!currentGoalContext) {
+        console.log('❌ currentGoalContext és null/undefined!');
+        return;
+    }
+    
+    const {playerNum, isRival} = currentGoalContext;
+    let playerName = '';
+    const currentQuarter = getCurrentQuarter();
+    const timestamp = Date.now();
+    
+    const goalZone = !selectedGoalZone ? 'unknown' : selectedGoalZone;
+	const fieldZone = !selectedFieldZone ? 'unknown' : selectedFieldZone;
+    
+    // ✅ NOU: Detectar automàticament quin porter està a l'aigua
+    let goalkeeperNum = null;
+    if (isRival) {
+        // Buscar quin porter (1 o 13) està dins de l'aigua
+        if (playersInWater.has(1)) {
+            goalkeeperNum = 1;
+        } else if (playersInWater.has(13)) {
+            goalkeeperNum = 13;
+        }
+        // Si cap dels dos està dins, buscar a la lineup del quarter actual
+        if (!goalkeeperNum) {
+            const currentLineup = lineups[currentQuarter] || [];
+            if (currentLineup.includes(1)) {
+                goalkeeperNum = 1;
+            } else if (currentLineup.includes(13)) {
+                goalkeeperNum = 13;
+            }
+        }
+    }
+    
+    if (isRival) {
+        playerName = rivalStats[playerNum].name || `Rival ${playerNum + 1}`;
+        
+        if (!rivalStats[playerNum].goalTypes) {
+            rivalStats[playerNum].goalTypes = {normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0};
+        }
+        if (!rivalStats[playerNum].goalZones) {
+    rivalStats[playerNum].goalZones = {};
+}
+if (!rivalStats[playerNum].fieldZones) {
+    rivalStats[playerNum].fieldZones = {};
+}
+
+rivalStats[playerNum].gols++;
+rivalStats[playerNum].goalTypes[t]++;
+rivalStats[playerNum].goalZones[goalZone] = (rivalStats[playerNum].goalZones[goalZone] || 0) + 1;
+rivalStats[playerNum].fieldZones[fieldZone] = (rivalStats[playerNum].fieldZones[fieldZone] || 0) + 1;
+        
+        // ✅ Guardar a quin porter li han fet gol
+        chronologicalActions.push({
+    timestamp: timestamp,
+    quarter: currentQuarter,
+    type: 'goal',
+    goalType: t,
+    goalZone: goalZone,
+    fieldZone: fieldZone,
+    team: 'rival',
+    playerNum: playerNum,
+    playerName: playerName,
+    goalkeeperNum: goalkeeperNum
+});
+        
+        // ✅ Incrementar gols rebuts del porter
+        if (goalkeeperNum && stats[goalkeeperNum]) {
+            if (!stats[goalkeeperNum].golsRebuts) {
+                stats[goalkeeperNum].golsRebuts = 0;
+            }
+            stats[goalkeeperNum].golsRebuts++;
+            
+            // ✅ Guardar zones dels gols rebuts
+            if (!stats[goalkeeperNum].golsRebutsZones) {
+    stats[goalkeeperNum].golsRebutsZones = {};
+}
+stats[goalkeeperNum].golsRebutsZones[goalZone] = 
+    (stats[goalkeeperNum].golsRebutsZones[goalZone] || 0) + 1;
+
+if (!stats[goalkeeperNum].golsRebutsFieldZones) {
+    stats[goalkeeperNum].golsRebutsFieldZones = {};
+}
+stats[goalkeeperNum].golsRebutsFieldZones[fieldZone] = 
+    (stats[goalkeeperNum].golsRebutsFieldZones[fieldZone] || 0) + 1;
+            
+            console.log(`✅ Gol assignat al porter ${goalkeeperNum} - Zona: ${goalZone}`);
+        } else {
+            console.warn('⚠️ No s\'ha pogut detectar quin porter estava a l\'aigua!');
+        }
+        
+        document.getElementById(`rival-gols-${playerNum}`).textContent = rivalStats[playerNum].gols;
+        renderCompactView();
+    } else {
+        const player = players.find(p => p.num === playerNum);
+        playerName = player ? player.name : `Jugador ${playerNum}`;
+		
+		showAssistModal(playerNum, playerName, t, goalZone, fieldZone, timestamp);
+		return; // ❌ IMPORTANT: sortir aquí per no guardar el gol encara
+        
+        if (!stats[playerNum].goalTypes) {
+            stats[playerNum].goalTypes = {normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0};
+        }
+        if (!stats[playerNum].goalZones) {
+            stats[playerNum].goalZones = {};
+        }
+        
+        stats[playerNum].gols++;
+        stats[playerNum].goalTypes[t]++;
+        stats[playerNum].goalZones[goalZone] = (stats[playerNum].goalZones[goalZone] || 0) + 1;
+        
+		
+             
+        document.getElementById(`gols-${playerNum}`).textContent = stats[playerNum].gols;
+        renderCompactView();
+    }
+    
+    const zoneText = (goalZone !== 'unknown') ? ` (${getZoneText(goalZone)})` : '';
+    const goalkeeperText = (isRival && goalkeeperNum) ? 
+        ` → Porter: ${goalkeeperNum}. ${players.find(p => p.num === goalkeeperNum)?.name.split(' ')[0]}` : '';
+
+    addToHistory({
+        type: 'gol',
+        playerNum: playerNum,
+        isRival: isRival,
+        goalType: t,
+        goalZone: goalZone,
+        goalkeeperNum: goalkeeperNum,
+        text: `${playerName}: Gol ${t === 'h+' ? 'H+' : t === 'penalty' ? 'Penalty' : t === 'contra' ? 'Contra' : t === 'boya' ? 'Boya' : 'Normal'}${zoneText}${goalkeeperText}`
+    });
+    updateScores();
+    updateQuarterInfo();
+    closeGoalModal();
+    saveToLocalStorage();
+}
+
+function showAssistModal(scorerNum, scorerName, goalType, goalZone, fieldZone, goalTimestamp) {
+    const assistModal = document.getElementById('assistModal');
+    const assistPlayerSelect = document.getElementById('assistPlayerSelect');
+    
+    // Netejar opcions anteriors
+    assistPlayerSelect.innerHTML = '<option value="">-- Sense assistència --</option>';
+    
+    // Afegir només jugadors dins l'aigua (excepte el que ha marcat)
+    playersInWater.forEach(num => {
+        if (num != scorerNum) {  // Diferent del que marca
+            const jugador = players.find(p => p.num == num);
+            if (jugador) {
+                const option = document.createElement('option');
+                option.value = num;
+                option.textContent = `${num}. ${jugador.name}`;
+                assistPlayerSelect.appendChild(option);
+            }
+        }
+    });
+    
+    assistModal.style.display = 'flex'; // Mostrar modal
+    
+    // Guardar les dades del gol per usar-les després
+    assistModal.dataset.scorerNum = scorerNum;
+assistModal.dataset.scorerName = scorerName;
+assistModal.dataset.goalType = goalType;
+assistModal.dataset.goalZone = goalZone;
+assistModal.dataset.fieldZone = fieldZone;
+assistModal.dataset.goalTimestamp = goalTimestamp;
+}
+function confirmAssist() {
+    const assistModal = document.getElementById('assistModal');
+    const assistPlayerSelect = document.getElementById('assistPlayerSelect');
+    const assistNum = assistPlayerSelect.value;
+    
+    // Recuperar dades del gol
+    const scorerNum = parseInt(assistModal.dataset.scorerNum);
+const scorerName = assistModal.dataset.scorerName;
+const goalType = assistModal.dataset.goalType;
+const goalZone = assistModal.dataset.goalZone;
+const fieldZone = assistModal.dataset.fieldZone;
+const goalTimestamp = parseInt(assistModal.dataset.goalTimestamp);
+    
+    const currentQuarter = getCurrentQuarter();
+    
+    // ✅ Si hi ha assistència, registrar-la PRIMER (2 segons abans del gol)
+    if (assistNum) {
+        const assistPlayer = players.find(p => p.num == assistNum);
+        if (assistPlayer) {
+            chronologicalActions.push({
+                timestamp: goalTimestamp - 2000,  // 2 segons abans del gol
+                quarter: currentQuarter,
+                type: 'action',
+                actionType: 'assistencia',
+                team: 'cnt',
+                playerNum: parseInt(assistNum),
+                playerName: assistPlayer.name
+            });
+            // ✅ INCREMENTAR COMPTADOR D'ASSISTÈNCIES (AFEGEIX AIXÒ)
+        if (!stats[parseInt(assistNum)].assistencies) {
+            stats[parseInt(assistNum)].assistencies = 0;
+        }
+        stats[parseInt(assistNum)].assistencies++;
+            addToHistory({
+                type: 'action',
+                playerNum: parseInt(assistNum),
+                isRival: false,
+                actionType: 'assistencia',
+                text: `${assistPlayer.name}: Assistència`
+            });
+        }
+    }
+    
+    // ✅ ARA SÍ, GUARDAR EL GOL (copia el codi que has comentat abans)
+    if (!stats[scorerNum].goalTypes) {
+        stats[scorerNum].goalTypes = {normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0};
+    }
+    if (!stats[scorerNum].goalZones) {
+    stats[scorerNum].goalZones = {};
+}
+if (!stats[scorerNum].fieldZones) {
+    stats[scorerNum].fieldZones = {};
+}
+
+stats[scorerNum].gols++;
+stats[scorerNum].goalTypes[goalType]++;
+stats[scorerNum].goalZones[goalZone] = (stats[scorerNum].goalZones[goalZone] || 0) + 1;
+stats[scorerNum].fieldZones[fieldZone] = (stats[scorerNum].fieldZones[fieldZone] || 0) + 1;
+    
+    chronologicalActions.push({
+    timestamp: goalTimestamp,
+    quarter: currentQuarter,
+    type: 'goal',
+    goalType: goalType,
+    goalZone: goalZone,
+    fieldZone: fieldZone,
+    team: 'cnt',
+    playerNum: scorerNum,
+    playerName: scorerName
+});
+    
+    document.getElementById(`gols-${scorerNum}`).textContent = stats[scorerNum].gols;
+    
+    const zoneText = (goalZone !== 'unknown') ? ` (${getZoneText(goalZone)})` : '';
+    
+    addToHistory({
+        type: 'gol',
+        playerNum: scorerNum,
+        isRival: false,
+        goalType: goalType,
+        goalZone: goalZone,
+        text: `${scorerName}: Gol ${goalType === 'h+' ? 'H+' : goalType === 'penalty' ? 'Penalty' : goalType === 'contra' ? 'Contra' : goalType === 'boya' ? 'Boya' : 'Normal'}${zoneText}`
+    });
+    
+    renderCompactView();
+    updateScores();
+    updateQuarterInfo();
+    saveToLocalStorage();
+    
+    // Tancar modals
+    assistModal.style.display = 'none';
+    closeGoalModal();
+}
+function getZoneText(zone) {
+    const zones = {
+        'top-left': '⬆️ Esq.',
+        'top-center': '⬆️ Centre',
+        'top-right': '⬆️ Dret',
+        'mid-left': '➡️ Esq.',
+        'mid-center': '🎯 Centre',
+        'mid-right': '⬅️ Dret',
+        'bottom-left': '⬇️ Esq.',
+        'bottom-center': '⬇️ Baix',
+        'bottom-right': '⬇️ Dret',
+        'unknown': '❓'
+    };
+    return zones[zone] || '❓';
+}
+
+let exclusionLongPressTimer;
+let isExclusionLongPress = false;
+
+function handleExclusionPress(playerNum, isRival) {
+    // Si és rival, SEMPRE obrir modal (no fer long press)
+    if (isRival) {
+        return; // No fer res amb long press per rivals
+    }
+    
+    // Per jugadors CNT, mantenir el long press
+    isExclusionLongPress = false;
+    exclusionLongPressTimer = setTimeout(() => {
+        isExclusionLongPress = true;
+        if (navigator.vibrate) navigator.vibrate(50);
+        quickExclusion(playerNum, isRival, 'penalty');
+    }, 500);
+}
+
+function handleExclusionRelease(playerNum, isRival) {
+    // Si és rival, obrir modal sempre
+    if (isRival) {
+        openExclusionModal(playerNum, isRival, 1);
+        return;
+    }
+    
+    // Per jugadors CNT, mantenir el comportament actual
+    clearTimeout(exclusionLongPressTimer);
+    if (!isExclusionLongPress) {
+        quickExclusion(playerNum, isRival, 'normal');
+    }
+}
+
+function quickExclusion(playerNum, isRival, type) {
+    // ✅ No marcar exclusió si s'està fent swipe
+    if(window.isCurrentlyDragging) {
+        return;
+    }
+    
+    const currentQuarter = getCurrentQuarter();
+    const timestamp = Date.now();
+    let playerName = '';
+    
+    if (isRival) {
+        playerName = rivalStats[playerNum].name || `Rival ${playerNum + 1}`;
+        if (!rivalStats[playerNum].exclusionTypes) rivalStats[playerNum].exclusionTypes = {normal: 0, penalty: 0};
+        rivalStats[playerNum].exclusions++;
+        rivalStats[playerNum].exclusionTypes[type]++;
+        
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'exclusion',
+            exclusionType: type,
+            team: 'rival',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+        
+        document.getElementById(`rival-exc-${playerNum}`).textContent = rivalStats[playerNum].exclusions;
+        updateRivalNameColor(playerNum, rivalStats[playerNum].exclusions);
+    } else {
+        const player = players.find(p => p.num === playerNum);
+        playerName = player ? player.name : `Jugador ${playerNum}`;
+        if (!stats[playerNum].exclusionTypes) stats[playerNum].exclusionTypes = {normal: 0, penalty: 0};
+        stats[playerNum].exclusions++;
+        stats[playerNum].exclusionTypes[type]++;
+        
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'exclusion',
+            exclusionType: type,
+            team: 'cnt',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+        
+        document.getElementById(`exc-${playerNum}`).textContent = stats[playerNum].exclusions;
+        updatePlayerNameColor(playerNum, stats[playerNum].exclusions);
+    }
+    
+    addToHistory({
+        type: 'exclusion',
+        playerNum: playerNum,
+        isRival: isRival,
+        exclusionType: type,
+        text: `${playerName}: ${type === 'penalty' ? 'Exclusió Penalty' : 'Exclusió'}`
+    });
+    
+    renderCompactView();
+    updateScores();
+    showSuperioritatIndicator();
+    saveToLocalStorage();
+}
+function openExclusionModal(n,isR,inc){
+    // ✅ No obrir modal si s'està fent swipe
+	console.log('🔴 openExclusionModal cridat:', {n, isR, inc, playersInWater});
+    if(window.isCurrentlyDragging){
+        return;
+    }
+    
+    if(inc<0){
+        if(isR){updateRivalExclusion(n,inc)}
+        else{updateExclusion(n,inc)}
+        return
+    }
+    currentExclusionContext={playerNum:n,isRival:isR};
+    
+    const selectorDiv = document.getElementById('cntPlayerSelector');
+    const select = document.getElementById('cntPlayerSelect');
+    
+    if(isR){
+        // ✅ Només mostrar jugadors que estan a l'aigua
+        const playersInWaterArray = Array.from(playersInWater);
+        const playersInWaterFiltered = players.filter(p => playersInWaterArray.includes(p.num));
+        
+        select.innerHTML = '<option value="">Sense especificar</option>' + 
+            playersInWaterFiltered.map(p => `<option value="${p.num}">${p.num}. ${p.name}</option>`).join('');
+        selectorDiv.style.display = 'block';
+    } else {
+        selectorDiv.style.display = 'none';
+    }
+    
+    document.getElementById('exclusionModal').classList.add('show');
+}
+function selectExclusionType(t){
+    if(!currentExclusionContext)return;
+    const{playerNum,isRival}=currentExclusionContext;
+    
+    // Obtenir el jugador del CNT al que li han fet la falta (només si és exclusió rival)
+    const faltaSobreJugador = isRival ? (document.getElementById('cntPlayerSelect')?.value || null) : null;
+    
+    let playerName='';
+    const currentQuarter=getCurrentQuarter();
+    const timestamp=Date.now();
+    
+    if(isRival){
+        playerName=rivalStats[playerNum].name||`Rival ${playerNum+1}`;
+        if(!rivalStats[playerNum].exclusionTypes)rivalStats[playerNum].exclusionTypes={normal:0,penalty:0};
+        rivalStats[playerNum].exclusions++;
+        rivalStats[playerNum].exclusionTypes[t]++;
+        
+        // Guardar falta rebuda pel jugador CNT
+        if(faltaSobreJugador){
+            if(!stats[faltaSobreJugador].faltesRebudes) stats[faltaSobreJugador].faltesRebudes = 0;
+            stats[faltaSobreJugador].faltesRebudes++;
+        }
+        
+        chronologicalActions.push({
+            timestamp:timestamp,
+            quarter:currentQuarter,
+            type:'exclusion',
+            exclusionType:t,
+            team:'rival',
+            playerNum:playerNum,
+            playerName:playerName,
+            faltaSobreJugador: faltaSobreJugador  // Jugador del CNT que ha rebut la falta
+        });
+        document.getElementById(`rival-exc-${playerNum}`).textContent=rivalStats[playerNum].exclusions;
+        updateRivalNameColor(playerNum,rivalStats[playerNum].exclusions);
+        if(compactMode)renderCompactView();
+        else renderCompactView()
+    }else{
+        const player=players.find(p=>p.num===playerNum);
+        playerName=player?player.name:`Jugador ${playerNum}`;
+        if(!stats[playerNum].exclusionTypes)stats[playerNum].exclusionTypes={normal:0,penalty:0};
+        stats[playerNum].exclusions++;
+        stats[playerNum].exclusionTypes[t]++;
+        chronologicalActions.push({
+            timestamp:timestamp,
+            quarter:currentQuarter,
+            type:'exclusion',
+            exclusionType:t,
+            team:'cnt',
+            playerNum:playerNum,
+            playerName:playerName
+        });
+        document.getElementById(`exc-${playerNum}`).textContent=stats[playerNum].exclusions;
+        updatePlayerNameColor(playerNum,stats[playerNum].exclusions);
+        if(compactMode)renderCompactView();
+        else renderCompactView()
+    }
+    
+    // Construir el text amb info de la falta
+let historyText = `${playerName}: ${t==='penalty'?'Exclusió Penalty':'Exclusió'}`;
+if(isRival && faltaSobreJugador){
+    const cntPlayer = players.find(p => p.num == faltaSobreJugador);
+    if(cntPlayer){
+        historyText += ` (sobre ${cntPlayer.name.split(' ')[0]})`;
+    }
+}
+
+addToHistory({
+    type:'exclusion',
+    playerNum:playerNum,
+    isRival:isRival,
+    exclusionType:t,
+    faltaSobreJugador: faltaSobreJugador,
+    text: historyText
+});
+    updateScores();
+	showSuperioritatIndicator();
+    saveToLocalStorage();
+    closeExclusionModal();
+}
+function updateExclusion(n,inc){
+    // ✅ No fer res si s'està fent swipe
+    if(window.isCurrentlyDragging){
+        return;
+    }
+    
+    stats[n].exclusions=Math.max(0,stats[n].exclusions+inc);
+    if(inc<0){
+        const e=stats[n].exclusionTypes;
+        const ts=['penalty','normal'];
+        for(let t of ts){
+            if(e[t]>0){
+                e[t]--;
+                break
+            }
+        }
+        renderCompactView()
+    }
+    document.getElementById(`exc-${n}`).textContent=stats[n].exclusions;
+    updatePlayerNameColor(n,stats[n].exclusions);
+    saveToLocalStorage()
+}
+function updateRivalExclusion(i,inc){rivalStats[i].exclusions=Math.max(0,rivalStats[i].exclusions+inc);if(inc<0){const e=rivalStats[i].exclusionTypes;const ts=['penalty','normal'];for(let t of ts){if(e[t]>0){e[t]--;break}}renderCompactView()}document.getElementById(`rival-exc-${i}`).textContent=rivalStats[i].exclusions;updateRivalNameColor(i,rivalStats[i].exclusions);saveToLocalStorage()}
+function closeExclusionModal(){document.getElementById('exclusionModal').classList.remove('show');currentExclusionContext=null}
+function renderCompactView(){
+    console.log('🔄 RENDERITZANT VISTA NORMAL');
+    console.log('Parades jugador 1:', stats[1]?.parades);
+    
+    const c=document.getElementById('playersList');
+    c.className='players-grid';
+    c.innerHTML=players.map(p=>{
+        const exc=stats[p.num]?.exclusions||0;
+        const gols=stats[p.num]?.gols||0;
+        const parades=stats[p.num]?.parades||0;
+        const totalActions=getTotalActions(p.num);
+        
+        let excC='';
+        if(exc===1)excC='exc-1';
+        else if(exc===2)excC='exc-2';
+        else if(exc>=3)excC='exc-3';
+        const isInWater=playersInWater.has(p.num);
+        const isGoalkeeper = p.num === 1 || p.num === 13;
+        
+        return `<div class="player-card" style="padding:2px;">
+            <div style="display:flex;align-items:center;gap:1px;margin-bottom:2px;">
+                <div class="player-number ${isInWater?'active-player':''}" style="width:14px;height:14px;font-size:7px;">${p.num}</div>
+                <input type="text" class="player-name-input ${excC}" value="${p.name}" onchange="updatePlayerName(${p.num},this.value)" style="flex:1;font-size:5px;padding:1px;">
+            </div>
+            <div style="display:flex;gap:0px;width:100%;">
+                ${isGoalkeeper ? `
+                    <button onclick="openSaveModal(${p.num}, 1)" style="flex:1;padding:3px 0;background:#8b5cf6;color:white;border:none;border-radius:2px;font-size:7px;font-weight:bold;min-width:0;line-height:1.2;"><span id="parades-${p.num}">${parades}</span><br>🧤</button>
+                ` : `
+                    <button onclick="openGoalModal(${p.num},false,1)" style="flex:1;padding:3px 0;background:#22c55e;color:white;border:none;border-radius:2px;font-size:7px;font-weight:bold;min-width:0;line-height:1.2;"><span id="gols-${p.num}">${gols}</span><br>⚽</button>
+                `}
+                <button onclick="openExclusionModal(${p.num},false,1)" style="flex:1;padding:3px 0;background:#ef4444;color:white;border:none;border-radius:2px;font-size:7px;font-weight:bold;min-width:0;line-height:1.2;"><span id="exc-${p.num}">${exc}</span><br>🟥</button>
+                <button onclick="openActionModal(${p.num},1)" style="flex:1;padding:3px 0;background:#3b82f6;color:white;border:none;border-radius:2px;font-size:7px;font-weight:bold;min-width:0;line-height:1.2;"><span id="actions-${p.num}">${totalActions}</span><br>📊</button>
+                <button onclick="togglePlayerWaterStatus(${p.num})" style="flex:1;padding:3px 0;background:${isInWater?'#14b8a6':'#a855f7'};color:white;border:none;border-radius:2px;font-size:5px;font-weight:bold;min-width:0;line-height:1.2;">${isInWater?'DINS':'FORA'}<br>💧</button>
+            </div>
+        </div>`;
+    }).join('');
+    setTimeout(checkPlayersInWater,100);
+}
+
+function renderLineups(){
+    const c=document.getElementById('lineupsContainer');
+	
+	console.log('=== renderLineups DEBUG ===');
+    console.log('quarterStartTimes:', quarterStartTimes);
+    console.log('quarterRealEndTimes:', quarterRealEndTimes);
+	
+    c.innerHTML=['q1','q2','q3','q4'].map((q,i)=>{
+        const isComplete = lineups[q].length === 7;
+        const isStarted = quarterStartTimes[q] !== null;
+        const isEnded = quarterRealEndTimes[q] !== null;
+        console.log(`${q}: isComplete=${isComplete}, isStarted=${isStarted}, isEnded=${isEnded}`);
+        console.log(`  quarterStartTimes[${q}] =`, quarterStartTimes[q]);
+        console.log(`  quarterRealEndTimes[${q}] =`, quarterRealEndTimes[q]);
+        return `<div class="card">
+            <h2>${i+1}º Cuarto - 7 Titulares</h2>
+            
+           ${!isStarted && isComplete ? `
+    <div style="margin-bottom: 12px;">
+        <h3 style="font-size: 14px; color: #0891b2; margin-bottom: 8px; text-align: center;">
+            🏊 Qui guanya la primera cursa?
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="btn btn-green" onclick="winSwim('${q}', true)" style="padding: 12px;">
+                🟢 CNT guanya
+            </button>
+            <button class="btn btn-red" onclick="winSwim('${q}', false)" style="padding: 12px;">
+                🔴 Rival guanya
+            </button>
+        </div>
+    </div>
+` : ''}
+            
+            ${isStarted && !isEnded ? `
+                <div style="background: rgba(34, 197, 94, 0.3); border: 1px solid #22c55e; padding: 8px; border-radius: 8px; margin-bottom: 12px; text-align: center;">
+                    <div style="font-size: 12px; font-weight: bold; color: #22c55e;">⏱️ Cuarto en curso</div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">
+                        Començat a ${new Date(quarterStartTimes[q]).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div class="lineup-counter">
+    ${(() => {
+        const quarters = ['q1', 'q2', 'q3', 'q4'];
+        const currentIndex = quarters.indexOf(q);
+        if (currentIndex > 0 && quarterRealEndTimes[quarters[currentIndex - 1]] === null) {
+            return `🔒 Bloquejat - Finalitza el ${currentIndex}º quart primer`;
+        }
+        return `${lineups[q].length}/7 seleccionados`;
+    })()}
+</div>
+
+${(() => {
+    const quarters = ['q1', 'q2', 'q3', 'q4'];
+    const currentIndex = quarters.indexOf(q);
+    const previousQuarter = currentIndex > 0 ? quarters[currentIndex - 1] : null;
+    const canCopy = previousQuarter && 
+                    quarterRealEndTimes[previousQuarter] !== null && 
+                    !isStarted && 
+                    lineups[q].length < 7;
+    
+    if (canCopy) {
+        return `
+            <button class="btn btn-blue" onclick="copyPreviousLineup('${q}')" 
+                    style="width: 100%; padding: 10px; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                📋 Copiar alineació del ${currentIndex}º quart
+            </button>
+        `;
+    }
+    return '';
+})()}
+            <div class="lineup-grid">
+               ${players.map(p=>{
+    const quarters = ['q1', 'q2', 'q3', 'q4'];
+    const currentIndex = quarters.indexOf(q);
+    const isPreviousQuarterEnded = currentIndex === 0 || quarterRealEndTimes[quarters[currentIndex - 1]] !== null;
+    const isDisabled = isStarted || !isPreviousQuarterEnded;
+    
+    return `<button class="btn lineup-btn ${lineups[q].includes(p.num)?'selected':''}" 
+                    onclick="toggleLineup('${q}',${p.num})" 
+                    ${isDisabled ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                ${p.num}. ${p.name.split(' ')[0]}
+            </button>`;
+}).join('')}
+            </div>
+            
+            ${isStarted && !isEnded ? `
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 2px solid rgba(255,255,255,0.2);">
+                    <button class="btn btn-red" onclick="endQuarter('${q}')" style="width: 100%; padding: 12px; font-size: 14px;">
+                        ⏹️ Finalitzar ${i+1}º Cuarto
+                    </button>
+                    <p style="font-size: 10px; color: #64748b; margin-top: 8px; text-align: center;">
+                        Prem aquest botó quan acabi el quart
+                    </p>
+                </div>
+            ` : ''}
+            
+           ${isStarted && isEnded ? `
+    <div style="background: rgba(34, 211, 238, 0.3); border: 1px solid #0891b2; padding: 10px; border-radius: 8px; margin-top: 12px; text-align: center;">
+        <div style="font-size: 14px; font-weight: bold; color: #0891b2;">✅ Cuarto Finalitzat</div>
+        <div style="font-size: 10px; color: #64748b; margin-top: 4px;">
+            ${new Date(quarterStartTimes[q]).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(quarterRealEndTimes[q]).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <button class="btn" onclick="undoEndQuarter('${q}')" style="margin-top: 8px; padding: 6px 12px; font-size: 11px; background: rgba(251, 191, 36, 0.8); color: #000;">
+            ↩️ Reobrir quart
+        </button>
+    </div>
+` : ''}
+        </div>`;
+    }).join('');
+}
+function winSwim(quarter, cntWins) {
+    // Sempre mostrar el modal per seleccionar jugador
+    showSwimWinnerModal(quarter, cntWins);
+}
+
+function showSwimWinnerModal(quarter, cntWins) {
+    const modal = document.getElementById('penaltyMissedModal');
+    const content = document.getElementById('penaltyModalContent');
+    
+    const titulars = lineups[quarter];
+    
+    content.innerHTML = `
+        <div class="modal-title">🏊 Qui ha anat a la cursa?</div>
+        <div style="background: ${cntWins ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 8px; border-radius: 6px; margin-bottom: 12px; text-align: center;">
+            <span style="font-size: 14px; font-weight: bold; color: ${cntWins ? '#22c55e' : '#ef4444'};">
+                ${cntWins ? '✅ CNT guanya la cursa' : '❌ CNT perd la cursa'}
+            </span>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                ${titulars.map(num => {
+                    const player = players.find(p => p.num === num);
+                    return `
+                        <button class="modal-btn" onclick="selectSwimWinner('${quarter}', ${num}, ${cntWins})">
+                            ${num}. ${player ? player.name.split(' ')[0] : 'Jugador'}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        <button class="btn btn-red" style="width: 100%;" onclick="closePenaltyMissedModal()">
+            Cancel·lar
+        </button>
+    `;
+    
+    modal.classList.add('show');
+}
+
+function selectSwimWinner(quarter, playerNum, cntWins) {
+    registerSwimResult(quarter, playerNum, cntWins);
+    startQuarter(quarter);
+    closePenaltyMissedModal();
+}
+
+function registerSwimResult(quarter, playerNum, cntWins) {
+    const timestamp = Date.now();
+    const player = players.find(p => p.num === playerNum);
+    const playerName = player ? player.name : `Jugador ${playerNum}`;
+    
+    const text = cntWins ? 
+        `🏊 Cursa guanyada per ${playerName}` : 
+        `🏊 Cursa perduda per ${playerName}`;
+    
+    chronologicalActions.push({
+        timestamp: timestamp,
+        quarter: quarter,
+        type: 'swim-race',
+        result: cntWins ? 'win' : 'loss',
+        playerNum: playerNum,
+        playerName: playerName,
+        team: 'cnt'
+    });
+    
+    addToHistory({
+        type: 'swim-race',
+        playerNum: playerNum,
+        isRival: false,
+        result: cntWins ? 'win' : 'loss',
+        text: text
+    });
+    
+    saveToLocalStorage();
+}
+function renderPeriodScores(){const c=document.getElementById('periodScores');let h='';['q1','q2','q3','q4'].forEach((q,i)=>{h+=`<div class="period-row"><div class="period-label">${i+1}º Cuarto</div><div class="period-score">${periodScores[q].cnt} - ${periodScores[q].rival}</div></div>`});c.innerHTML=h}
+function updatePlayerName(n,name){const p=players.find(p=>p.num===n);if(p){p.name=name;renderLineups();saveToLocalStorage()}}
+function closeGoalModal(){document.getElementById('goalModal').classList.remove('show');currentGoalContext=null}
+function updateStat(n,stat,inc){stats[n][stat]=Math.max(0,stats[n][stat]+inc);document.getElementById(`${stat==='exclusions'?'exc':'gols'}-${n}`).textContent=stats[n][stat];if(stat==='exclusions')updatePlayerNameColor(n,stats[n][stat]);if(stat==='gols'&&inc<0){const gt=stats[n].goalTypes;const ts=['boya','contra','penalty','h+','normal'];for(let t of ts){if(gt[t]>0){gt[t]--;break}}renderCompactView();}updateScores();if(lineups.q4.length===7)calculateFinalQuarter();saveToLocalStorage()}
+function updateRivalStat(i,stat,inc){rivalStats[i][stat]=Math.max(0,rivalStats[i][stat]+inc);document.getElementById(`rival-${stat==='exclusions'?'exc':'gols'}-${i}`).textContent=rivalStats[i][stat];if(stat==='exclusions')updateRivalNameColor(i,rivalStats[i][stat]);if(stat==='gols'&&inc<0){const gt=rivalStats[i].goalTypes;const ts=['boya','contra','penalty','h+','normal'];for(let t of ts){if(gt[t]>0){gt[t]--;break}}renderCompactView()}updateScores();if(lineups.q4.length===7)calculateFinalQuarter();saveToLocalStorage()}
+function updatePlayerNameColor(n,exc){
+    const p=players.find(p=>p.num===n);
+    if(!p)return;
+    
+    // Actualitzar vista normal
+    const inputs=document.querySelectorAll(`input.player-name-input[value="${p.name}"]`);
+    inputs.forEach(input=>{
+        input.classList.remove('exc-1','exc-2','exc-3');
+        if(exc===1)input.classList.add('exc-1');
+        else if(exc===2)input.classList.add('exc-2');
+        else if(exc>=3)input.classList.add('exc-3');
+    });
+    
+    // Actualitzar vista compacta amb ID específic
+    const compactInput=document.getElementById(`compact-name-${n}`);
+    if(compactInput){
+        compactInput.classList.remove('exc-1','exc-2','exc-3');
+        if(exc===1)compactInput.classList.add('exc-1');
+        else if(exc===2)compactInput.classList.add('exc-2');
+        else if(exc>=3)compactInput.classList.add('exc-3');
+    }
+}
+function updateRivalNameColor(i,exc){const cards=document.querySelectorAll('#rivalPlayersList .player-card');const input=cards[i]?.querySelector('.player-name-input');if(!input)return;input.classList.remove('exc-1','exc-2','exc-3');if(exc===1)input.classList.add('exc-1');else if(exc===2)input.classList.add('exc-2');else if(exc>=3)input.classList.add('exc-3')}
+function updateRivalName(i,name){rivalStats[i].name=name;saveToLocalStorage()}
+function updateTempsMortCNT(inc){tempsMortCNT=Math.max(0,tempsMortCNT+inc);document.getElementById('tempsMortCNT').textContent=tempsMortCNT;saveToLocalStorage()}
+function updateTempsMortRival(inc){tempsMortRival=Math.max(0,tempsMortRival+inc);document.getElementById('tempsMortRival').textContent=tempsMortRival;saveToLocalStorage()}
+function updateRivalTeam(){
+    rivalTeam=document.getElementById('rivalTeamInput').value||'Rival';
+    document.getElementById('rivalTeamLabel').textContent=rivalTeam;
+    
+    // 🔥 RECONECTAR A FIREBASE AMB EL NOU ID!
+    connectToFirebase();
+    
+    saveToLocalStorage();
+}
+function setLocation(loc){matchLocation=loc;document.getElementById('locationHome').classList.remove('selected');document.getElementById('locationAway').classList.remove('selected');document.getElementById('location'+(loc==='home'?'Home':'Away')).classList.add('selected');saveToLocalStorage()}
+function updateScores(){const cs=Object.values(stats).reduce((s,st)=>s+st.gols,0);const rs=rivalStats.reduce((s,p)=>s+p.gols,0);document.getElementById('scoreCNT').textContent=cs;document.getElementById('scoreRival').textContent=rs;updateExclusionsSummary()}
+function toggleLineup(q, n) {
+    // No permetre canvis si el quart ja ha començat
+    if (quarterStartTimes[q] !== null) {
+        alert('❌ No pots canviar l\'alineació després de començar el quart!');
+        return;
+    }
+    // ✅ BLOQUEJAR QUARTS FUTURS: No permetre editar si el quart anterior no s'ha finalitzat
+    const quarters = ['q1', 'q2', 'q3', 'q4'];
+    const currentQuarterIndex = quarters.indexOf(q);
+    
+    if (currentQuarterIndex > 0) {
+        const previousQuarter = quarters[currentQuarterIndex - 1];
+        if (quarterRealEndTimes[previousQuarter] === null) {
+            alert(`❌ Has de finalitzar el ${currentQuarterIndex}º quart abans de configurar el ${currentQuarterIndex + 1}º quart!`);
+            return;
+        }
+    }
+    const l = lineups[q];
+    const i = l.indexOf(n);
+    
+    if (i > -1) {
+        l.splice(i, 1);
+    } else if (l.length < 7) {
+        l.push(n);
+    }
+    
+    if (l.length === 7) {
+        const qs = ['q1', 'q2', 'q3', 'q4'];
+        const ci = qs.indexOf(q);
+        if (ci > 0) {
+            const pq = qs[ci - 1];
+            captureLineupScore(pq);
+        }
+        
+        
+         }
+    
+    renderLineups();
+    saveToLocalStorage();
+}
+function copyPreviousLineup(currentQuarter) {
+    const quarters = ['q1', 'q2', 'q3', 'q4'];
+    const currentIndex = quarters.indexOf(currentQuarter);
+    
+    if (currentIndex === 0) {
+        alert('❌ No hi ha quart anterior per copiar!');
+        return;
+    }
+    
+    const previousQuarter = quarters[currentIndex - 1];
+    const previousLineup = lineups[previousQuarter];
+    
+    if (previousLineup.length !== 7) {
+        alert('❌ L\'alineació del quart anterior no està completa!');
+        return;
+    }
+    
+    // Copiar l'alineació del quart anterior
+    lineups[currentQuarter] = [...previousLineup];
+    
+    renderLineups();
+    saveToLocalStorage();
+    
+    alert(`✅ Alineació copiada del ${currentIndex}º quart!`);
+}
+function resetQuarterTimes(quarter) {
+    if (confirm(`Vols esborrar els temps registrats del ${quarter.toUpperCase()}? Això et permetrà tornar a començar el quart.`)) {
+        quarterStartTimes[quarter] = null;
+        quarterRealEndTimes[quarter] = null;
+        
+        // Esborrar els canvis d'aigua d'aquest quart
+        playerWaterChanges = playerWaterChanges.filter(c => c.quarter !== quarter);
+        
+        // Esborrar les accions cronològiques d'aquest quart
+        chronologicalActions = chronologicalActions.filter(a => a.quarter !== quarter);
+        
+        // Treure tots els jugadors de l'aigua si estem resetejant el quart actual
+        const currentQuarter = getCurrentQuarter();
+        if (quarter === currentQuarter) {
+            playersInWater.clear();
+            renderCompactView();
+            if (compactMode) renderCompactView();
+        }
+        
+        renderLineups();
+        saveToLocalStorage();
+        alert(`✅ Temps del ${quarter.toUpperCase()} esborrats. Ara pots tornar a començar el quart.`);
+    }
+}
+function captureLineupScore(q){const cs=Object.values(stats).reduce((s,st)=>s+st.gols,0);const rs=rivalStats.reduce((s,p)=>s+p.gols,0);const qs=['q1','q2','q3','q4'];const qi=qs.indexOf(q);const pq=qs.slice(0,qi);const pcs=pq.reduce((s,q)=>s+periodScores[q].cnt,0);const prs=pq.reduce((s,q)=>s+periodScores[q].rival,0);periodScores[q].cnt=cs-pcs;periodScores[q].rival=rs-prs;renderPeriodScores()}
+function calculateFinalQuarter(){const cs=Object.values(stats).reduce((s,st)=>s+st.gols,0);const rs=rivalStats.reduce((s,p)=>s+p.gols,0);const pcs=periodScores.q1.cnt+periodScores.q2.cnt+periodScores.q3.cnt;const prs=periodScores.q1.rival+periodScores.q2.rival+periodScores.q3.rival;periodScores.q4.cnt=cs-pcs;periodScores.q4.rival=rs-prs;renderPeriodScores()}
+function showView(v){const views=['statsView','rivalView','lineupsView','configView'];views.forEach(view=>{const element=document.getElementById(view);if(element)element.classList.add('hidden')});const targetView=document.getElementById(v+'View');if(targetView)targetView.classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(event&&event.target)event.target.classList.add('active')}
+function generateMatchData(){observacions=document.getElementById('observacions')?.value||'';return {temporada:SEASON_V2+' '+currentTeam.toUpperCase(),equip:'CN TERRASSA',data:new Date().toISOString(),scoreCNT:Object.values(stats).reduce((sum,s)=>sum+s.gols,0),scoreRival:rivalStats.reduce((sum,p)=>sum+p.gols,0),lineups,periodScores,tempsMortCNT,tempsMortRival,rivalTeam,matchLocation,rivalStats,jugadors:players.map(p=>({numero:p.num,nom:p.name,estadistiques:stats[p.num]})),observacions,chronologicalActions:chronologicalActions||[],quarterStartTimes:quarterStartTimes,playerWaterChanges:playerWaterChanges||[]}}
+function exportData(){const d=generateMatchData();const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;const rivalName=rivalTeam?rivalTeam.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''):'rival';a.download=`cnt_stats_${new Date().toISOString().split('T')[0]}_${rivalName}.json`;a.click();URL.revokeObjectURL(u)}
+function importData(e){const f=e.target.files[0];if(f){const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(d.lineups)lineups=d.lineups;if(d.periodScores)periodScores=d.periodScores;if(d.tempsMortCNT!==undefined){tempsMortCNT=d.tempsMortCNT;document.getElementById('tempsMortCNT').textContent=tempsMortCNT}if(d.tempsMortRival!==undefined){tempsMortRival=d.tempsMortRival;document.getElementById('tempsMortRival').textContent=tempsMortRival}if(d.rivalTeam){rivalTeam=d.rivalTeam;document.getElementById('rivalTeamInput').value=rivalTeam;document.getElementById('rivalTeamLabel').textContent=rivalTeam}if(d.rivalStats)rivalStats=d.rivalStats;if(d.observacions)document.getElementById('observacions').value=d.observacions;if(d.chronologicalActions)chronologicalActions=d.chronologicalActions;else chronologicalActions=[];if(d.playersInWater)playersInWater=new Set(d.playersInWater);else playersInWater=new Set();if(d.quarterStartTimes)quarterStartTimes=d.quarterStartTimes;else quarterStartTimes={q1:null,q2:null,q3:null,q4:null};if(d.playerWaterChanges)playerWaterChanges=d.playerWaterChanges;else playerWaterChanges=[];if(d.jugadors){d.jugadors.forEach(j=>{const p=players.find(p=>p.num===j.numero);if(p)p.name=j.nom;stats[j.numero]=j.estadistiques;if(stats[j.numero].penaltyMissed===undefined)stats[j.numero].penaltyMissed=0})}renderCompactView();renderCompactView();renderLineups();renderPeriodScores();updateScores();alert('Datos importados correctamente')}catch(err){alert('Error al importar el archivo')}};r.readAsText(f)}}
+function resetAll() {
+    if (confirm('¿Seguro que quieres resetear todas las estadísticas?')) {
+        // Resetear jugadores a los predefinidos del CNT
+        players = defaultRoster(currentTeam);
+
+        // Resetear estadísticas de jugadores
+        stats = {};
+        players.forEach(p => {
+            stats[p.num] = {
+                gols: 0,
+                exclusions: 0,
+                penaltyMissed: 0,
+                goalTypes: { normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0 },
+                exclusionTypes: { normal: 0, penalty: 0 },
+                parades: 0,
+                paradeTypes: { corner: 0, rebuig: 0, atrapa: 0, penal: 0 },
+                assistencies: 0,
+                robatoris: 0,
+                perdues: 0,
+                xutsFallats: 0,
+                blocatges: 0,
+                faltesRebudes: 0
+            };
+        });
+
+        // Resetear rival
+        rivalStats = Array(14).fill(null).map((_, i) => ({
+            num: i + 1,
+            name: '',
+            gols: 0,
+            exclusions: 0,
+            penaltyMissed: 0,
+            goalTypes: { normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0 },
+            exclusionTypes: { normal: 0, penalty: 0 }
+        }));
+
+        // Resetear altres dades
+        rivalTeam = 'Rival';
+        matchLocation = 'home';
+        lineups = { q1: [], q2: [], q3: [], q4: [] };
+        periodScores = { q1: { cnt: 0, rival: 0 }, q2: { cnt: 0, rival: 0 }, q3: { cnt: 0, rival: 0 }, q4: { cnt: 0, rival: 0 } };
+        tempsMortCNT = 0;
+        tempsMortRival = 0;
+        actionsHistory = [];
+        chronologicalActions = [];
+        playersInWater = new Set();
+        quarterStartTimes = { q1: null, q2: null, q3: null, q4: null };
+        playerWaterChanges = [];
+		
+		// ⭐ AFEGIR AQUESTES LÍNIES PER NETEJAR ELS TEMPS:
+        quarterStartTimes={q1:null,q2:null,q3:null,q4:null};
+        quarterRealEndTimes={q1:null,q2:null,q3:null,q4:null};
+        playerWaterChanges=[];
+        playersInWater.clear();
+
+        // Actualitzar interfície
+        document.getElementById('rivalTeamInput').value = 'Rival';
+        document.getElementById('rivalTeamLabel').textContent = 'Rival';
+        document.getElementById('tempsMortCNT').textContent = '0';
+        document.getElementById('tempsMortRival').textContent = '0';
+        document.getElementById('observacions').value = '';
+        
+        compactMode = true;
+        renderCompactView();
+        renderLineups();
+        renderPeriodScores();
+        renderHistory();
+        updateScores();
+
+        saveToLocalStorage();
+        alert('Estadísticas reseteadas correctamente. Jugadores del CNT restaurados.');
+    }
+}
+function addToHistory(action){actionsHistory.unshift(action);if(actionsHistory.length>10)actionsHistory.pop();renderHistory();saveToLocalStorage()}
+function renderHistory(){
+    const container=document.getElementById('actionsList');
+    if(!container)return;
+    if(actionsHistory.length===0){
+        container.innerHTML='<div style="font-size: 9px; color: #94a3b8; padding: 6px;">No hay acciones recientes</div>';
+        return;
+    }
+    container.innerHTML=actionsHistory.map((action,index)=>{
+        let icon = '⚽';
+        if (action.type === 'gol') icon = '⚽';
+        else if (action.type === 'exclusion') icon = '🟥';
+        else if (action.type === 'water-change') {
+            icon = action.action === 'in' ? '🌊➡️' : '🌊⬅️';
+        } else if (action.type === 'save') {
+            icon = '🧤';
+        } else if (action.type === 'action') {
+            icon = '📊';
+        } else if (action.type === 'swim-race') {
+            // ✅ AFEGIR AQUEST BLOC:
+            icon = action.result === 'win' ? '🏊✅' : '🏊❌';
+        } else {
+            icon = '⏱️';
+        }
+        
+        return `<div class="action-item"><span class="action-icon">${icon}</span><span>${action.text}</span><button class="undo-btn" onclick="undoAction(${index})">↩️ Deshacer</button></div>`;
+    }).join('');
+}
+function undoAction(index){
+    const action=actionsHistory[index];
+    if(!action)return;
+    
+    if (action.type === 'gol') {
+    if (action.isRival) {
+        rivalStats[action.playerNum].gols--;
+        if (rivalStats[action.playerNum].goalTypes && rivalStats[action.playerNum].goalTypes[action.goalType]) {
+            rivalStats[action.playerNum].goalTypes[action.goalType]--;
+        }
+        // NUEVO: Restar zona també pels rivals
+        if (action.goalZone && rivalStats[action.playerNum].goalZones) {
+            rivalStats[action.playerNum].goalZones[action.goalZone]--;
+        }
+        renderCompactView();
+    } else {
+        stats[action.playerNum].gols--;
+        if (stats[action.playerNum].goalTypes && stats[action.playerNum].goalTypes[action.goalType]) {
+            stats[action.playerNum].goalTypes[action.goalType]--;
+        }
+        // Només restem zona si existeix
+        if (action.goalZone && stats[action.playerNum].goalZones) {
+            stats[action.playerNum].goalZones[action.goalZone]--;
+        }
+        renderCompactView();
+    }
+
+    } else if(action.type==='exclusion'){
+        if(action.isRival){
+            rivalStats[action.playerNum].exclusions--;
+            if(rivalStats[action.playerNum].exclusionTypes&&rivalStats[action.playerNum].exclusionTypes[action.exclusionType]){
+                rivalStats[action.playerNum].exclusionTypes[action.exclusionType]--;
+            }
+            updateRivalNameColor(action.playerNum,rivalStats[action.playerNum].exclusions);
+            renderCompactView();
+        }else{
+            stats[action.playerNum].exclusions--;
+            if(stats[action.playerNum].exclusionTypes&&stats[action.playerNum].exclusionTypes[action.exclusionType]){
+                stats[action.playerNum].exclusionTypes[action.exclusionType]--;
+            }
+            updatePlayerNameColor(action.playerNum,stats[action.playerNum].exclusions);
+            renderCompactView();
+        }
+    } else if(action.type === 'water-change'){
+        // Desfer canvi d'aigua
+        if(action.action === 'in'){
+            playersInWater.delete(action.playerNum);
+        } else {
+            playersInWater.add(action.playerNum);
+        }
+        
+        // Eliminar l'últim canvi de playerWaterChanges
+        const lastChangeIndex = playerWaterChanges.map((c, i) => ({...c, index: i}))
+            .reverse()
+            .find(c => c.playerNum === action.playerNum && c.action === action.action);
+        
+        if(lastChangeIndex){
+            playerWaterChanges.splice(lastChangeIndex.index, 1);
+        }
+        
+        // Eliminar de chronologicalActions
+        const lastChronIndex = chronologicalActions.map((a, i) => ({...a, index: i}))
+            .reverse()
+            .find(a => a.type === 'water-change' && 
+                      a.playerNum === action.playerNum && 
+                      a.action === action.action);
+        
+        if(lastChronIndex){
+            chronologicalActions.splice(lastChronIndex.index, 1);
+        }
+        
+        renderCompactView();
+        if(compactMode) renderCompactView();
+    } else if(action.type === 'save'){
+        stats[action.playerNum].parades--;
+        if(stats[action.playerNum].paradeTypes && stats[action.playerNum].paradeTypes[action.saveType]){
+            stats[action.playerNum].paradeTypes[action.saveType]--;
+        }
+        renderCompactView();
+        if(compactMode) renderCompactView();
+    } else if(action.type === 'action'){
+        const type = action.actionType;
+        if (type === 'assistencia' && stats[action.playerNum].assistencies > 0) {
+            stats[action.playerNum].assistencies--;
+        } else if (type === 'robatori' && stats[action.playerNum].robatoris > 0) {
+            stats[action.playerNum].robatoris--;
+        } else if (type === 'perdua' && stats[action.playerNum].perdues > 0) {
+            stats[action.playerNum].perdues--;
+        } else if (type === 'xut' && stats[action.playerNum].xutsFallats > 0) {
+            stats[action.playerNum].xutsFallats--;
+        } else if (type === 'block' && stats[action.playerNum].blocks > 0) {
+            stats[action.playerNum].blocks--;
+        } else if (type === 'contrafalta' && stats[action.playerNum].contrafaltes > 0) {
+			stats[action.playerNum].contrafaltes--;
+		} else if (type === '2metres' && stats[action.playerNum].infraccions2m > 0) {
+			stats[action.playerNum].infraccions2m--;
+		}
+        renderCompactView();
+        if(compactMode) renderCompactView();
+    }
+    
+    actionsHistory.splice(index,1);
+    updateScores();
+    updateQuarterInfo();
+    renderHistory();
+    
+    if(action.type==='gol'){
+        const lastGoalIndex=chronologicalActions.map((a,i)=>({...a,index:i})).reverse().find(a=>a.type==='goal'&&a.team===(action.isRival?'rival':'cnt')&&a.playerNum===action.playerNum&&a.goalType===action.goalType);
+        if(lastGoalIndex){
+            chronologicalActions.splice(lastGoalIndex.index,1);
+        }
+    } else if(action.type==='exclusion'){
+        const lastExcIndex=chronologicalActions.map((a,i)=>({...a,index:i})).reverse().find(a=>a.type==='exclusion'&&a.team===(action.isRival?'rival':'cnt')&&a.playerNum===action.playerNum&&a.exclusionType===action.exclusionType);
+        if(lastExcIndex){
+            chronologicalActions.splice(lastExcIndex.index,1);
+        }
+    } else if(action.type==='save'){
+        const lastSaveIndex=chronologicalActions.map((a,i)=>({...a,index:i})).reverse().find(a=>a.type==='save'&&a.playerNum===action.playerNum&&a.saveType===action.saveType);
+        if(lastSaveIndex){
+            chronologicalActions.splice(lastSaveIndex.index,1);
+        }
+    } else if(action.type==='action'){
+        const lastActionIndex=chronologicalActions.map((a,i)=>({...a,index:i})).reverse().find(a=>a.type==='action'&&a.playerNum===action.playerNum&&a.actionType===action.actionType);
+        if(lastActionIndex){
+            chronologicalActions.splice(lastActionIndex.index,1);
+        }
+    }
+    
+    saveToLocalStorage();
+}
+function clearHistory(){if(confirm('¿Limpiar el historial de acciones?')){actionsHistory=[];renderHistory();saveToLocalStorage()}}
+function updateQuarterInfo(){const container=document.getElementById('quarterInfo');if(!container)return;const currentQuarter=getCurrentQuarter();const qNum=currentQuarter==='q1'?'1':currentQuarter==='q2'?'2':currentQuarter==='q3'?'3':'4';const totalCNT=Object.values(stats).reduce((s,st)=>s+st.gols,0);const totalRival=rivalStats.reduce((s,p)=>s+p.gols,0);const quarters=['q1','q2','q3','q4'];const currentIndex=quarters.indexOf(currentQuarter);let previousCNT=0;let previousRival=0;for(let i=0;i<currentIndex;i++){previousCNT+=periodScores[quarters[i]].cnt;previousRival+=periodScores[quarters[i]].rival}const qScoreCNT=totalCNT-previousCNT;const qScoreRival=totalRival-previousRival;container.textContent=`Q${qNum}: ${qScoreCNT}-${qScoreRival}`}
+function getCurrentQuarter(){if(lineups.q4.length===7)return 'q4';if(lineups.q3.length===7)return 'q3';if(lineups.q2.length===7)return 'q2';return 'q1'}
+function renderCompactView(){
+    console.log('🔄 RENDERITZANT VISTA COMPACTA');
+    console.log('Parades jugador 1:', stats[1]?.parades);
+    
+    const cntContainer=document.getElementById('playersList');
+    const rivalContainer=document.getElementById('rivalPlayersList');
+    cntContainer.className='compact-grid';
+    rivalContainer.className='compact-grid';
+    
+    // ✅ JUGADORS CNT AMB LONG-PRESS PER EXCLUSIONS
+    cntContainer.innerHTML=players.map(p=>{
+        const gols=stats[p.num]?.gols||0;
+        const parades=stats[p.num]?.parades||0;
+        const exc=stats[p.num]?.exclusions||0;
+        const totalActions=getTotalActions(p.num);
+        const isInWater=playersInWater.has(p.num);
+        const isGoalkeeper = p.num === 1 || p.num === 13;
+        
+        let excClass='';
+        if(exc===1)excClass='exc-1';
+        else if(exc===2)excClass='exc-2';
+        else if(exc>=3)excClass='exc-3';
+        
+        return `<div class="compact-player" style="padding:2px;width:100%;box-sizing:border-box;">
+            <div style="display:flex;align-items:center;gap:2px;margin-bottom:2px;">
+                <div class="player-number ${isInWater?'active-player':''} ${exc===1?'exc-1':exc===2?'exc-2':exc>=3?'exc-3':''}" style="width:16px;height:16px;font-size:8px;">${p.num}</div>
+                <input type="text" class="compact-name player-name-input ${excClass}" id="compact-name-${p.num}" value="${p.name}" onchange="updatePlayerName(${p.num},this.value)" style="flex:1;font-size:7px;padding:2px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);">
+            </div>
+            ${easyMode ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%;box-sizing:border-box;"><button onclick="quickGoal(${p.num},false)" style="padding:8px 1px;background:#22c55e;color:white;border:none;border-radius:4px;font-size:9px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;"><span id="gols-${p.num}" style="font-size:15px;line-height:1;">${gols}</span><span style="font-size:11px;">⚽</span></button><button ontouchstart="handleExclusionPress(${p.num}, false); return false;" ontouchend="handleExclusionRelease(${p.num}, false); return false;" onmousedown="handleExclusionPress(${p.num}, false); return false;" onmouseup="handleExclusionRelease(${p.num}, false); return false;" style="padding:8px 1px;background:#ef4444;color:white;border:none;border-radius:4px;font-size:9px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;"><span id="exc-${p.num}" style="font-size:15px;line-height:1;">${exc}</span><span style="font-size:11px;">🟥</span></button></div>` : `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;width:100%;box-sizing:border-box;">
+                ${isGoalkeeper ? `
+                    <button onclick="openSaveModal(${p.num},1)" style="padding:4px 1px;background:#8b5cf6;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+                        <span id="parades-${p.num}" style="font-size:11px;line-height:1;">${parades}</span>
+                        <span style="font-size:9px;">🧤</span>
+                    </button>
+                ` : `
+                    <button onclick="openGoalModal(${p.num},false,1)" style="padding:4px 1px;background:#22c55e;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+                        <span id="gols-${p.num}" style="font-size:11px;line-height:1;">${gols}</span>
+                        <span style="font-size:9px;">⚽</span>
+                    </button>
+                `}
+                <button 
+                    ontouchstart="handleExclusionPress(${p.num}, false); return false;" 
+                    ontouchend="handleExclusionRelease(${p.num}, false); return false;"
+                    onmousedown="handleExclusionPress(${p.num}, false); return false;"
+                    onmouseup="handleExclusionRelease(${p.num}, false); return false;"
+                    style="padding:4px 1px;background:#ef4444;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+                    <span id="exc-${p.num}" style="font-size:11px;line-height:1;">${exc}</span>
+                    <span style="font-size:9px;">🟥</span>
+                </button>
+                <button onclick="openActionModal(${p.num},1)" style="padding:4px 1px;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+                    <span id="actions-${p.num}" style="font-size:11px;line-height:1;">${totalActions}</span>
+                    <span style="font-size:9px;">📊</span>
+                </button>
+                <button onclick="togglePlayerWaterStatus(${p.num})" style="padding:4px 1px;background:${isInWater?'#14b8a6':'#a855f7'};color:white;border:none;border-radius:4px;font-size:6px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+                    <span style="font-size:7px;line-height:1;">${isInWater?'DINS':'FORA'}</span>
+                    <span style="font-size:9px;">💧</span>
+                </button>
+            </div>`}
+        </div>`;
+    }).join('');
+    
+    // ✅ JUGADORS RIVAL AMB LONG-PRESS PER EXCLUSIONS
+   rivalContainer.innerHTML=rivalStats.map((p,i)=>{
+    const gols=p.gols||0;
+    const exc=p.exclusions||0;
+    let excClass='';
+    if(exc===1)excClass='exc-1';
+    else if(exc===2)excClass='exc-2';
+    else if(exc>=3)excClass='exc-3';
+    
+    return `<div class="compact-player" style="padding:2px;display:flex;flex-direction:column;width:100%;box-sizing:border-box;">
+    <div style="display:flex;align-items:center;gap:2px;margin-bottom:2px;">
+        <div class="player-number rival ${exc===1?'exc-1':exc===2?'exc-2':exc>=3?'exc-3':''}" style="width:16px;height:16px;font-size:8px;flex-shrink:0;">${p.num}</div>
+        <input type="text" class="compact-name player-name-input ${excClass}" id="compact-rival-name-${i}" value="${p.name}" onchange="updateRivalName(${i},this.value)" placeholder="Rival ${p.num}" style="flex:1;font-size:7px;padding:2px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);">
+    </div>
+    <div style="display:flex;gap:2px;width:100%;">
+        <button onclick="${easyMode?`quickGoal(${i},true)`:`openGoalModal(${i},true,1)`}" style="flex:1;padding:4px 1px;background:#22c55e;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+            <span id="rival-gols-${i}" style="font-size:11px;line-height:1;">${gols}</span>
+            <span style="font-size:9px;">⚽</span>
+        </button>
+        <button 
+            ontouchstart="handleExclusionPress(${i}, true); return false;" 
+            ontouchend="handleExclusionRelease(${i}, true); return false;"
+            onmousedown="handleExclusionPress(${i}, true); return false;"
+            onmouseup="handleExclusionRelease(${i}, true); return false;"
+            style="flex:1;padding:4px 1px;background:#ef4444;color:white;border:none;border-radius:4px;font-size:8px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:0;">
+            <span id="rival-exc-${i}" style="font-size:11px;line-height:1;">${exc}</span>
+            <span style="font-size:9px;">🟥</span>
+        </button>
+    </div>
+</div>`;
+}).join('');
+    
+    setTimeout(checkPlayersInWater,100);
+}
+function saveGithubConfig(){githubConfig.token=document.getElementById('githubToken').value;localStorage.setItem(('githubConfig_'+currentTeam),JSON.stringify(githubConfig));updateGithubStatus()}
+function loadGithubConfig(){const saved=localStorage.getItem(('githubConfig_'+currentTeam));if(saved){githubConfig=JSON.parse(saved);if(document.getElementById('githubToken')){document.getElementById('githubToken').value=githubConfig.token;document.getElementById('githubRepo').value=githubConfig.repo;document.getElementById('githubBranch').value=githubConfig.branch}}}
+function updateGithubStatus(){const statusDiv=document.getElementById('githubStatus');if(!statusDiv)return;if(!githubConfig.token){statusDiv.innerHTML='<div class="github-status warning">⚠️ Token de GitHub no configurado</div>'}else{statusDiv.innerHTML='<div class="github-status success">✓ Configuración guardada</div>'}}
+async function testGithubConnection(){const statusDiv=document.getElementById('githubStatus');if(!githubConfig.token){statusDiv.innerHTML='<div class="github-status error">❌ Configura primero el token</div>';return}statusDiv.innerHTML='<div class="github-status">🔄 Probando conexión...</div>';try{const[owner,repo]=githubConfig.repo.split('/');const response=await fetch(`https://api.github.com/repos/${owner}/${repo}`,{headers:{'Authorization':`token ${githubConfig.token}`,'Accept':'application/vnd.github.v3+json'}});if(response.ok){statusDiv.innerHTML='<div class="github-status success">✓ Conexión exitosa</div>'}else{statusDiv.innerHTML='<div class="github-status error">❌ Error: Verifica token y repositorio</div>'}}catch(error){statusDiv.innerHTML='<div class="github-status error">❌ Error de conexión</div>'}}
+async function uploadToGithub(){if(!githubConfig.token){alert('Configura primero el token de GitHub en la pestaña Config');return}const data=generateMatchData();const rivalName=rivalTeam?rivalTeam.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''):'rival';const fileName=`cnt_stats_${new Date().toISOString().split('T')[0]}_${rivalName}.json`;const[owner,repo]=githubConfig.repo.split('/');try{let sha=null;try{const checkResponse=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fileName}?ref=${githubConfig.branch}`,{headers:{'Authorization':`token ${githubConfig.token}`,'Accept':'application/vnd.github.v3+json'}});if(checkResponse.ok){const fileData=await checkResponse.json();sha=fileData.sha}}catch(e){}const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));const uploadData={message:`Actualizar estadísticas - ${new Date().toLocaleDateString('es-ES')}`,content:content,branch:githubConfig.branch};if(sha){uploadData.sha=sha}const response=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${fileName}`,{method:'PUT',headers:{'Authorization':`token ${githubConfig.token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(uploadData)});if(response.ok){alert('✅ Archivo subido exitosamente a GitHub')}else{const error=await response.json();alert('Error al subir: '+(error.message||'Error desconocido'))}}catch(error){alert('Error de conexión: '+error.message)}}
+function togglePlayerWaterStatus(playerNum){
+    const timestamp=Date.now();
+    const currentQuarter=getCurrentQuarter();
+    const player = players.find(p => p.num === playerNum);
+    const playerName = player ? player.name : `Jugador ${playerNum}`;
+    
+    if(playersInWater.has(playerNum)){
+        playersInWater.delete(playerNum);
+        playerWaterChanges.push({
+            playerNum:playerNum,
+            quarter:currentQuarter,
+            action:'out',
+            timestamp:timestamp
+        });
+        
+        // ✅ AFEGIR A L'HISTORIAL
+        addToHistory({
+            type: 'water-change',
+            playerNum: playerNum,
+            isRival: false,
+            action: 'out',
+            text: `${playerName}: Surt de l'aigua`
+        });
+        
+        // ✅ AFEGIR A CHRONOLOGICAL ACTIONS
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'water-change',
+            action: 'out',
+            team: 'cnt',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+    } else {
+        playersInWater.add(playerNum);
+        playerWaterChanges.push({
+            playerNum:playerNum,
+            quarter:currentQuarter,
+            action:'in',
+            timestamp:timestamp
+        });
+        
+        // ✅ AFEGIR A L'HISTORIAL
+        addToHistory({
+            type: 'water-change',
+            playerNum: playerNum,
+            isRival: false,
+            action: 'in',
+            text: `${playerName}: Entra a l'aigua`
+        });
+        
+        // ✅ AFEGIR A CHRONOLOGICAL ACTIONS
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'water-change',
+            action: 'in',
+            team: 'cnt',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+    }
+    
+    renderCompactView()
+    if(compactMode)renderCompactView();
+    saveToLocalStorage();
+    checkPlayersInWater();
+}
+function checkPlayersInWater(){
+    const warning=document.getElementById('waterWarning');
+    if(!warning){return}
+    
+    const count=playersInWater.size;
+    
+    if(count!==7){
+        // ✅ AFEGIR LLISTA DE JUGADORS DINS
+        const playerNumbers = Array.from(playersInWater).sort((a,b) => a-b);
+        const playersList = playerNumbers.length > 0 ? ` (Dins: ${playerNumbers.join('-')})` : '';
+        
+        if(count<7){
+            warning.textContent=`⚠️ Falten ${7-count} jugador${7-count===1?'':'s'} DINS! (${count}/7)${playersList}`
+        }else{
+            warning.textContent=`⚠️ Hi ha ${count-7} jugador${count-7===1?'':'s'} de més DINS! (${count}/7)${playersList}`
+        }
+        
+        warning.style.display='block';
+        
+        // ✅ CANCEL·LAR QUALSEVOL TIMER ANTERIOR
+        if(window.waterWarningTimer){
+            clearTimeout(window.waterWarningTimer);
+            window.waterWarningTimer = null;
+        }
+    }else{
+        // ✅ NOMÉS AMAGAR QUAN HI HA EXACTAMENT 7
+        warning.style.display='none';
+    }
+}
+function processQuarterStart(quarter){const timestamp=Date.now();quarterStartTimes[quarter]=timestamp;const newLineup=lineups[quarter];playersInWater.forEach(num=>{if(!newLineup.includes(num)){playerWaterChanges.push({playerNum:num,quarter:quarter,action:'out',timestamp:timestamp})}});playersInWater.clear();newLineup.forEach(num=>{playersInWater.add(num);playerWaterChanges.push({playerNum:num,quarter:quarter,action:'in',timestamp:timestamp})});renderCompactView();if(compactMode)renderCompactView();saveToLocalStorage()}
+function startQuarter(quarter) {
+    const timestamp = Date.now();
+    quarterStartTimes[quarter] = timestamp;
+    
+    const newLineup = lineups[quarter];
+    
+    // Treure tots els jugadors que no estan a la nova alineació
+    playersInWater.forEach(num => {
+        if (!newLineup.includes(num)) {
+            playerWaterChanges.push({
+                playerNum: num,
+                quarter: quarter,
+                action: 'out',
+                timestamp: timestamp
+            });
+        }
+    });
+    
+    playersInWater.clear();
+    
+    // Afegir els titulars del nou quart
+    newLineup.forEach(num => {
+        playersInWater.add(num);
+        playerWaterChanges.push({
+            playerNum: num,
+            quarter: quarter,
+            action: 'in',
+            timestamp: timestamp
+        });
+    });
+    
+    // ❌ ELIMINAR AQUESTA LÍNIA:
+    // renderCompactView()
+    
+    // ✅ MANTENIR NOMÉS AQUESTA:
+    if (compactMode) renderCompactView();
+    renderLineups();
+    saveToLocalStorage();
+    
+    //alert(`✅ ${quarter.toUpperCase()} començat!`);
+}
+function calculatePlayingTimeForMatch(){
+  const OFFICIAL=480; const result={}; const nowTs=Date.now();
+  players.forEach(p=>{
+    const times={q1:0,q2:0,q3:0,q4:0,total:0};
+    const changes=playerWaterChanges.filter(c=>c.playerNum===p.num);
+    ['q1','q2','q3','q4'].forEach(q=>{
+      const start=quarterStartTimes[q]; if(!start){times[q]=0;return;}
+      const ended=!!quarterRealEndTimes[q];
+      const end=quarterRealEndTimes[q]||nowTs;
+      const quarterWall=Math.max(1,end-start);
+      const qCh=changes.filter(c=>c.quarter===q).sort((a,b)=>a.timestamp-b.timestamp);
+      let wall=0,lastIn=null;
+      qCh.forEach(c=>{ if(c.action==='in')lastIn=c.timestamp; else if(c.action==='out'&&lastIn!==null){wall+=c.timestamp-lastIn;lastIn=null;} });
+      if(lastIn!==null) wall+=end-lastIn;
+      const secs = ended ? (wall/quarterWall)*OFFICIAL : wall/1000;
+      times[q]=Math.round(secs);
+    });
+    times.total=times.q1+times.q2+times.q3+times.q4;
+    result[p.num]={name:p.name,times:times};
+  });
+  return result;
+}
+function updateExclusionsSummary(){
+  const c=document.getElementById('exclusionsSummary'); if(!c)return;
+  const cnt=Object.values(stats).reduce((s,st)=>s+(st.exclusions||0),0);
+  const riv=rivalStats.reduce((s,p)=>s+(p.exclusions||0),0);
+  c.innerHTML=`<div style="display:flex;gap:8px;text-align:center">
+    <div style="flex:1;background:var(--accent-soft);border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--muted);font-weight:700">CNT</div><div style="font-size:26px;font-weight:900;color:var(--accent)">${cnt}</div></div>
+    <div style="flex:1;background:#fee2e2;border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--muted);font-weight:700">RIVAL</div><div style="font-size:26px;font-weight:900;color:#dc2626">${riv}</div></div>
+  </div>`;
+}
+function renderPlayingTimes(){
+  const box=document.getElementById('playingTimesBox'); if(!box)return;
+  const t=calculatePlayingTimeForMatch();
+  const rows=players.map(p=>{const x=t[p.num].times;const pct=Math.round((x.total/1920)*100);
+    return `<tr style="border-top:1px solid var(--border)"><td style="padding:6px 8px;white-space:nowrap"><b>${p.num}</b> ${p.name.split(' ')[0]}</td><td style="text-align:center">${formatTime(x.q1)}</td><td style="text-align:center">${formatTime(x.q2)}</td><td style="text-align:center">${formatTime(x.q3)}</td><td style="text-align:center">${formatTime(x.q4)}</td><td style="text-align:center;font-weight:700;color:var(--accent)">${formatTime(x.total)}</td><td style="text-align:center;color:var(--muted)">${pct}%</td></tr>`;}).join('');
+  box.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="color:var(--muted);font-size:11px"><td style="padding:4px 8px">Jugador</td><td style="text-align:center">Q1</td><td style="text-align:center">Q2</td><td style="text-align:center">Q3</td><td style="text-align:center">Q4</td><td style="text-align:center">Total</td><td style="text-align:center">%</td></tr>${rows}</table>`;
+}
+function formatTime(seconds){const mins=Math.floor(seconds/60);const secs=seconds%60;return `${mins}:${secs.toString().padStart(2,'0')}`}
+function showPlayingTimes(){const times=calculatePlayingTimeForMatch();let report='⏱️ TEMPS DE JOC PER JUGADOR\n\n';players.forEach(p=>{const t=times[p.num].times;report+=`${p.num}. ${p.name}\n`;report+=`  Q1: ${formatTime(t.q1)} | Q2: ${formatTime(t.q2)} | Q3: ${formatTime(t.q3)} | Q4: ${formatTime(t.q4)}\n`;report+=`  TOTAL: ${formatTime(t.total)} (${Math.round((t.total/1920)*100)}%)\n\n`});alert(report)}
+document.addEventListener('DOMContentLoaded',function(){const o=document.getElementById('observacions');if(o){o.addEventListener('input',function(){saveToLocalStorage()})}init()});
+// ============================================
+// GESTOS TOUCH ULTRA-SENSIBLES (VISTA COMPACTA)
+// ============================================
+
+let startX = 0;
+let startY = 0;
+let isDragging = false;
+let hasMoved = false;
+window.isCurrentlyDragging = false; // ✅ Variable global
+
+document.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isDragging = true;
+    window.isCurrentlyDragging = false;
+}, { passive: true });
+
+document.addEventListener('touchmove', function (e) {
+  if (!isDragging) return;
+
+  const currentX = e.touches[0].clientX;
+  const currentY = e.touches[0].clientY;
+  const moveX = currentX - startX;
+  const moveY = currentY - startY;
+
+  // Només bloqueja el comportament per defecte si és swipe horitzontal clar
+  if (Math.abs(moveX) > 20 && Math.abs(moveX) > Math.abs(moveY)) {
+    window.isCurrentlyDragging = true;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+    
+   // ✅ CRITICAL: Només activar swipe si el moviment és MÉS HORITZONTAL que vertical
+   const isHorizontalSwipe = Math.abs(diffX) > Math.abs(diffY);
+   const isSignificantMove = Math.abs(diffX) > 50; // Augmentat de 30 a 50 per més seguretat
+   
+   if (!isHorizontalSwipe || !isSignificantMove) {
+       isDragging = false;
+       setTimeout(() => { window.isCurrentlyDragging = false; }, 100);
+       return;
+   }
+    
+    // Vista actual
+    const onStats = !document.getElementById('statsView').classList.contains('hidden');
+    const onRival = !document.getElementById('rivalView').classList.contains('hidden');
+    const onLineups = !document.getElementById('lineupsView').classList.contains('hidden');
+    
+    // SWIPE ESQUERRA (següent)
+    if (diffX < 0) {
+        if (onStats) {
+            quickChangeTab('rival', 1);
+        } else if (onRival) {
+            quickChangeTab('lineups', 2);
+        }
+    }
+    
+    // SWIPE DRETA (anterior)
+    if (diffX > 0) {
+        if (onRival) {
+            quickChangeTab('stats', 0);
+        } else if (onLineups) {
+            quickChangeTab('rival', 1);
+        }
+    }
+    
+    isDragging = false;
+    // ✅ Reset després del swipe
+    setTimeout(() => { window.isCurrentlyDragging = false; }, 100);
+}, { passive: true });
+// ✅ BLOQUEJAR CLICS durant swipe
+document.addEventListener('click', function(e) {
+    if (hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+        hasMoved = false;
+        return false;
+    }
+}, true); // ✅ true = captura l'event ABANS que arribi als botons
+
+function rotacioCompleta() {
+    // Verificar que hi ha exactament 7 jugadors dins
+    if (playersInWater.size !== 7) {
+        alert(`⚠️ No es pot fer la rotació! Hi ha ${playersInWater.size} jugadors dins (necessites 7)`);
+        return;
+    }
+    
+    // Identificar el porter dins (1 o 13)
+    let porterDins = null;
+    if (playersInWater.has(1)) porterDins = 1;
+    else if (playersInWater.has(13)) porterDins = 13;
+    
+    if (!porterDins) {
+        alert('⚠️ No hi ha porter dins! (1 o 13)');
+        return;
+    }
+    
+    // Obtenir els 6 jugadors de camp que estan dins
+    const jugadorsDins = Array.from(playersInWater).filter(num => num !== porterDins);
+    
+    // Obtenir els jugadors de camp que estan fora (excloent els dos porters)
+    const jugadorsFora = players
+        .filter(p => !playersInWater.has(p.num) && p.num !== 1 && p.num !== 13)
+        .map(p => p.num);
+    
+    // Verificar que hi ha 6 jugadors fora disponibles
+    if (jugadorsFora.length !== 6) {
+        alert(`⚠️ No hi ha exactament 6 jugadors de camp fora! (Tens ${jugadorsFora.length})`);
+        return;
+    }
+    
+    const timestamp = Date.now();
+    const currentQuarter = getCurrentQuarter();
+    
+    // Treure els 6 jugadors de camp
+    jugadorsDins.forEach(playerNum => {
+        playersInWater.delete(playerNum);
+        const player = players.find(p => p.num === playerNum);
+        const playerName = player ? player.name : `Jugador ${playerNum}`;
+        
+        playerWaterChanges.push({
+            playerNum: playerNum,
+            quarter: currentQuarter,
+            action: 'out',
+            timestamp: timestamp
+        });
+        
+        addToHistory({
+            type: 'water-change',
+            playerNum: playerNum,
+            isRival: false,
+            action: 'out',
+            text: `${playerName}: Surt (Rotació)`
+        });
+        
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'water-change',
+            action: 'out',
+            team: 'cnt',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+    });
+    
+    // Posar els 6 jugadors de camp que estaven fora
+    jugadorsFora.forEach(playerNum => {
+        playersInWater.add(playerNum);
+        const player = players.find(p => p.num === playerNum);
+        const playerName = player ? player.name : `Jugador ${playerNum}`;
+        
+        playerWaterChanges.push({
+            playerNum: playerNum,
+            quarter: currentQuarter,
+            action: 'in',
+            timestamp: timestamp
+        });
+        
+        addToHistory({
+            type: 'water-change',
+            playerNum: playerNum,
+            isRival: false,
+            action: 'in',
+            text: `${playerName}: Entra (Rotació)`
+        });
+        
+        chronologicalActions.push({
+            timestamp: timestamp,
+            quarter: currentQuarter,
+            type: 'water-change',
+            action: 'in',
+            team: 'cnt',
+            playerNum: playerNum,
+            playerName: playerName
+        });
+    });
+    
+    // Actualitzar vista
+    renderCompactView();
+    if (compactMode) renderCompactView();
+    saveToLocalStorage();
+    checkPlayersInWater();
+    
+    alert(`✅ Rotació completa! Han sortit: ${jugadorsDins.join(', ')} | Han entrat: ${jugadorsFora.join(', ')}`);
+}
+function quickChangeTab(viewName, tabIndex) {
+    // Canviar vista
+    const views = ['statsView', 'rivalView', 'lineupsView'];
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.classList.add('hidden');
+    });
+    
+    const target = document.getElementById(viewName + 'View');
+    if (target) target.classList.remove('hidden');
+    
+    // Actualitzar tabs
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (tabs[tabIndex]) tabs[tabIndex].classList.add('active');
+    
+    // Vibració (si el dispositiu ho suporta)
+    if (navigator.vibrate) {
+        navigator.vibrate(10);
+    }
+}
+
+
+function openSaveModal(n, inc) {
+    if (inc < 0) {
+        updateSave(n, inc);
+        return;
+    }
+    currentSaveContext = { playerNum: n };
+    document.getElementById('saveModal').classList.add('show');
+}
+
+function closeSaveModal() {
+    document.getElementById('saveModal').classList.remove('show');
+    currentSaveContext = null;
+}
+
+function selectSaveType(type) {
+    if (!currentSaveContext) return;
+    const { playerNum } = currentSaveContext;
+    
+    const player = players.find(p => p.num === playerNum);
+    const playerName = player ? player.name : `Jugador ${playerNum}`;
+    const currentQuarter = getCurrentQuarter();
+    const timestamp = Date.now();
+    
+    if (!stats[playerNum].paradeTypes) {
+        stats[playerNum].paradeTypes = { corner: 0, rebuig: 0, atrapa: 0 };
+    }
+    
+    stats[playerNum].parades++;
+    stats[playerNum].paradeTypes[type]++;
+    
+    chronologicalActions.push({
+        timestamp: timestamp,
+        quarter: currentQuarter,
+        type: 'save',
+        saveType: type,
+        team: 'cnt',
+        playerNum: playerNum,
+        playerName: playerName
+    });
+    
+    const saveTypeText = type === 'corner' ? 'Corner' : 
+                     type === 'rebuig' ? 'Rebuig' : 
+                     type === 'atrapa' ? 'Atrapa' :
+                     type === 'penal' ? 'Penal' : '';
+    
+    addToHistory({
+        type: 'save',
+        playerNum: playerNum,
+        isRival: false,
+        saveType: type,
+        text: `${playerName}: Parada (${saveTypeText})`
+    });
+    
+    // ✅ RENDERITZAR SEGONS EL MODE
+    if (compactMode) {
+        renderCompactView();
+    } else {
+        renderCompactView();  // ✅ AFEGIR AQUESTA LÍNIA
+    }
+    
+    saveToLocalStorage();
+    closeSaveModal();
+}
+
+function updateSave(n, inc) {
+    stats[n].parades = Math.max(0, stats[n].parades + inc);
+    if (inc < 0) {
+        const st = stats[n].paradeTypes;
+        const types = ['penal','atrapa', 'rebuig', 'corner'];
+        for (let t of types) {
+            if (st[t] > 0) {
+                st[t]--;
+                break;
+            }
+        }
+        renderCompactView()
+    }
+    saveToLocalStorage();
+}
+// ============================================
+// CRONÒMETRE DEL QUARTER
+// ============================================
+
+let timerInterval = null;
+
+function updateQuarterTimer() {
+    const currentQuarter = getCurrentQuarter();
+    const quarterStart = quarterStartTimes[currentQuarter];
+    
+    // Actualitzar label del quarter
+    document.getElementById('quarterLabel').textContent = currentQuarter.toUpperCase();
+    
+    // Si el quarter no ha començat
+    if (!quarterStart) {
+        document.getElementById('timerDisplay').textContent = '00:00';
+        document.getElementById('timerStatus').classList.remove('recording');
+        return;
+    }
+    
+    // Si el quarter ha acabat
+    if (quarterRealEndTimes[currentQuarter]) {
+        const elapsed = (quarterRealEndTimes[currentQuarter] - quarterStart) / 1000;
+        document.getElementById('timerDisplay').textContent = formatTime(Math.floor(elapsed));
+        document.getElementById('timerStatus').classList.remove('recording');
+        return;
+    }
+    
+    // Calcular temps transcorregut
+    const now = Date.now();
+    const elapsed = Math.floor((now - quarterStart) / 1000);
+    
+    // ✅ Mostrar temps REAL (sense límit)
+    document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+    
+    // Indicador de gravació actiu
+    document.getElementById('timerStatus').classList.add('recording');
+    
+    // ⚠️ Canviar color si passa dels 8 minuts
+    if (elapsed > 480) {
+        document.getElementById('timerDisplay').style.color = '#fbbf24'; // Groc d'avís
+    } else {
+        document.getElementById('timerDisplay').style.color = 'white';
+    }
+}
+
+function startQuarterTimer() {
+    // Actualitzar immediatament
+    updateQuarterTimer();
+    
+    // Actualitzar cada segon
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+    
+    timerInterval = setInterval(updateQuarterTimer, 1000);
+}
+
+function stopQuarterTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    document.getElementById('timerStatus').classList.remove('recording');
+}
+
+// ✅ Modificar la funció startQuarter() existent
+function startQuarter(q) {
+    if (lineups[q].length !== 7) {
+        alert('Necessites 7 jugadors a l\'alineació per començar el quart!');
+        return;
+    }
+    
+    if (quarterStartTimes[q] !== null) {
+        alert('Aquest quart ja ha començat!');
+        return;
+    }
+    
+    const timestamp = Date.now();
+    quarterStartTimes[q] = timestamp;
+    
+    // Inicialitzar jugadors dins l'aigua amb l'alineació titular
+    playersInWater.clear();
+    lineups[q].forEach(num => {
+        playersInWater.add(num);
+        playerWaterChanges.push({
+            playerNum: num,
+            quarter: q,
+            action: 'in',
+            timestamp: timestamp
+        });
+    });
+    
+    if (compactMode) renderCompactView();
+    renderLineups();
+    saveToLocalStorage();
+    
+    // ✅ INICIAR CRONÒMETRE
+    startQuarterTimer();
+    
+    alert(`✅ ${q.toUpperCase()} començat!`);
+}
+
+// ✅ Modificar la funció endQuarter() existent
+function endQuarter(quarter) {
+    const timestamp = Date.now();
+    quarterRealEndTimes[quarter] = timestamp;
+    
+    captureLineupScore(quarter);
+    
+    playersInWater.forEach(num => {
+        playerWaterChanges.push({
+            playerNum: num,
+            quarter: quarter,
+            action: 'out',
+            timestamp: timestamp
+        });
+    });
+    
+    playersInWater.clear();
+    
+    if(compactMode) renderCompactView();
+    renderLineups();
+    renderPeriodScores();
+    saveToLocalStorage();
+    
+    // ✅ ATURAR CRONÒMETRE
+    stopQuarterTimer();
+    
+    renderPlayingTimes();
+    alert(`✅ ${quarter.toUpperCase()} finalitzat correctament!`);
+}
+// ============================================
+// 🏁 FINALITZAR PARTIT (quan acaba Q4)
+// ============================================
+
+function undoEndQuarter(quarter) {
+    if (!confirm(`Segur que vols reobrir el ${quarter.toUpperCase()}?\n\nAixò permetrà continuar afegint accions al quart.`)) {
+        return;
+    }
+    
+    // Esborrar el temps de finalització
+    quarterRealEndTimes[quarter] = null;
+    
+    // Reiniciar el cronòmetre del quart
+    startQuarterTimer();
+    
+    // Re-renderitzar tot
+    if(compactMode) renderCompactView();
+    renderLineups();
+    renderPeriodScores();
+    saveToLocalStorage();
+    
+    console.log(`↩️ ${quarter.toUpperCase()} reobert`);
+}
+function finalizeMatch() {
+    console.log('🏁 Finalitzant partit...');
+    
+    if (!currentMatch || !currentMatch.id) {
+        console.error('❌ No hi ha partit actiu per finalitzar');
+        alert('Error: No hi ha partit actiu');
+        return;
+    }
+    
+    // 1. Generar JSON
+    const jsonData = generateMatchJSON();
+    
+    // 2. Descarregar JSON automàticament
+    downloadMatchJSON(jsonData);
+    
+    // 3. Marcar partit com finalitzat a Firebase
+    markMatchAsFinished();
+    
+    // 4. Mostrar confirmació
+    showFinishConfirmation();
+}
+
+// ============================================
+// 💾 GENERAR JSON DEL PARTIT
+// ============================================
+function generateMatchJSON() {
+    const matchData = {
+        metadata: {
+            rivalTeam: currentMatch.rivalTeam || 'Rival',
+            location: currentMatch.location || 'Local',
+            date: currentMatch.startTime ? new Date(currentMatch.startTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            time: currentMatch.startTime ? new Date(currentMatch.startTime).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' }) : '',
+            season: '2025-26',
+            competition: 'Lliga Catalana',
+            finalScore: {
+                cnt: currentMatch.scoreCNT || 0,
+                rival: currentMatch.scoreRival || 0
+            },
+            result: (currentMatch.scoreCNT || 0) > (currentMatch.scoreRival || 0) ? 'Victoria' : 
+                    (currentMatch.scoreCNT || 0) < (currentMatch.scoreRival || 0) ? 'Derrota' : 'Empat'
+        },
+        jugadors: currentMatch.jugadors || [],
+        rivalStats: currentMatch.rivalStats || [],
+        chronologicalActions: currentMatch.chronologicalActions || [],
+        periodScores: currentMatch.periodScores || { q1: {cnt: 0, rival: 0}, q2: {cnt: 0, rival: 0}, q3: {cnt: 0, rival: 0}, q4: {cnt: 0, rival: 0} },
+        playerWaterChanges: currentMatch.playerWaterChanges || [],
+        quarterStartTimes: currentMatch.quarterStartTimes || {},
+        quarterRealEndTimes: currentMatch.quarterRealEndTimes || {}
+    };
+    
+    return matchData;
+}
+
+// ============================================
+// 📥 DESCARREGAR JSON
+// ============================================
+function downloadMatchJSON(matchData) {
+    const filename = `cnt_stats_${matchData.metadata.date}_${matchData.metadata.rivalTeam.toLowerCase().replace(/\s+/g, '_')}.json`;
+    
+    const dataStr = JSON.stringify(matchData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ JSON descarregat:', filename);
+}
+
+// ============================================
+// 🔥 MARCAR PARTIT COM FINALITZAT A FIREBASE
+// ============================================
+function markMatchAsFinished() {
+    if (!db || !currentMatch.id) {
+        console.error('❌ No es pot actualitzar Firebase');
+        return;
+    }
+    
+    const matchRef = db.collection('matches').doc(currentMatch.id);
+    
+    matchRef.update({
+        status: 'finished',
+        finishedAt: Date.now(),
+        lastUpdate: Date.now()
+    })
+    .then(() => {
+        console.log('✅ Partit marcat com finalitzat a Firebase');
+    })
+    .catch(error => {
+        console.error('❌ Error actualitzant Firebase:', error);
+    });
+}
+
+// ============================================
+// ✨ MOSTRAR CONFIRMACIÓ
+// ============================================
+function showFinishConfirmation() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s;
+    `;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.4s;
+    `;
+    
+    const score = `${currentMatch.scoreCNT || 0} - ${currentMatch.scoreRival || 0}`;
+    const result = (currentMatch.scoreCNT || 0) > (currentMatch.scoreRival || 0) ? '🏆 VICTÒRIA!' : 
+                  (currentMatch.scoreCNT || 0) < (currentMatch.scoreRival || 0) ? '😔 Derrota' : '🤝 Empat';
+    
+    modal.innerHTML = `
+        <div style="font-size: 64px; margin-bottom: 20px;">🏁</div>
+        <h2 style="color: white; font-size: 28px; margin-bottom: 10px; font-weight: 900;">
+            PARTIT FINALITZAT
+        </h2>
+        <div style="color: #ca8a04; font-size: 48px; font-weight: 900; margin: 20px 0; font-family: monospace;">
+            ${score}
+        </div>
+        <div style="color: #64748b; font-size: 24px; font-weight: 700; margin-bottom: 30px;">
+            ${result}
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <div style="color: #0891b2; font-size: 14px; margin-bottom: 10px;">✅ Dades sincronitzades amb Firebase</div>
+            <div style="color: #0891b2; font-size: 14px;">💾 JSON descarregat automàticament</div>
+        </div>
+        <button id="closeFinishModal" style="
+            background: white;
+            color: #1e3a8a;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s;
+        ">
+            TANCAR
+        </button>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Tancar modal
+    document.getElementById('closeFinishModal').addEventListener('click', () => {
+        overlay.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => {
+            document.body.removeChild(overlay);
+        }, 300);
+    });
+    
+    // Tancar clicant fora
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.animation = 'fadeOut 0.3s';
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+            }, 300);
+        }
+    });
+}
+
+// Afegir animacions CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+// ============================================
+// 🗄️ SISTEMA DE BASE DE DADES DE RIVALS v2.0
+// Versió amb gestió d'errors i millor visibilitat
+// ============================================
+
+// Variable global per la base de dades de rivals
+let rivalsDatabase = null;
+
+// Funció millorada per detectar l'equip
+function detectTeam() {
+    const url = window.location.href.toLowerCase();
+    
+    // Comprovar variants de CADET
+    if (url.includes('cadet') || url.includes('_ct_') || url.includes('_ct.') || url.includes('/ct/')) {
+        return 'cadet';
+    }
+    
+    // Comprovar variants de JUVENIL  
+    if (url.includes('juvenil') || url.includes('_jv_') || url.includes('_jv.') || url.includes('/jv/')) {
+        return 'juvenil';
+    }
+    
+    // Per defecte, si no detecta res, avisa i usa juvenil
+    console.warn('⚠️ No s\'ha pogut detectar l\'equip automàticament. Utilitzant juvenil per defecte.');
+    console.warn('   URL actual:', url);
+    return 'juvenil';
+}
+
+const CURRENT_TEAM = detectTeam();
+
+// URL de la base de dades segons l'equip detectat
+const RIVALS_DB_URL = CURRENT_TEAM === 'cadet'
+    ? 'https://joseprico.github.io/cnt_cadet_25-26/rivals_database_cadet.json'
+    : 'https://joseprico.github.io/CNT_juvenil_25_26/rivals_database_juvenil.json';
+
+console.log('🗄️ Sistema de Rivals carregat');
+console.log('🏊 Equip detectat:', CURRENT_TEAM.toUpperCase());
+console.log('🔗 URL base de dades:', RIVALS_DB_URL);
+
+// ============================================
+// 📥 CARREGAR BASE DE DADES DE RIVALS
+// ============================================
+async function loadRivalsDatabase() {
+    try {
+        console.log('📥 Carregant base de dades de rivals des de:', RIVALS_DB_URL);
+        const response = await fetch(RIVALS_DB_URL + '?t=' + Date.now());
+        
+        console.log('📡 Resposta del servidor:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            console.error('❌ Error HTTP:', response.status);
+            console.error('🔗 URL intentada:', RIVALS_DB_URL);
+            console.warn('⚠️ Fitxer no trobat. Creant base de dades per defecte...');
+            throw new Error(`Error ${response.status}: Fitxer no trobat al repositori`);
+        }
+        
+        const jsonText = await response.text();
+        console.log('📄 Text rebut (primers 200 chars):', jsonText.substring(0, 200));
+        
+        rivalsDatabase = JSON.parse(jsonText);
+        
+        const teamNames = Object.keys(rivalsDatabase.teams);
+        console.log('✅ Base de dades carregada correctament!');
+        console.log('📊 Nombre d\'equips:', teamNames.length);
+        console.log('🏊 Equips trobats:', teamNames);
+        
+        return rivalsDatabase;
+    } catch (error) {
+        console.error('❌ Error carregant base de dades de rivals:', error.message);
+        
+        // ⚠️ FALLBACK: Base de dades per defecte si no existeix
+        console.log('🔧 Creant base de dades temporal...');
+        rivalsDatabase = {
+            metadata: {
+                version: "1.0",
+                lastUpdated: new Date().toISOString().split('T')[0],
+                description: "Base de dades de plantilles d'equips rivals (temporal)",
+                warning: "Puja rivals_database_cadet.json o rivals_database_juvenil.json al repositori per utilitzar plantilles guardades"
+            },
+            teams: {
+                "PLANTILLA_BUIDA": {
+                    fullName: "Equip Nou",
+                    lastPlayed: null,
+                    lastUpdated: null,
+                    players: Array.from({length: 13}, (_, i) => ({
+                        num: i + 1,
+                        name: i === 0 || i === 12 ? "Porter" : `Jugador ${i + 1}`
+                    }))
+                }
+            }
+        };
+        
+        // Mostrar avís a l'usuari
+        setTimeout(() => {
+            if (confirm('⚠️ BASE DE DADES DE RIVALS NO TROBADA\n\nEl fitxer rivals_database_' + CURRENT_TEAM + '.json no existeix al repositori.\n\n¿Vols descarregar una plantilla per pujar-la al repositori?')) {
+                downloadEmptyDatabase();
+            }
+        }, 2000);
+        
+        return rivalsDatabase;
+    }
+}
+
+// ============================================
+// 📥 DESCARREGAR BASE DE DADES BUIDA
+// ============================================
+function downloadEmptyDatabase() {
+    const emptyDB = {
+        metadata: {
+            version: "1.0",
+            lastUpdated: new Date().toISOString().split('T')[0],
+            description: `Base de dades de plantilles d'equips rivals - CN Terrassa ${CURRENT_TEAM.toUpperCase()}`
+        },
+        teams: {
+            "PLANTILLA_BUIDA": {
+                fullName: "Equip Nou",
+                lastPlayed: null,
+                lastUpdated: null,
+                players: Array.from({length: 13}, (_, i) => ({
+                    num: i + 1,
+                    name: i === 0 || i === 12 ? "Porter" : `Jugador ${i + 1}`
+                }))
+            }
+        }
+    };
+    
+    const blob = new Blob([JSON.stringify(emptyDB, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rivals_database_${CURRENT_TEAM}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('✅ Plantilla descarregada!\n\nPuja-la a l\'arrel del repositori:\n' + 
+          (CURRENT_TEAM === 'cadet' ? 'cnt_cadet_25-26/' : 'CNT_juvenil_25_26/') + 
+          '\n\nDesprés refresca la pàgina.');
+}
+
+// ============================================
+// 🎯 MOSTRAR SELECTOR D'EQUIP RIVAL
+// ============================================
+function showRivalSelector() {
+    if (!rivalsDatabase) {
+        alert('❌ Error: Base de dades de rivals no carregada');
+        return;
+    }
+    
+    console.log('🎯 Mostrant selector d\'equips');
+    console.log('📊 Base de dades disponible:', rivalsDatabase);
+    console.log('🏊 Teams object:', rivalsDatabase.teams);
+    console.log('🔑 Keys disponibles:', Object.keys(rivalsDatabase.teams));
+    
+    const teams = Object.keys(rivalsDatabase.teams).filter(t => t !== 'PLANTILLA_BUIDA');
+    
+    console.log('✅ Equips després de filtrar PLANTILLA_BUIDA:', teams);
+    console.log('📈 Nombre d\'equips per mostrar:', teams.length);
+    
+    let html = `
+        <div id="rivalSelectorModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+            overflow-y: auto;
+        ">
+            <div style="
+                background: linear-gradient(135deg, #1e3a8a, #1e40af);
+                border-radius: 16px;
+                padding: 30px;
+                max-width: 500px;
+                width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            ">
+                <h2 style="color: #0891b2; margin-bottom: 20px; font-size: 24px;">
+                    ⚽ Selecciona l'equip rival
+                </h2>
+                
+                ${rivalsDatabase.metadata.warning ? `
+                <div style="
+                    background: rgba(251, 191, 36, 0.2);
+                    border-left: 4px solid #fbbf24;
+                    padding: 12px;
+                    margin-bottom: 15px;
+                    border-radius: 4px;
+                    color: #fbbf24;
+                    font-size: 12px;
+                ">
+                    ⚠️ ${rivalsDatabase.metadata.warning}
+                </div>
+                ` : ''}
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #64748b; margin-bottom: 8px; font-weight: bold;">
+                        ${teams.length > 0 ? 'Equips guardats:' : 'No hi ha equips guardats encara'}
+                    </label>
+                    <select id="rivalTeamSelect" style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        border: 2px solid #0891b2;
+                        background: rgba(255,255,255,0.1);
+                        color: white;
+                        font-size: 16px;
+                    ">
+                        <option value="">-- Selecciona un equip --</option>
+                        ${teams.map(team => `
+                            <option value="${team}">${team}</option>
+                        `).join('')}
+                        <option value="PLANTILLA_BUIDA">🆕 Equip nou (plantilla buida)</option>
+                    </select>
+                </div>
+                
+                <div id="rivalTeamInfo" style="
+                    display: none;
+                    background: rgba(34, 211, 238, 0.1);
+                    border-left: 4px solid #0891b2;
+                    padding: 12px;
+                    margin-bottom: 20px;
+                    border-radius: 4px;
+                ">
+                    <div style="color: #0e7490; font-size: 12px; margin-bottom: 4px;">
+                        Última actualització: <span id="rivalLastUpdate">--</span>
+                    </div>
+                    <div style="color: #64748b; font-size: 12px;">
+                        Últim partit: <span id="rivalLastPlayed">--</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="loadSelectedRival()" style="
+                        flex: 1;
+                        padding: 12px;
+                        background: linear-gradient(135deg, #22c55e, #16a34a);
+                        border: none;
+                        border-radius: 8px;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 16px;
+                        cursor: pointer;
+                    ">
+                        ✅ Carregar jugadors
+                    </button>
+                    
+                    <button onclick="closeRivalSelector()" style="
+                        padding: 12px 20px;
+                        background: rgba(239, 68, 68, 0.2);
+                        border: 2px solid #ef4444;
+                        border-radius: 8px;
+                        color: #dc2626;
+                        font-weight: bold;
+                        cursor: pointer;
+                    ">
+                        ✖️ Cancel·lar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    // Event listener per mostrar info quan selecciones un equip
+    document.getElementById('rivalTeamSelect').addEventListener('change', function() {
+        const selectedTeam = this.value;
+        const infoDiv = document.getElementById('rivalTeamInfo');
+        
+        if (selectedTeam && selectedTeam !== 'PLANTILLA_BUIDA') {
+            const teamData = rivalsDatabase.teams[selectedTeam];
+            document.getElementById('rivalLastUpdate').textContent = teamData.lastUpdated || 'Mai';
+            document.getElementById('rivalLastPlayed').textContent = teamData.lastPlayed || 'Mai';
+            infoDiv.style.display = 'block';
+        } else {
+            infoDiv.style.display = 'none';
+        }
+    });
+}
+
+// ============================================
+// 📋 CARREGAR JUGADORS DEL RIVAL SELECCIONAT
+// ============================================
+function loadSelectedRival() {
+    const select = document.getElementById('rivalTeamSelect');
+    const selectedTeam = select.value;
+    
+    if (!selectedTeam) {
+        alert('⚠️ Sisplau, selecciona un equip');
+        return;
+    }
+    
+    const teamData = rivalsDatabase.teams[selectedTeam];
+    
+    if (!teamData) {
+        alert('❌ Error: No s\'han trobat dades per aquest equip');
+        return;
+    }
+    
+    // Guardar el nom de l'equip rival
+    if (typeof rivalTeam !== 'undefined') {
+        rivalTeam = selectedTeam === 'PLANTILLA_BUIDA' ? '' : teamData.fullName;
+    }
+    
+    // Actualitzar el camp de nom d'equip rival
+    const rivalInput = document.getElementById('rivalTeamInput');
+    if (rivalInput) {
+        rivalInput.value = teamData.fullName;
+        // Trigger event per actualitzar
+        if (typeof updateRivalTeam === 'function') {
+            updateRivalTeam();
+        }
+    }
+    
+    const rivalLabel = document.getElementById('rivalTeamLabel');
+    if (rivalLabel) {
+        rivalLabel.textContent = teamData.fullName || 'Equip Rival';
+    }
+    
+    // Carregar jugadors rivals
+    if (typeof rivalStats !== 'undefined') {
+        rivalStats = teamData.players.map(p => ({
+            num: p.num,
+            name: p.name,
+            gols: 0,
+            exclusions: 0,
+            assistencies: 0,
+            parades: 0,
+            robatoris: 0,
+            perdues: 0,
+            blocks: 0,
+            xutsFallats: 0,
+            contrafaltes: 0,
+            infraccions2m: 0
+        }));
+        
+        console.log('✅ Jugadors rivals carregats:', rivalStats.length);
+    }
+    
+    // Actualitzar la vista
+    if (typeof renderCompactView === 'function') {
+        renderCompactView();
+    }
+    if (typeof renderRivalPlayers === 'function') {
+        renderRivalPlayers();
+    }
+    
+    // Tancar el modal
+    closeRivalSelector();
+    
+    // Mostrar confirmació
+    alert(`✅ Plantilla de ${teamData.fullName || 'equip rival'} carregada!\n\n${teamData.players.length} jugadors importats.`);
+}
+
+// ============================================
+// ✖️ TANCAR SELECTOR
+// ============================================
+function closeRivalSelector() {
+    const modal = document.getElementById('rivalSelectorModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ============================================
+// 🔍 DEBUG DEL SISTEMA
+// ============================================
+function debugRivalsSystem() {
+    console.log('\n========================================');
+    console.log('🔍 DEBUG DEL SISTEMA DE RIVALS');
+    console.log('========================================\n');
+    
+    console.log('📦 Versió:', '2.2 (detecció millorada)');
+    console.log('🏊 Equip actual:', CURRENT_TEAM);
+    console.log('🔗 URL de la base de dades:', RIVALS_DB_URL);
+    console.log('\n--- ESTAT DE LA BASE DE DADES ---');
+    console.log('📊 Base de dades carregada:', rivalsDatabase !== null);
+    
+    if (rivalsDatabase) {
+        console.log('📝 Metadata:', rivalsDatabase.metadata);
+        console.log('🏊 Nombre d\'equips:', Object.keys(rivalsDatabase.teams).length);
+        console.log('🔑 Equips disponibles:', Object.keys(rivalsDatabase.teams));
+        
+        // Mostrar cada equip
+        Object.keys(rivalsDatabase.teams).forEach(teamName => {
+            const team = rivalsDatabase.teams[teamName];
+            console.log(`\n  📁 ${teamName}:`);
+            console.log(`     - Jugadors: ${team.players.length}`);
+            console.log(`     - Últim partit: ${team.lastPlayed || 'Mai'}`);
+            console.log(`     - Actualització: ${team.lastUpdated || 'Mai'}`);
+        });
+    } else {
+        console.error('❌ Base de dades NO carregada!');
+    }
+    
+    console.log('\n--- TEST DE CONNECTIVITAT ---');
+    
+    // Test fetch
+    fetch(RIVALS_DB_URL + '?debug=' + Date.now())
+        .then(response => {
+            console.log('✅ Fetch exitós');
+            console.log('   Status:', response.status);
+            console.log('   Status Text:', response.statusText);
+            console.log('   Content-Type:', response.headers.get('content-type'));
+            return response.text();
+        })
+        .then(text => {
+            console.log('📄 Contingut rebut (primers 300 chars):');
+            console.log(text.substring(0, 300));
+            
+            try {
+                const json = JSON.parse(text);
+                console.log('✅ JSON vàlid');
+                console.log('🔑 Keys trobades:', Object.keys(json.teams));
+            } catch (e) {
+                console.error('❌ Error parseant JSON:', e.message);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error en el fetch:', error.message);
+            console.error('   Això significa que el fitxer NO està al repositori');
+        });
+    
+    console.log('\n========================================');
+    
+    // Mostrar info visual
+    alert('🔍 DEBUG DEL SISTEMA\n\n' +
+          'Mira la CONSOLA (F12) per veure els detalls complets.\n\n' +
+          'Equips carregats: ' + (rivalsDatabase ? Object.keys(rivalsDatabase.teams).length : 0) + '\n' +
+          'URL: ' + RIVALS_DB_URL);
+}
+
+// ============================================
+// 💾 EXPORTAR PLANTILLA ACTUALITZADA
+// ============================================
+function exportRivalTemplate() {
+    if (typeof rivalTeam === 'undefined' || !rivalTeam || typeof rivalStats === 'undefined' || rivalStats.length === 0) {
+        alert('⚠️ No hi ha dades de rival per exportar.\n\nPrimer has de completar un partit amb jugadors rivals.');
+        return;
+    }
+    
+    const teamKey = rivalTeam.trim();
+    
+    const templateData = {
+        fullName: rivalTeam,
+        lastPlayed: new Date().toISOString().split('T')[0],
+        lastUpdated: new Date().toISOString().split('T')[0],
+        players: rivalStats.map(p => ({
+            num: p.num,
+            name: p.name
+        }))
+    };
+    
+    // Crear un JSON per copiar/enganxar a la base de dades
+    const exportData = {
+        team: teamKey,
+        instructions: "Copia el bloc 'template' i enganxa'l dins rivals_database_" + CURRENT_TEAM + ".json dins la clau 'teams'",
+        example: `AFEGIR AIXÒ A rivals_database_${CURRENT_TEAM}.json:\n\n"${teamKey}": ${JSON.stringify(templateData, null, 2)}`,
+        template: templateData
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rival_template_${teamKey.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Plantilla de rival exportada');
+    
+    alert(`✅ Plantilla de ${rivalTeam} exportada!\n\nAra pots:\n1. Obrir el fitxer descarregat\n2. Copiar el bloc 'template'\n3. Enganxar-lo a rivals_database_${CURRENT_TEAM}.json`);
+}
+
+// ============================================
+// 🎯 CREAR BOTONS EN POSICIÓ VISIBLE
+// ============================================
+function createRivalLoaderButton() {
+    console.log('🔧 Creant botons del sistema de rivals...');
+    
+    // Buscar el contenidor de la vista de rivals
+    const rivalView = document.getElementById('rivalView');
+    
+    if (!rivalView) {
+        console.warn('⚠️ No s\'ha trobat rivalView');
+        return;
+    }
+    
+    // Buscar on està el input del rival
+    const rivalInput = document.getElementById('rivalTeamInput');
+    
+    if (!rivalInput) {
+        console.warn('⚠️ No s\'ha trobat rivalTeamInput');
+        return;
+    }
+    
+    // Crear contenidor de botons DESPRÉS del títol
+    const buttonContainer = document.createElement('div');
+    buttonContainer.id = 'rivalsButtonsContainer';
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+    `;
+    
+    buttonContainer.innerHTML = `
+        <button onclick="showRivalSelector()" class="btn" style="
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        " title="Carregar plantilla d'equip rival">
+            📋 Carregar plantilla
+        </button>
+        
+        <button onclick="exportRivalTemplate()" class="btn" style="
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        " title="Exportar plantilla actualitzada">
+            💾 Exportar plantilla
+        </button>
+        
+          `;
+    
+    // Inserir DESPRÉS de la grid de jugadors
+    const playersGrid = document.getElementById('rivalPlayersList');
+    if (playersGrid) {
+        playersGrid.parentNode.insertBefore(buttonContainer, playersGrid.nextSibling);
+        console.log('✅ Botons inserits correctament després de la llista de jugadors');
+    } else {
+        // Fallback: inserir després del input
+        rivalInput.parentNode.insertBefore(buttonContainer, rivalInput.nextSibling);
+        console.log('✅ Botons inserits correctament després del input (fallback)');
+    }
+}
+
+// ============================================
+// 🚀 INICIALITZACIÓ
+// ============================================
+async function initRivalsSystem() {
+    console.log('🚀 Inicialitzant sistema de rivals v2.2 (detecció millorada)...');
+    
+    // Carregar base de dades (amb gestió d'errors millorada)
+    await loadRivalsDatabase();
+    
+    // Esperar que el DOM estigui completament carregat
+    setTimeout(() => {
+        // Crear botons
+        createRivalLoaderButton();
+        console.log('✅ Sistema de rivals inicialitzat correctament');
+    }, 1000);
+}
+
+// Executar quan es carrega la pàgina
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRivalsSystem);
+} else {
+    // Si ja està carregat, executar amb delay per assegurar que tot està renderitzat
+    setTimeout(initRivalsSystem, 500);
+}
+
+console.log('📦 rivals_database_system.js v2.2 (detecció millorada) carregat');
+</script>
+<script src="rivals_database_system.js"></script>
+<script>
+    // 🔒 Bloqueo de clic derecho y atajos
+  /*  document.addEventListener("contextmenu", event => event.preventDefault());
+    document.addEventListener("keydown", event => {
+      if ((event.ctrlKey && ["s", "u"].includes(event.key.toLowerCase())) ||
+          event.key === "F12") {
+        event.preventDefault();
+      }
+    });*/
+    </script>
+	
+
+</body>
+</html>

@@ -50,13 +50,22 @@ La UI passa d'un toggle Cadet/Juvenil a un **selector de categoria** genèric.
 
 ## Fases
 
-1. **[EN CURS] Entrada de dades v2** — millorar l'app d'entrada (partint de
-   `waterpolo_app_entrada_dades_ct.html` com a referència), escrivint a Firestore,
-   amb Firebase Auth, validació i offline. Sense federació.
-2. **Model Firestore + migració** — definir col·leccions, migrar l'històric útil.
-3. **Frontend v2** — vista de lectura amb disseny clar, multi-categoria.
+1. **[EN CURS] Entrada de dades v2** — offline-first amb localStorage.
+   - ✅ Sistema de disseny compartit (`shared/theme.css`, net i minimalista).
+   - ✅ Model + magatzem (`shared/store.js`): equips, plantilles, partits, recàlcul
+     d'estadístiques des del registre d'accions, sync a Firestore.
+   - ✅ App d'entrada (`entrada/`): categories, plantilla, crear partit, registrar
+     gols/exclusions/penals/parades per jugador i quart, marcador i parcials
+     automàtics, registre amb desfer, finalitzar.
+   - ✅ Primera llesca app principal (`app/`): llista + detall de partit.
+   - ⏳ Activar Firestore a la consola per habilitar sync (veure `README.md`).
+   - ⏳ Firebase Auth, zones de gol/camp, temps de joc.
+2. **Model Firestore + migració** — activar Firestore, migrar l'històric útil.
+3. **Frontend v2 complet** — app principal contra Firestore, selector de categoria, gràfics.
 4. **Federació (quan torni)** — Cloud Functions Python (Leverade/ACTAWP) → Firestore,
    només per validar.
+
+Veure [README.md](README.md) per provar-ho en local i activar Firestore.
 
 ## Referències al repo
 
