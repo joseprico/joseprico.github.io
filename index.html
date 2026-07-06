@@ -5774,6 +5774,9 @@ function filterTemporada(filter) {
 // 🔥 ESCOLTAR FIREBASE PER PARTITS EN DIRECTE
 // ============================================
 function listenForLiveMatch(team = 'juvenil') {
+  // 🔕 Connexió en temps real desactivada (les proves de l'app v2 activaven un partit fantasma)
+  showNoLiveBanner();
+  return;
   if (!window.firebaseReady) {
     console.warn('⚠️ Firebase no disponible');
     showNoLiveBanner();
