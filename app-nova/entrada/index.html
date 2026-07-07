@@ -67,7 +67,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* Capçalera / marcador */
 .header-fixed{position:fixed;top:0;left:0;right:0;background:var(--surface);box-shadow:0 2px 12px rgba(15,23,42,.08);border-bottom:3px solid var(--accent);z-index:1000;padding:8px 0;}
-.scoreboard{max-width:1024px;margin:0 auto;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.scoreboard{max-width:1024px;margin:0 auto;padding:0 104px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:4px;}
 .team-score{flex:1;text-align:center;}
 .team-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:1px;text-transform:uppercase;letter-spacing:.03em;}
 .score-display{font-size:30px;font-weight:900;color:var(--text);line-height:1;}
@@ -184,7 +184,7 @@ svg{display:inline-block;vertical-align:middle;}
 @keyframes slideDown{from{top:70px;opacity:0;}to{top:118px;opacity:1;}}
 
 /* Xip de categoria (obre modal amb categoria + mode fàcil) */
-.team-chip{position:fixed;top:10px;right:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;color:var(--accent);border:1px solid var(--accent);box-shadow:var(--shadow);cursor:pointer;}
+.team-chip{position:fixed;top:14px;right:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;color:var(--accent);border:1px solid var(--accent);box-shadow:var(--shadow);cursor:pointer;}
 .team-chip:active{transform:scale(.95);}
 
 @media (max-width:480px){.container{padding:6px !important;padding-top:92px !important;padding-bottom:88px !important;}}
@@ -192,7 +192,7 @@ svg{display:inline-block;vertical-align:middle;}
 @media (min-width:1024px){#playersList.compact-grid,#rivalPlayersList.compact-grid{grid-template-columns:repeat(4,1fr) !important;}}
 
 /* Indicador Firebase */
-.firebase-indicator{position:fixed;top:10px;left:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);transition:all .3s;border:1px solid var(--border);}
+.firebase-indicator{position:fixed;top:48px;right:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);transition:all .3s;border:1px solid var(--border);}
 .firebase-indicator.connected{background:#dcfce7;border-color:#22c55e;color:#166534;}
 .firebase-indicator.disconnected{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
 .firebase-indicator.syncing{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
@@ -207,7 +207,7 @@ svg{display:inline-block;vertical-align:middle;}
      ============================================ -->
 <div id="firebaseIndicator" class="firebase-indicator disconnected">
     <div class="firebase-dot"></div>
-    <span id="firebaseStatus">Connectant...</span>
+    <span id="firebaseStatus">Connectant</span>
 </div>
    <div class="header-fixed">
         <div class="scoreboard">
@@ -477,7 +477,7 @@ function updateFirebaseIndicator(status) {
         text.textContent = '🔥';
     } else if (status === 'syncing') {
         dot?.classList.add('pulse');
-        text.textContent = '⏳ Sincronitzant';
+        text.textContent = '⏳ Sync';
     } else {
         dot?.classList.remove('pulse');
         text.textContent = '❌ Offline';
