@@ -63,7 +63,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 html{overflow-x:hidden;width:100%;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;width:100%;max-width:100vw;position:relative;-webkit-font-smoothing:antialiased;}
-.container{max-width:1024px;margin:0 auto;padding:8px;padding-top:130px;padding-bottom:88px;box-sizing:border-box;width:100%;}
+.container{max-width:1024px;margin:0 auto;padding:8px;padding-top:92px;padding-bottom:88px;box-sizing:border-box;width:100%;}
 
 /* Capçalera / marcador */
 .header-fixed{position:fixed;top:0;left:0;right:0;background:var(--surface);box-shadow:0 2px 12px rgba(15,23,42,.08);border-bottom:3px solid var(--accent);z-index:1000;padding:8px 0;}
@@ -180,14 +180,14 @@ svg{display:inline-block;vertical-align:middle;}
 .quarter-info{background:var(--accent-soft);padding:2px 8px;border-radius:4px;font-size:10px;color:var(--accent);font-weight:bold;border:1px solid var(--accent);}
 
 /* Avís aigua */
-.water-warning{display:none;position:fixed;top:156px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:bold;z-index:1001;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:90%;text-align:center;}
-@keyframes slideDown{from{top:108px;opacity:0;}to{top:156px;opacity:1;}}
+.water-warning{display:none;position:fixed;top:118px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:bold;z-index:1001;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:90%;text-align:center;}
+@keyframes slideDown{from{top:70px;opacity:0;}to{top:118px;opacity:1;}}
 
-/* Selector d'equip (nou) */
-.team-bar{max-width:1024px;margin:6px auto 0;padding:0 12px;display:flex;align-items:center;gap:8px;}
-.team-select{flex:1;padding:6px 10px;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);}
+/* Xip de categoria (obre modal amb categoria + mode fàcil) */
+.team-chip{position:fixed;top:10px;right:10px;z-index:10000;background:var(--surface);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;color:var(--accent);border:1px solid var(--accent);box-shadow:var(--shadow);cursor:pointer;}
+.team-chip:active{transform:scale(.95);}
 
-@media (max-width:480px){.container{padding:6px !important;padding-top:130px !important;padding-bottom:88px !important;}}
+@media (max-width:480px){.container{padding:6px !important;padding-top:92px !important;padding-bottom:88px !important;}}
 @media (min-width:768px){#playersList.compact-grid,#rivalPlayersList.compact-grid{grid-template-columns:repeat(4,1fr) !important;}.quarter-timer{min-width:80px;}}
 @media (min-width:1024px){#playersList.compact-grid,#rivalPlayersList.compact-grid{grid-template-columns:repeat(4,1fr) !important;}}
 
@@ -210,7 +210,6 @@ svg{display:inline-block;vertical-align:middle;}
     <span id="firebaseStatus">Connectant...</span>
 </div>
    <div class="header-fixed">
-        <div style="position: absolute; top: 5px; right: 15px; font-size: 9px; color: #94a3b8; font-style: italic;">by Josep Rico</div>
         <div class="scoreboard">
     <div class="team-score">
         <div class="team-label">CN TERRASSA</div>
@@ -239,18 +238,18 @@ svg{display:inline-block;vertical-align:middle;}
         </div>
     </div>
 </div>
-       <div class="team-bar">
-           <span style="font-size:12px;font-weight:700;color:var(--muted)">🏊</span>
-           <select id="teamSelect" class="team-select" onchange="changeTeam(this.value)">
-               <option value="alevi">Aleví</option>
-               <option value="infantil">Infantil</option>
-               <option value="cadet">Cadet</option>
-               <option value="juvenil">Juvenil</option>
-               <option value="absolut">Absolut</option>
-           </select>
-           <button id="easyToggle" onclick="toggleEasyMode()" class="btn" style="padding:6px 10px;font-size:12px;white-space:nowrap;">⚡ Mode fàcil: OFF</button>
-       </div>
     </div>
+
+<button id="teamChip" class="team-chip" onclick="openTeamModal()">🏊 Cadet</button>
+
+<div id="teamModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">🏊 Categoria</div>
+        <div class="modal-buttons" id="teamModalButtons"></div>
+        <button id="easyToggle" onclick="toggleEasyMode()" class="btn" style="width:100%;margin-bottom:10px;padding:12px;font-size:14px;">⚡ Mode fàcil: OFF</button>
+        <button class="btn btn-red" style="width:100%" onclick="closeTeamModal()">Tancar</button>
+    </div>
+</div>
 
     <div id="goalModal" class="modal">
     <div class="modal-content">
@@ -381,11 +380,11 @@ svg{display:inline-block;vertical-align:middle;}
 	    <div id="penaltyMissedModal" class="modal"><div class="modal-content" style="max-width: 400px;" id="penaltyModalContent"></div></div>
     
     <div id="waterWarning" class="water-warning">⚠️ Has de tenir exactament 7 jugadors DINS!</div>
-	<div id="playersInWaterBar" style="position: fixed; top: 113px; left: 0; right: 0; background: rgba(34, 197, 94, 0.9); padding: 4px 8px; text-align: center; z-index: 998; display: none;">
+	<div id="playersInWaterBar" style="position: fixed; top: 75px; left: 0; right: 0; background: rgba(34, 197, 94, 0.9); padding: 4px 8px; text-align: center; z-index: 998; display: none;">
     <div style="font-size: 8px; color: white; margin-bottom: 2px;">DINS:</div>
     <div id="playersInWaterList" style="font-size: 12px; font-weight: bold; color: white; line-height: 1;"></div>
 </div>
-<div id="superioritatIndicator" style="display: none; position: fixed; top: 188px; left: 50%; transform: translateX(-50%); z-index: 1001; animation: slideDown 0.3s ease-out;"></div>
+<div id="superioritatIndicator" style="display: none; position: fixed; top: 150px; left: 50%; transform: translateX(-50%); z-index: 1001; animation: slideDown 0.3s ease-out;"></div>
 
     <div class="container">
                <div class="card tabs">
@@ -407,7 +406,7 @@ svg{display:inline-block;vertical-align:middle;}
     <label class="btn btn-blue" style="cursor: pointer;"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Importar<input type="file" accept=".json" onchange="importData(event)" style="display: none;"></label>
     <button class="btn btn-red" onclick="resetAll()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Reset</button>
 </div>
-        <div class="undo-section"><div class="undo-header"><div class="undo-title">↩️ ÚLTIMAS ACCIONES</div><button class="undo-clear" onclick="clearHistory()">Limpiar</button></div><div class="actions-list" id="actionsList"><div style="font-size: 9px; color: #94a3b8; padding: 6px;">No hay acciones recientes</div></div></div>
+        <div class="undo-section"><div class="undo-header"><div class="undo-title">↩️ ÚLTIMAS ACCIONES</div><span style="font-size:8px;color:var(--faint);font-style:italic;">by Josep Rico</span><button class="undo-clear" onclick="clearHistory()">Limpiar</button></div><div class="actions-list" id="actionsList"><div style="font-size: 9px; color: #94a3b8; padding: 6px;">No hay acciones recientes</div></div></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -427,10 +426,19 @@ const CADET_ROSTER=[{num:1,name:'DAVID CASADO'},{num:2,name:'SAMUEL DIAZ'},{num:
 function defaultRoster(team){ if(team==='cadet') return CADET_ROSTER.map(p=>({...p})); return Array.from({length:14},(_,i)=>({num:i+1,name:''})); }
 let currentTeam=localStorage.getItem('cntv2_currentTeam')||'cadet';
 function teamRoster(team){ const s=localStorage.getItem('cntv2_roster_'+team); return s?JSON.parse(s):defaultRoster(team); }
-function changeTeam(t){ if(t===currentTeam) return; if(!confirm('Canviar a '+((TEAMS_CFG[t]&&TEAMS_CFG[t].nom)||t)+'? Es carregaran les dades de la categoria.')){ const s=document.getElementById('teamSelect'); if(s)s.value=currentTeam; return; } localStorage.setItem('cntv2_currentTeam',t); location.reload(); }
+function changeTeam(t){ if(t===currentTeam) return; if(!confirm('Canviar a '+((TEAMS_CFG[t]&&TEAMS_CFG[t].nom)||t)+'? Es carregaran les dades de la categoria.')) return; localStorage.setItem('cntv2_currentTeam',t); location.reload(); }
+function updateTeamChip(){ const c=document.getElementById('teamChip'); if(c) c.textContent='🏊 '+((TEAMS_CFG[currentTeam]&&TEAMS_CFG[currentTeam].nom)||currentTeam)+(easyMode?' ⚡':''); }
+function renderTeamModal(){
+    const box=document.getElementById('teamModalButtons'); if(!box) return;
+    box.innerHTML=Object.keys(TEAMS_CFG).map(k=>'<button class="modal-btn" style="'+(k===currentTeam?'background:var(--accent);color:#fff;border-color:transparent;':'')+'" onclick="selectTeamModal(\''+k+'\')">'+TEAMS_CFG[k].nom+'</button>').join('');
+    const b=document.getElementById('easyToggle'); if(b){ b.textContent=easyMode?'⚡ Mode fàcil: ON':'⚡ Mode fàcil: OFF'; b.style.background=easyMode?'var(--accent)':'var(--surface)'; b.style.color=easyMode?'#fff':'var(--text)'; }
+}
+function openTeamModal(){ renderTeamModal(); document.getElementById('teamModal').classList.add('show'); }
+function closeTeamModal(){ document.getElementById('teamModal').classList.remove('show'); }
+function selectTeamModal(t){ if(t===currentTeam){ closeTeamModal(); return; } closeTeamModal(); changeTeam(t); }
 let players=teamRoster(currentTeam);
 let easyMode = localStorage.getItem('cntv2_easy')==='1';
-function toggleEasyMode(){ easyMode=!easyMode; localStorage.setItem('cntv2_easy', easyMode?'1':'0'); const b=document.getElementById('easyToggle'); if(b){ b.textContent = easyMode?'⚡ Mode fàcil: ON':'⚡ Mode fàcil: OFF'; b.style.background=easyMode?'var(--accent)':'var(--surface)'; b.style.color=easyMode?'#fff':'var(--text)'; } renderCompactView(); }
+function toggleEasyMode(){ easyMode=!easyMode; localStorage.setItem('cntv2_easy', easyMode?'1':'0'); const b=document.getElementById('easyToggle'); if(b){ b.textContent = easyMode?'⚡ Mode fàcil: ON':'⚡ Mode fàcil: OFF'; b.style.background=easyMode?'var(--accent)':'var(--surface)'; b.style.color=easyMode?'#fff':'var(--text)'; } updateTeamChip(); renderCompactView(); }
 function quickGoal(playerNum, isRival){
     const currentQuarter=getCurrentQuarter(); const timestamp=Date.now(); let playerName='';
     if(isRival){
@@ -641,7 +649,7 @@ function calculatePlayingTimeForMatch(){
 }
 function init() {
     document.body.className=(TEAMS_CFG[currentTeam]&&TEAMS_CFG[currentTeam].accent)||'';
-    var _ts=document.getElementById('teamSelect'); if(_ts)_ts.value=currentTeam;
+    updateTeamChip();
     var _eb=document.getElementById('easyToggle'); if(_eb&&easyMode){_eb.textContent='⚡ Mode fàcil: ON'; _eb.style.background='var(--accent)'; _eb.style.color='#fff';}
     if(document.getElementById('playingTimesBox')) renderPlayingTimes();
     loadFromLocalStorage();
