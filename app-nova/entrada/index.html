@@ -188,6 +188,15 @@ svg{display:inline-block;vertical-align:middle;}
 .action-item{background:var(--surface-2);padding:6px 10px;border-radius:6px;font-size:9px;white-space:nowrap;display:flex;align-items:center;gap:6px;border:1px solid var(--border);color:var(--text);}
 .action-icon{font-size:12px;}
 .undo-btn{background:var(--red);color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:8px;font-weight:bold;cursor:pointer;flex-shrink:0;}
+/* Toast de detall d'exclusió rival */
+.exc-toast{position:fixed;bottom:96px;left:8px;right:8px;background:var(--surface);border:2px solid var(--red);border-radius:12px;padding:10px;z-index:1500;box-shadow:0 4px 20px rgba(15,23,42,.25);animation:excToastIn .15s ease-out;}
+@keyframes excToastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.exc-toast-title{font-size:11px;font-weight:bold;color:var(--red);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.exc-toast-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.exc-chip{padding:8px 10px;border-radius:8px;border:1px solid var(--accent);background:var(--surface);color:var(--text);font-size:11px;font-weight:bold;cursor:pointer;}
+.exc-chip.sel{background:var(--accent);color:#fff;}
+.exc-chip-penal{border-color:var(--red);color:var(--red);}
+.exc-chip-penal.sel{background:var(--red);color:#fff;}
 .quarter-info{background:var(--accent-soft);padding:2px 8px;border-radius:4px;font-size:10px;color:var(--accent);font-weight:bold;border:1px solid var(--accent);}
 
 /* Avís aigua */
@@ -1476,9 +1485,12 @@ function handleExclusionPress(playerNum, isRival) {
 }
 
 function handleExclusionRelease(playerNum, isRival) {
-    // Si és rival, obrir modal sempre
+    // Si és rival: registrar a l'instant (normal, sense detall) i oferir
+    // un toast temporal per afegir-hi el jugador CNT o marcar penal
     if (isRival) {
-        openExclusionModal(playerNum, isRival, 1);
+        if (window.isCurrentlyDragging) return;
+        quickExclusion(playerNum, true, 'normal');
+        showRivalExclusionToast(playerNum);
         return;
     }
     
@@ -1487,6 +1499,121 @@ function handleExclusionRelease(playerNum, isRival) {
     if (!isExclusionLongPress) {
         quickExclusion(playerNum, isRival, 'normal');
     }
+}
+
+// ✅ TOAST DE DETALL PER EXCLUSIONS RIVALS
+// L'exclusió ja queda registrada amb 1 toc; durant uns segons es pot
+// afegir el jugador CNT que ha rebut la falta o convertir-la en penal.
+let excToastCtx = null;
+
+function dismissExclusionToast(){
+    if(!excToastCtx) return;
+    clearTimeout(excToastCtx.timer);
+    if(excToastCtx.el && excToastCtx.el.parentNode) excToastCtx.el.parentNode.removeChild(excToastCtx.el);
+    excToastCtx = null;
+}
+
+function excToastResetTimer(){
+    if(!excToastCtx) return;
+    clearTimeout(excToastCtx.timer);
+    excToastCtx.timer = setTimeout(dismissExclusionToast, 6000);
+}
+
+// L'acció encara existeix? (podria haver-se desfet des de l'historial)
+function excToastAlive(){
+    return excToastCtx && actionsHistory.includes(excToastCtx.histAct);
+}
+
+function showRivalExclusionToast(rivalIndex){
+    dismissExclusionToast();
+    const chronoAct = chronologicalActions[chronologicalActions.length-1];
+    const histAct = actionsHistory[0];
+    if(!chronoAct || chronoAct.type!=='exclusion' || chronoAct.team!=='rival' ||
+       chronoAct.playerNum!==rivalIndex || (Date.now()-chronoAct.timestamp)>2000) return;
+
+    // Jugadors a l'aigua; si no es fa seguiment de l'aigua, tots
+    const inWater = Array.from(playersInWater);
+    const candidates = inWater.length ? players.filter(p=>inWater.includes(p.num)) : players;
+
+    const el = document.createElement('div');
+    el.className = 'exc-toast';
+    el.innerHTML = `
+        <div class="exc-toast-title">
+            <span>🟥 Exclusió rival #${rivalStats[rivalIndex].num} registrada · detall opcional</span>
+            <button onclick="dismissExclusionToast()" style="background:none;border:none;font-size:16px;color:var(--muted);padding:0 6px;cursor:pointer;">✕</button>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:4px;">Sobre quin jugador CNT?</div>
+        <div class="exc-toast-chips">
+            ${candidates.map(p=>`<button class="exc-chip" id="exc-chip-${p.num}" onclick="excToastPickPlayer(${p.num})">${p.num} ${(p.name||'').split(' ')[0]}</button>`).join('')}
+            <button class="exc-chip exc-chip-penal" id="exc-chip-penal" onclick="excToastTogglePenal()">🎯 Era penal</button>
+        </div>`;
+    document.body.appendChild(el);
+
+    excToastCtx = { chronoAct: chronoAct, histAct: histAct, rivalIndex: rivalIndex, faltaSobre: null, penal: false, el: el, timer: null };
+    excToastResetTimer();
+}
+
+function excToastRefreshText(){
+    const c = excToastCtx;
+    let txt = `${c.chronoAct.playerName}: ${c.penal?'Exclusió Penalty':'Exclusió'}`;
+    if(c.faltaSobre){
+        const p = players.find(pp=>pp.num==c.faltaSobre);
+        if(p) txt += ` (sobre ${p.name.split(' ')[0]})`;
+    }
+    c.histAct.text = txt;
+    renderHistory();
+}
+
+function excToastPickPlayer(num){
+    if(!excToastAlive()){ dismissExclusionToast(); return; }
+    const c = excToastCtx;
+    if(c.faltaSobre){
+        // Desfer la selecció anterior
+        if(stats[c.faltaSobre] && stats[c.faltaSobre].faltesRebudes) stats[c.faltaSobre].faltesRebudes--;
+        const prevChip = document.getElementById(`exc-chip-${c.faltaSobre}`);
+        if(prevChip) prevChip.classList.remove('sel');
+    }
+    if(c.faltaSobre == num){
+        // Tocar el mateix xip = deseleccionar
+        c.faltaSobre = null;
+        c.chronoAct.faltaSobreJugador = null;
+        c.histAct.faltaSobreJugador = null;
+    } else {
+        c.faltaSobre = num;
+        if(!stats[num].faltesRebudes) stats[num].faltesRebudes = 0;
+        stats[num].faltesRebudes++;
+        c.chronoAct.faltaSobreJugador = String(num);
+        c.histAct.faltaSobreJugador = String(num);
+        const chip = document.getElementById(`exc-chip-${num}`);
+        if(chip) chip.classList.add('sel');
+    }
+    excToastRefreshText();
+    excToastResetTimer();
+    saveToLocalStorage();
+}
+
+function excToastTogglePenal(){
+    if(!excToastAlive()){ dismissExclusionToast(); return; }
+    const c = excToastCtx;
+    const types = rivalStats[c.rivalIndex].exclusionTypes;
+    if(c.penal){
+        c.penal = false;
+        if(types.penalty>0) types.penalty--;
+        types.normal++;
+        c.chronoAct.exclusionType = 'normal';
+        c.histAct.exclusionType = 'normal';
+    } else {
+        c.penal = true;
+        if(types.normal>0) types.normal--;
+        types.penalty++;
+        c.chronoAct.exclusionType = 'penalty';
+        c.histAct.exclusionType = 'penalty';
+    }
+    const chip = document.getElementById('exc-chip-penal');
+    if(chip) chip.classList.toggle('sel', c.penal);
+    excToastRefreshText();
+    excToastResetTimer();
+    saveToLocalStorage();
 }
 
 function quickExclusion(playerNum, isRival, type) {
