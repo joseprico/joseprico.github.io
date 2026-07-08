@@ -494,8 +494,23 @@ body.theme-cadet {
 }
 
 /* Tema JUVENIL (Azul suau) */
-body.theme-juvenil { 
+body.theme-juvenil {
     background: linear-gradient(135deg, #1e3a5a 0%, #1e4a7a 50%, #0891b2 100%);
+}
+
+/* Tema ALEVÍ (Verd suau) */
+body.theme-alevi {
+    background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%);
+}
+
+/* Tema INFANTIL (Lila suau) */
+body.theme-infantil {
+    background: linear-gradient(135deg, #312e81 0%, #5b21b6 50%, #7c3aed 100%);
+}
+
+/* Tema ABSOLUT (Granat) */
+body.theme-absolut {
+    background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #b91c1c 100%);
 }
         .container { max-width: 1400px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 30px; }
@@ -3205,10 +3220,10 @@ body.live-mode {
   transition: background 0.2s;
 }
 .ct-bracket-card .ct-link:hover { background: #2563eb; }
-body.theme-cadet .ct-bracket.ct-juvenil,
-body.theme-cadet .ct-link-juvenil { display: none; }
-body.theme-juvenil .ct-bracket.ct-cadet,
-body.theme-juvenil .ct-link-cadet { display: none; }
+body:not(.theme-juvenil) .ct-bracket.ct-juvenil,
+body:not(.theme-juvenil) .ct-link-juvenil { display: none; }
+body:not(.theme-cadet) .ct-bracket.ct-cadet,
+body:not(.theme-cadet) .ct-link-cadet { display: none; }
 
 .ct-bracket {
   display: grid;
@@ -3347,10 +3362,10 @@ body.theme-juvenil .ct-link-cadet { display: none; }
   gap: 6px;
   flex-wrap: wrap;
 }
-body.theme-cadet .ct-bracket-host.ct-juvenil,
-body.theme-cadet .ct-link-juvenil { display: none; }
-body.theme-juvenil .ct-bracket-host.ct-cadet,
-body.theme-juvenil .ct-link-cadet { display: none; }
+body:not(.theme-juvenil) .ct-bracket-host.ct-juvenil,
+body:not(.theme-juvenil) .ct-link-juvenil { display: none; }
+body:not(.theme-cadet) .ct-bracket-host.ct-cadet,
+body:not(.theme-cadet) .ct-link-cadet { display: none; }
 
 .ct-bracket-host {
   display: grid;
@@ -3435,7 +3450,7 @@ body.theme-juvenil .ct-link-cadet { display: none; }
 .ct-final-78 .ct-match-header { background: rgba(71,85,105,0.45); color: #cbd5e1; }
 
 /* ───── Campionat d'Espanya Cadet · camí del Terrassa (portada) ───── */
-body.theme-juvenil .es-card { display: none; }
+body:not(.theme-cadet) .es-card { display: none; }
 .es-card .ct-link { background: #dc2626; }
 .es-card .ct-link:hover { background: #b91c1c; }
 .es-loading { padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; font-style: italic; }
@@ -4071,7 +4086,7 @@ body.theme-juvenil .es-card { display: none; }
 <div id="temporadaTab" class="hidden">
     <div class="card" style="margin-bottom: 20px;">
         <h2 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-            📅 Temporada 25/26
+            📅 Temporada 26/27
             <span id="temporada-stats-badge" style="font-size: 12px; background: #3b82f6; padding: 4px 12px; border-radius: 20px; font-weight: normal;"></span>
         </h2>
         
@@ -4980,7 +4995,7 @@ const WEATHER_API_KEY = '48d972eea2f04ac9a9674326250811';
         displayComparison();
         displayTitularStats();
         initializePlayerSelector();
-        document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26 • ${allMatches.length} partits`;
+        document.getElementById('mainSubtitle').innerHTML = `Temporada 26/27 • ${allMatches.length} partits`;
         
         // Carregar dades ACTAWP
         try { await loadActawpData(team); } catch(e){ console.warn('⚠️ ACTAWP no disponible (federació):', e.message); }
@@ -14928,77 +14943,77 @@ function renderFieldZoneStats() {
     }
 }
 // ============================================
-// 🏆 ÚLTIMS PARTITS JUGATS (CADET + JUVENIL)
+// 🏆 ÚLTIMS PARTITS JUGATS (totes les categories, Firestore temporada actual)
 // ============================================
 async function renderUltimsPartits() {
-    const baseUrls = {
-        cadet: 'https://joseprico.github.io/cnt_cadet_25-26/',
-        juvenil: 'https://joseprico.github.io/CNT_juvenil_25_26/'
+    const container = document.getElementById('ultims-partits-resum');
+    if (!container) return;
+
+    // Font única: Firestore (temporada actual). Res de repos de temporades antigues.
+    let allSeasonMatches = [];
+    try {
+        if (window.cntListAllMatches) allSeasonMatches = await window.cntListAllMatches();
+    } catch (e) {
+        console.warn('⚠️ No s\'han pogut carregar els últims partits de Firestore:', e.message);
+        return;
+    }
+
+    // Gradients de les targetes alineats amb els temes de cada categoria
+    const cardGradients = {
+        alevi: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)',
+        infantil: 'linear-gradient(135deg, #312e81 0%, #6d28d9 100%)',
+        cadet: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        juvenil: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+        absolut: 'linear-gradient(135deg, #450a0a 0%, #991b1b 100%)'
     };
 
     let html = '';
 
-    for (const [team, baseUrl] of Object.entries(baseUrls)) {
-        try {
-            // Carregar index.json per saber quins fitxers hi ha
-            const indexResp = await fetch(`${baseUrl}index.json?t=${Date.now()}`);
-            const indexData = await indexResp.json();
-            const files = indexData.files || [];
-            
-            if (files.length === 0) continue;
+    for (const [team, cat] of Object.entries(CATS)) {
+        const matches = allSeasonMatches
+            .filter(m => m.teamId === team && m.data && m.scoreCNT !== undefined && m.scoreRival !== undefined)
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
 
-            // Agafar l'últim fitxer (últim partit)
-            const lastFile = files[files.length - 1];
-            const matchResp = await fetch(`${baseUrl}${lastFile}?t=${Date.now()}`);
-            const match = await matchResp.json();
+        if (matches.length === 0) continue;
 
-            const date = new Date(match.data);
-            const dateStr = date.toLocaleDateString('ca-ES', {weekday: 'short', day: 'numeric', month: 'short'});
-            const rival = match.rivalTeam || 'Rival';
-            const locationIcon = (match.matchLocation === 'home' || !match.matchLocation) ? '🏠' : '✈️';
+        const match = matches[0];
+        const date = new Date(match.data);
+        const dateStr = date.toLocaleDateString('ca-ES', {weekday: 'short', day: 'numeric', month: 'short'});
+        const rival = match.rivalTeam || 'Rival';
+        const locationIcon = (match.matchLocation === 'home' || !match.matchLocation) ? '🏠' : '✈️';
 
-            // Resultat
-            let resultat, colorResultat;
-            if (match.scoreCNT > match.scoreRival) {
-                resultat = 'VICTÒRIA';
-                colorResultat = '#10b981';
-            } else if (match.scoreCNT < match.scoreRival) {
-                resultat = 'DERROTA';
-                colorResultat = '#ef4444';
-            } else {
-                resultat = 'EMPAT';
-                colorResultat = '#f59e0b';
-            }
-
-            // Colors segons equip
-            const isJuvenil = team === 'juvenil';
-            const gradient = isJuvenil
-                ? 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)'
-                : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
-            const emoji = isJuvenil ? '🟦' : '⬛';
-            const teamName = isJuvenil ? 'JUVENIL' : 'CADET';
-
-            html += `
-            <div onclick="obrirUltimPartit('${team}')" style="cursor: pointer; background: ${gradient}; border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 12px; font-weight: 700; opacity: 0.8;">${emoji} ÚLTIM ${teamName}</span>
-                    <span style="font-size: 11px; opacity: 0.6;">${dateStr}</span>
-                </div>
-                <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    ${locationIcon} vs ${rival}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">${match.scoreCNT} - ${match.scoreRival}</span>
-                    <span style="font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: ${colorResultat}; color: white;">${resultat}</span>
-                </div>
-            </div>`;
-        } catch (e) {
-            console.error(`❌ Error carregant últim partit ${team}:`, e);
+        // Resultat
+        let resultat, colorResultat;
+        if (match.scoreCNT > match.scoreRival) {
+            resultat = 'VICTÒRIA';
+            colorResultat = '#10b981';
+        } else if (match.scoreCNT < match.scoreRival) {
+            resultat = 'DERROTA';
+            colorResultat = '#ef4444';
+        } else {
+            resultat = 'EMPAT';
+            colorResultat = '#f59e0b';
         }
+
+        const gradient = cardGradients[team] || cardGradients.cadet;
+
+        html += `
+        <div onclick="obrirUltimPartit('${team}')" style="cursor: pointer; background: ${gradient}; border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 700; opacity: 0.8;">${cat.emoji} ÚLTIM ${cat.name}</span>
+                <span style="font-size: 11px; opacity: 0.6;">${dateStr}</span>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${locationIcon} vs ${rival}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">${match.scoreCNT} - ${match.scoreRival}</span>
+                <span style="font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: ${colorResultat}; color: white;">${resultat}</span>
+            </div>
+        </div>`;
     }
 
-    const container = document.getElementById('ultims-partits-resum');
-    if (container) container.innerHTML = html;
+    container.innerHTML = html;
 }
 function obrirUltimPartit(team) {
     const currentTeam = localStorage.getItem('selectedTeam') || 'juvenil';
@@ -15704,11 +15719,11 @@ function getQuarterEndTime(quarterStartTimes, quarterRealEndTimes, quarter) {
 // ✅ GESTIÓ DE SELECCIÓ D'EQUIP
 // Multi-categoria (v2)
 const CATS = {
-  alevi:{name:'ALEVÍ',emoji:'🐟',coach:'',theme:'theme-juvenil'},
-  infantil:{name:'INFANTIL',emoji:'🐬',coach:'',theme:'theme-juvenil'},
+  alevi:{name:'ALEVÍ',emoji:'🐟',coach:'',theme:'theme-alevi'},
+  infantil:{name:'INFANTIL',emoji:'🐬',coach:'',theme:'theme-infantil'},
   cadet:{name:'CADET',emoji:'⬛',coach:'Dídac Cobacho',theme:'theme-cadet'},
   juvenil:{name:'JUVENIL',emoji:'🟦',coach:'Jordi Busquets',theme:'theme-juvenil'},
-  absolut:{name:'ABSOLUT',emoji:'🏆',coach:'',theme:'theme-juvenil'}
+  absolut:{name:'ABSOLUT',emoji:'🏆',coach:'Sergi Mora',theme:'theme-absolut'}
 };
 function applyTeamHeader(team){
   const c = CATS[team] || CATS.cadet;
@@ -15725,18 +15740,8 @@ function selectTeam(team) {
     selectedTeam = team;
     localStorage.setItem('selectedTeam', team);
     document.getElementById('teamSelectionModal').style.display = 'none';
-    
-    // ✅ APLICAR TEMA VISUAL SEGONS L'EQUIP
-    document.body.className = team === 'cadet' ? 'theme-cadet' : 'theme-juvenil';
-    
-    // ✅ ACTUALITZAR TÍTOL I SUBTÍTOL
-    const teamName = team === 'cadet' ? 'CADET' : 'JUVENIL';
-    const emoji = team === 'cadet' ? '⬛' : '🟦';
-    const coach = team === 'cadet' ? 'Didac Cobacho' : 'Jordi Busquets';
-    document.getElementById('mainTitle').innerHTML = `${emoji} 📊 Estadístiques CN Terrassa - ${teamName} ${emoji}`;
-    document.getElementById('coachName').innerHTML = `👨‍🏫 Entrenador: ${coach}`;
-    //document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26 • ${allMatches.length} partits`;
-    
+
+    // ✅ TEMA, TÍTOL I ENTRENADOR SEGONS LA CATEGORIA (CATS)
     applyTeamHeader(team);
     // Carregar dades
     loadAllMatches(team);
@@ -15762,19 +15767,10 @@ async function changeTeam() {
 window.addEventListener('DOMContentLoaded', () => {
     if (selectedTeam) {
         document.getElementById('teamSelectionModal').style.display = 'none';
-        
-        // ✅ APLICAR TEMA VISUAL SEGONS L'EQUIP
-        document.body.className = selectedTeam === 'cadet' ? 'theme-cadet' : 'theme-juvenil';
-        
-        // ✅ ACTUALITZAR TÍTOL I SUBTÍTOL
-        const teamName = selectedTeam === 'cadet' ? 'CADET' : 'JUVENIL';
-        const emoji = selectedTeam === 'cadet' ? '⬛' : '🟦';
-        const coach = selectedTeam === 'cadet' ? 'Dídac Cobacho' : 'Jordi Busquets';
-        document.getElementById('mainTitle').innerHTML = `${emoji} 📊 Estadístiques CN Terrassa - ${teamName} ${emoji}`;
-        document.getElementById('coachName').innerHTML = `👨‍🏫 Entrenador: ${coach}`;
-        document.getElementById('mainSubtitle').innerHTML = `Temporada 25/26`;
-        
+
+        // ✅ TEMA, TÍTOL I ENTRENADOR SEGONS LA CATEGORIA (CATS)
         applyTeamHeader(selectedTeam);
+        document.getElementById('mainSubtitle').innerHTML = `Temporada 26/27`;
         loadAllMatches(selectedTeam);
 		renderUltimsPartits();
     }
@@ -22128,7 +22124,7 @@ const rivalLogo = isHome ? team2Logo : team1Logo;
             
             <!-- Footer -->
             <div style="background: #0f172a; padding: 20px; text-align: center; border-top: 1px solid #334155;">
-                <div style="color: #64748b; font-size: 12px;">CN Terrassa · Temporada 25/26 · Generat automàticament</div>
+                <div style="color: #64748b; font-size: 12px;">CN Terrassa · Temporada 26/27 · Generat automàticament</div>
             </div>
             
         </div>
@@ -22829,7 +22825,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   function renderPill(){
     const container=document.getElementById('next-match-pill');
     if(!container)return;
-    const isCadet=!(document.body&&document.body.classList.contains('theme-juvenil'));
+    const isCadet=!!(document.body&&document.body.classList.contains('theme-cadet'));
     let M; try{M=buildBracket();}catch(e){M=null;}
     const path=M?terrassaMatches(M):[];
     const next=path.find(x=>{const r=getScore(x.id,x.m.a,x.m.b);return !(r&&r.finished);});
@@ -22931,6 +22927,10 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   window.cntListMatches = async function(teamId){
     const snap = await getDocs(collection(db,'matches'));
     return snap.docs.map(d=>({id:d.id, ...d.data()})).filter(m=>m.teamId===teamId).sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));
+  };
+  window.cntListAllMatches = async function(){
+    const snap = await getDocs(collection(db,'matches'));
+    return snap.docs.map(d=>({id:d.id, ...d.data()}));
   };
   console.log('☁️ Lector Firestore llest');
 </script>
