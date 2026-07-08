@@ -261,6 +261,18 @@ svg{display:inline-block;vertical-align:middle;}
     </div>
 
 <button id="teamChip" class="team-chip" onclick="openTeamModal()">🏊 Cadet</button>
+<button id="swapChip" class="team-chip" style="top:82px;background:var(--accent);color:#fff;" onclick="openSwapModal()">🔄 CANVI</button>
+
+<div id="swapModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">🔄 Canvi</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Surt de l'aigua:</div>
+        <div class="exc-toast-chips" id="swapOutChips"></div>
+        <div style="font-size:11px;color:var(--muted);margin:10px 0 4px;">Entra a l'aigua:</div>
+        <div class="exc-toast-chips" id="swapInChips"></div>
+        <button class="btn btn-red" style="width:100%;margin-top:12px;" onclick="closeSwapModal()">Cancel·lar</button>
+    </div>
+</div>
 
 <div id="teamModal" class="modal">
     <div class="modal-content">
@@ -2605,6 +2617,55 @@ function checkPlayersInWater(){
         warning.style.display='none';
     }
 }
+
+// ✅ CANVI GUIAT (substitució en una sola acció: surt + entra)
+let swapCtx = null;
+
+function openSwapModal(){
+    swapCtx = { out: null, in: null };
+    renderSwapChips();
+    document.getElementById('swapModal').classList.add('show');
+}
+
+function closeSwapModal(){
+    swapCtx = null;
+    document.getElementById('swapModal').classList.remove('show');
+}
+
+function swapChipHtml(p, side){
+    const sel = swapCtx && swapCtx[side] === p.num ? ' sel' : '';
+    const name = (p.name || '').split(' ')[0];
+    return `<button class="exc-chip${sel}" onclick="pickSwap('${side}',${p.num})">${p.num}${name ? ' ' + name : ''}</button>`;
+}
+
+function renderSwapChips(){
+    const inWater = players.filter(p => playersInWater.has(p.num));
+    const bench = players.filter(p => !playersInWater.has(p.num));
+    const outEl = document.getElementById('swapOutChips');
+    const inEl = document.getElementById('swapInChips');
+    if(outEl) outEl.innerHTML = inWater.length
+        ? inWater.map(p => swapChipHtml(p, 'out')).join('')
+        : '<div style="font-size:11px;color:var(--muted);">Cap jugador dins l\'aigua (usa les alineacions o el botó 💧)</div>';
+    if(inEl) inEl.innerHTML = bench.length
+        ? bench.map(p => swapChipHtml(p, 'in')).join('')
+        : '<div style="font-size:11px;color:var(--muted);">Tots els jugadors són dins l\'aigua</div>';
+}
+
+function pickSwap(side, num){
+    if(!swapCtx) return;
+    // Tocar el mateix xip = deseleccionar
+    swapCtx[side] = swapCtx[side] === num ? null : num;
+    if(swapCtx.out !== null && swapCtx.in !== null){
+        const outNum = swapCtx.out, inNum = swapCtx.in;
+        closeSwapModal();
+        // Reutilitzar el flux existent: historial, cronologia, temps i avisos
+        togglePlayerWaterStatus(outNum); // surt
+        togglePlayerWaterStatus(inNum);  // entra
+        return;
+    }
+    renderSwapChips();
+}
+
 function processQuarterStart(quarter){const timestamp=Date.now();quarterStartTimes[quarter]=timestamp;const newLineup=lineups[quarter];playersInWater.forEach(num=>{if(!newLineup.includes(num)){playerWaterChanges.push({playerNum:num,quarter:quarter,action:'out',timestamp:timestamp})}});playersInWater.clear();newLineup.forEach(num=>{playersInWater.add(num);playerWaterChanges.push({playerNum:num,quarter:quarter,action:'in',timestamp:timestamp})});renderCompactView();if(compactMode)renderCompactView();saveToLocalStorage()}
 function startQuarter(quarter) {
     const timestamp = Date.now();
