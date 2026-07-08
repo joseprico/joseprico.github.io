@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CN Terrassa - Estadísticas</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0891b2">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="CNT Entrada">
+    <link rel="icon" type="image/png" sizes="192x192" href="/cnt-ios-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/cnt-ios-512.png">
 <!-- ============================================
      FIREBASE SDK - AFEGIR AIXÒ ARA!
      ============================================ -->
@@ -3810,7 +3821,17 @@ console.log('📦 rivals_database_system.js v2.2 (detecció millorada) carregat'
       }
     });*/
     </script>
-	
+
+<script>
+// 🎯 PWA: registre del Service Worker (només en https/localhost, no a file://)
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(reg => console.log('✅ Service Worker registrat:', reg.scope))
+            .catch(err => console.log('❌ Error registrant Service Worker:', err));
+    });
+}
+</script>
 
 </body>
 </html>
