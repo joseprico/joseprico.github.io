@@ -52,6 +52,17 @@ export async function getMatch(id) {
   return s.exists() ? { id: s.id, ...s.data() } : null;
 }
 
+// ---- Alineació habitual (plantilla) d'una categoria ----
+//   rosters/{teamId} -> { teamId, players: [{num, name}...], lastUpdate }
+// L'app d'entrada l'escriu (modal "Alineació habitual"); qualsevol app pot llegir-la.
+export async function saveRoster(teamId, players) {
+  await setDoc(doc(db, "rosters", teamId), { teamId, players, lastUpdate: Date.now() });
+}
+export async function getRoster(teamId) {
+  const s = await getDoc(doc(db, "rosters", teamId));
+  return s.exists() ? (s.data().players || []) : null;
+}
+
 // ---- Comprovar si Firestore respon ----
 export async function firestoreOnline() {
   try { await getDocs(collection(db, "matches")); return true; }

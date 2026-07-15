@@ -21,7 +21,7 @@
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-    import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
     // ⚠️ SUBSTITUEIX AMB LA TEVA CONFIGURACIÓ DE FIREBASE
     const firebaseConfig = {
@@ -40,6 +40,8 @@
     const database = getDatabase(app);
     const fsdb = getFirestore(app);
     window.publishMatchToFirestore = async function(match, teamId){ const id = match.id || match.matchID; if(!id) return; const clean = JSON.parse(JSON.stringify(Object.assign({}, match, {teamId: teamId, lastUpdate: Date.now()}))); await setDoc(doc(fsdb,'matches',id), clean); console.log('☁️ Publicat a Firestore:', id); };
+    window.saveRosterToFirestore = async function(teamId, roster){ await setDoc(doc(fsdb,'rosters',teamId), {teamId: teamId, players: roster, lastUpdate: Date.now()}); console.log('☁️ Plantilla guardada a Firestore:', teamId); };
+    window.loadRosterFromFirestore = async function(teamId){ const s = await getDoc(doc(fsdb,'rosters',teamId)); return s.exists() ? (s.data().players || []) : null; };
     
     // Exposar globalment
     window.firebaseDB = database;
@@ -283,6 +285,18 @@ svg{display:inline-block;vertical-align:middle;}
     </div>
 </div>
 
+<div id="rosterModal" class="modal">
+    <div class="modal-content" style="max-height:85vh;display:flex;flex-direction:column;">
+        <div class="modal-title" id="rosterModalTitle">📋 Alineació habitual</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Es guarda per categoria (aquí i al núvol) i s'usa als partits nous i al Reset.</div>
+        <div id="rosterModalList" style="overflow-y:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+            <button class="btn btn-red" onclick="closeRosterModal()">Cancel·lar</button>
+            <button class="btn btn-green" onclick="saveRosterModal()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
     <div id="goalModal" class="modal">
     <div class="modal-content">
         <!-- PASO 1: Seleccionar tipo de gol -->
@@ -438,6 +452,7 @@ svg{display:inline-block;vertical-align:middle;}
     <label class="btn btn-blue" style="cursor: pointer;"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Importar<input type="file" accept=".json" onchange="importData(event)" style="display: none;"></label>
     <button class="btn btn-red" onclick="resetAll()"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Reset</button>
 </div>
+<button onclick="openRosterModal()" style="width:100%;margin-top:8px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;padding:8px;cursor:pointer;">📋 Alineació habitual de l'equip</button>
         <div class="undo-section"><div class="undo-header"><div class="undo-title">↩️ ÚLTIMAS ACCIONES</div><span style="font-size:8px;color:var(--faint);font-style:italic;">by Josep Rico</span><button class="undo-clear" onclick="clearHistory()">Limpiar</button></div><div class="actions-list" id="actionsList"><div style="font-size: 9px; color: #94a3b8; padding: 6px;">No hay acciones recientes</div></div></div>
     </div>
 
@@ -468,6 +483,43 @@ function renderTeamModal(){
 function openTeamModal(){ renderTeamModal(); document.getElementById('teamModal').classList.add('show'); }
 function closeTeamModal(){ document.getElementById('teamModal').classList.remove('show'); }
 function selectTeamModal(t){ if(t===currentTeam){ closeTeamModal(); return; } closeTeamModal(); changeTeam(t); }
+/* ===== Alineació habitual (plantilla editable per categoria) ===== */
+function escRosterAttr(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function openRosterModal(){
+    const cfg=TEAMS_CFG[currentTeam];
+    document.getElementById('rosterModalTitle').textContent='📋 Alineació habitual · '+((cfg&&cfg.nom)||currentTeam);
+    const roster=teamRoster(currentTeam);
+    document.getElementById('rosterModalList').innerHTML=roster.map(p=>
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<span style="width:22px;flex:none;text-align:right;font-weight:700;font-size:13px;color:var(--muted);">'+p.num+'</span>'+
+        '<input type="text" class="input" style="padding:6px 10px;font-size:13px;" data-roster-num="'+p.num+'" value="'+escRosterAttr(p.name)+'" placeholder="Nom del jugador">'+
+        '</div>').join('');
+    document.getElementById('rosterModal').classList.add('show');
+}
+function closeRosterModal(){ document.getElementById('rosterModal').classList.remove('show'); }
+function saveRosterModal(){
+    const roster=Array.from(document.querySelectorAll('#rosterModalList input[data-roster-num]'))
+        .map(i=>({num:parseInt(i.getAttribute('data-roster-num'),10),name:i.value.trim()}));
+    localStorage.setItem('cntv2_roster_'+currentTeam,JSON.stringify(roster));
+    roster.forEach(r=>{ const p=players.find(pl=>pl.num===r.num); if(p) p.name=r.name; });
+    renderCompactView(); renderLineups(); saveToLocalStorage();
+    closeRosterModal();
+    if(window.saveRosterToFirestore){
+        window.saveRosterToFirestore(currentTeam, roster)
+            .catch(function(e){ console.warn('No s\'ha pogut guardar la plantilla a Firestore:', e.message); });
+    }
+    alert('✅ Alineació habitual guardada per '+((TEAMS_CFG[currentTeam]&&TEAMS_CFG[currentTeam].nom)||currentTeam));
+}
+function loadRosterFromCloud(){
+    if(localStorage.getItem('cntv2_roster_'+currentTeam) || !window.loadRosterFromFirestore) return;
+    window.loadRosterFromFirestore(currentTeam).then(function(roster){
+        if(!roster || !roster.length) return;
+        localStorage.setItem('cntv2_roster_'+currentTeam,JSON.stringify(roster));
+        let changed=false;
+        roster.forEach(function(r){ const p=players.find(pl=>pl.num===r.num); if(p && !p.name && r.name){ p.name=r.name; changed=true; } });
+        if(changed){ renderCompactView(); renderLineups(); saveToLocalStorage(); }
+    }).catch(function(e){ console.warn('Plantilla del núvol no disponible:', e.message); });
+}
 let players=teamRoster(currentTeam);
 let easyMode = localStorage.getItem('cntv2_easy')==='1';
 function toggleEasyMode(){ easyMode=!easyMode; localStorage.setItem('cntv2_easy', easyMode?'1':'0'); const b=document.getElementById('easyToggle'); if(b){ b.textContent = easyMode?'⚡ Mode fàcil: ON':'⚡ Mode fàcil: OFF'; b.style.background=easyMode?'var(--accent)':'var(--surface)'; b.style.color=easyMode?'#fff':'var(--text)'; } updateTeamChip(); renderCompactView(); }
@@ -685,6 +737,7 @@ function init() {
     var _eb=document.getElementById('easyToggle'); if(_eb&&easyMode){_eb.textContent='⚡ Mode fàcil: ON'; _eb.style.background='var(--accent)'; _eb.style.color='#fff';}
     if(document.getElementById('playingTimesBox')) renderPlayingTimes();
     loadFromLocalStorage();
+    loadRosterFromCloud();
 
     if(Object.keys(stats).length === 0) {
         players.forEach(p => {
@@ -2188,8 +2241,8 @@ function exportData(){const d=generateMatchData();const b=new Blob([JSON.stringi
 function importData(e){const f=e.target.files[0];if(f){const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(d.lineups)lineups=d.lineups;if(d.periodScores)periodScores=d.periodScores;if(d.tempsMortCNT!==undefined){tempsMortCNT=d.tempsMortCNT;document.getElementById('tempsMortCNT').textContent=tempsMortCNT}if(d.tempsMortRival!==undefined){tempsMortRival=d.tempsMortRival;document.getElementById('tempsMortRival').textContent=tempsMortRival}if(d.rivalTeam){rivalTeam=d.rivalTeam;document.getElementById('rivalTeamInput').value=rivalTeam;document.getElementById('rivalTeamLabel').textContent=rivalTeam}if(d.rivalStats)rivalStats=d.rivalStats;if(d.observacions)observacions=d.observacions;if(d.chronologicalActions)chronologicalActions=d.chronologicalActions;else chronologicalActions=[];if(d.playersInWater)playersInWater=new Set(d.playersInWater);else playersInWater=new Set();if(d.quarterStartTimes)quarterStartTimes=d.quarterStartTimes;else quarterStartTimes={q1:null,q2:null,q3:null,q4:null};if(d.playerWaterChanges)playerWaterChanges=d.playerWaterChanges;else playerWaterChanges=[];if(d.jugadors){d.jugadors.forEach(j=>{const p=players.find(p=>p.num===j.numero);if(p)p.name=j.nom;stats[j.numero]=j.estadistiques;if(stats[j.numero].penaltyMissed===undefined)stats[j.numero].penaltyMissed=0})}renderCompactView();renderCompactView();renderLineups();renderPeriodScores();updateScores();renderMVPPanel();alert('Datos importados correctamente')}catch(err){alert('Error al importar el archivo')}};r.readAsText(f)}}
 function resetAll() {
     if (confirm('¿Seguro que quieres resetear todas las estadísticas?')) {
-        // Resetear jugadores a los predefinidos del CNT
-        players = defaultRoster(currentTeam);
+        // Resetear jugadores a l'alineació habitual guardada (o la predefinida)
+        players = teamRoster(currentTeam);
 
         // Resetear estadísticas de jugadores
         stats = {};
