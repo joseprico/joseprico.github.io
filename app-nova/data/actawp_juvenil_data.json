@@ -1,0 +1,621 @@
+{
+  "metadata": {
+    "source": "ACTAWP",
+    "season": "2026-27",
+    "team_key": "juvenil",
+    "team_id": "15894541",
+    "team_name": "CN Terrassa Juvenil",
+    "actawp_team_name": "C.N. TERRASSA A",
+    "coach": "Jordi Busquets",
+    "tournament_id": 1339807,
+    "tournament_name": "LLIGA CATALANA JUVENIL MASCULI 26/27",
+    "tournament_url": "https://actawp.natacio.cat/ca/tournament/1339807/summary",
+    "group_id": "3714141",
+    "group_name": "Grup B 1a Fase",
+    "group_teams": [
+      "C.N. ATL BARCELONETA",
+      "C.N. RUBÍ",
+      "C.N. TERRASSA A"
+    ],
+    "byes": [
+      3
+    ],
+    "downloaded_at": "2026-09-11T11:16:10.119831+02:00",
+    "parser_version": "7.0_26-27_headless"
+  },
+  "players": [],
+  "team_stats": {},
+  "upcoming_matches": [
+    {
+      "team1": "C.N. TERRASSA A",
+      "team2": "C.N. RUBÍ",
+      "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+      "team2_logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+      "jornada": 1,
+      "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574210/results",
+      "date": "04/10/2026",
+      "time": "09:00",
+      "date_time": "04/10/2026 09:00",
+      "iso_date": "2026-10-04",
+      "venue": "163 - Terrassa C.N."
+    },
+    {
+      "team1": "C.N. ATL BARCELONETA",
+      "team2": "C.N. TERRASSA A",
+      "team1_logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+      "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+      "jornada": 2,
+      "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574212/results",
+      "date": "11/10/2026",
+      "time": "09:00",
+      "date_time": "11/10/2026 09:00",
+      "iso_date": "2026-10-11",
+      "venue": "166 - Atlètic Barceloneta, CN - 33m coberta"
+    }
+  ],
+  "last_results": [],
+  "ranking": [
+    {
+      "posicio": "1",
+      "equip": "C.N. ATL BARCELONETA",
+      "team_id": "15891637",
+      "logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+      "punts": 0,
+      "partits": 0,
+      "guanyats": 0,
+      "empatats": 0,
+      "perduts": 0,
+      "gols_favor": 0,
+      "gols_contra": 0,
+      "diferencia": 0
+    },
+    {
+      "posicio": "2",
+      "equip": "C.N. TERRASSA A",
+      "team_id": "15894541",
+      "logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+      "punts": 0,
+      "partits": 0,
+      "guanyats": 0,
+      "empatats": 0,
+      "perduts": 0,
+      "gols_favor": 0,
+      "gols_contra": 0,
+      "diferencia": 0
+    },
+    {
+      "posicio": "3",
+      "equip": "C.N. RUBÍ",
+      "team_id": "15899768",
+      "logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+      "punts": 0,
+      "partits": 0,
+      "guanyats": 0,
+      "empatats": 0,
+      "perduts": 0,
+      "gols_favor": 0,
+      "gols_contra": 0,
+      "diferencia": 0
+    }
+  ],
+  "rivals_form": {
+    "C.N. ATL BARCELONETA": {
+      "team_id": "15891637",
+      "logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+      "last_results": [],
+      "form": [],
+      "form_string": "",
+      "top_scorers": [],
+      "stats": {
+        "total_gf": 0,
+        "total_gc": 0,
+        "avg_gf": 0,
+        "avg_gc": 0,
+        "matches_played": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "trend": "unknown",
+        "total_exclusions": 0
+      }
+    },
+    "C.N. RUBÍ": {
+      "team_id": "15899768",
+      "logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+      "last_results": [],
+      "form": [],
+      "form_string": "",
+      "top_scorers": [],
+      "stats": {
+        "total_gf": 0,
+        "total_gc": 0,
+        "avg_gf": 0,
+        "avg_gc": 0,
+        "matches_played": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "trend": "unknown",
+        "total_exclusions": 0
+      }
+    }
+  },
+  "group_matches": [
+    {
+      "team1": "C.N. TERRASSA A",
+      "team2": "C.N. RUBÍ",
+      "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+      "team2_logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+      "jornada": 1,
+      "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574210/results",
+      "date": "04/10/2026",
+      "time": "09:00",
+      "date_time": "04/10/2026 09:00",
+      "iso_date": "2026-10-04",
+      "venue": "163 - Terrassa C.N."
+    },
+    {
+      "team1": "C.N. ATL BARCELONETA",
+      "team2": "C.N. TERRASSA A",
+      "team1_logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+      "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+      "jornada": 2,
+      "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574212/results",
+      "date": "11/10/2026",
+      "time": "09:00",
+      "date_time": "11/10/2026 09:00",
+      "iso_date": "2026-10-11",
+      "venue": "166 - Atlètic Barceloneta, CN - 33m coberta"
+    },
+    {
+      "team1": "C.N. RUBÍ",
+      "team2": "C.N. ATL BARCELONETA",
+      "team1_logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+      "team2_logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+      "jornada": 3,
+      "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574214/results",
+      "date": "18/10/2026",
+      "time": "11:30",
+      "date_time": "18/10/2026 11:30",
+      "iso_date": "2026-10-18",
+      "venue": "186 - Rubí, CN - Can Rosés"
+    }
+  ],
+  "groups": [
+    {
+      "id": "3714140",
+      "name": "Grup A 1a Fase",
+      "teams": [
+        "C.N. MATARÓ",
+        "C.N. MONTJUIC",
+        "C.N. SABADELL"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. MONTJUIC",
+          "team2": "C.N. MATARÓ",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaLZ2cLfo4fC.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaOLLadIjC6E.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574204/results",
+          "date": "04/10/2026",
+          "time": "10:30",
+          "date_time": "04/10/2026 10:30",
+          "iso_date": "2026-10-04",
+          "venue": "161 - Montjuic, CN - Zona Esportiva"
+        },
+        {
+          "team1": "C.N. SABADELL",
+          "team2": "C.N. MONTJUIC",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaLZ2cLfo4fC.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574206/results",
+          "date": "11/10/2026",
+          "time": "12:45",
+          "date_time": "11/10/2026 12:45",
+          "iso_date": "2026-10-11",
+          "venue": "264 - Sabadell, CN - Can Llong - 33m"
+        },
+        {
+          "team1": "C.N. MATARÓ",
+          "team2": "C.N. SABADELL",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaOLLadIjC6E.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaJFwTq1SdZo.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574208/results",
+          "date": "18/10/2026",
+          "time": "09:00",
+          "date_time": "18/10/2026 09:00",
+          "iso_date": "2026-10-18",
+          "venue": "373 - Mataró, CN - Joan Serra - 50m descoberta"
+        }
+      ]
+    },
+    {
+      "id": "3714141",
+      "name": "Grup B 1a Fase",
+      "teams": [
+        "C.N. ATL BARCELONETA",
+        "C.N. RUBÍ",
+        "C.N. TERRASSA A"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. TERRASSA A",
+          "team2": "C.N. RUBÍ",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574210/results",
+          "date": "04/10/2026",
+          "time": "09:00",
+          "date_time": "04/10/2026 09:00",
+          "iso_date": "2026-10-04",
+          "venue": "163 - Terrassa C.N."
+        },
+        {
+          "team1": "C.N. ATL BARCELONETA",
+          "team2": "C.N. TERRASSA A",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574212/results",
+          "date": "11/10/2026",
+          "time": "09:00",
+          "date_time": "11/10/2026 09:00",
+          "iso_date": "2026-10-11",
+          "venue": "166 - Atlètic Barceloneta, CN - 33m coberta"
+        },
+        {
+          "team1": "C.N. RUBÍ",
+          "team2": "C.N. ATL BARCELONETA",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/Aa0ntlmDPJHS.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaS9iMCevN9M.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574214/results",
+          "date": "18/10/2026",
+          "time": "11:30",
+          "date_time": "18/10/2026 11:30",
+          "iso_date": "2026-10-18",
+          "venue": "186 - Rubí, CN - Can Rosés"
+        }
+      ]
+    },
+    {
+      "id": "3714142",
+      "name": "Grup C 1a Fase",
+      "teams": [
+        "C.N. BARCELONA",
+        "C.N. SANT ANDREU",
+        "C.N. SANT FELIU"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. SANT ANDREU",
+          "team2": "C.N. SANT FELIU",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaHuNvh2GCD0.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574216/results",
+          "date": "04/10/2026",
+          "time": "13:00",
+          "date_time": "04/10/2026 13:00",
+          "iso_date": "2026-10-04",
+          "venue": "164 - St Andreu, CN (25 M.)"
+        },
+        {
+          "team1": "C.N. BARCELONA",
+          "team2": "C.N. SANT ANDREU",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaTcV9fsgKzp.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574218/results",
+          "date": "11/10/2026",
+          "time": "09:30",
+          "date_time": "11/10/2026 09:30",
+          "iso_date": "2026-10-11",
+          "venue": "160 - Barcelona, CN - Nova Escollera - 50m"
+        },
+        {
+          "team1": "C.N. SANT FELIU",
+          "team2": "C.N. BARCELONA",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaHuNvh2GCD0.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaT38Tf1E4Fg.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574220/results",
+          "date": "18/10/2026",
+          "time": "12:45",
+          "date_time": "18/10/2026 12:45",
+          "iso_date": "2026-10-18",
+          "venue": "185 - Sant Feliu, CN"
+        }
+      ]
+    },
+    {
+      "id": "3714143",
+      "name": "Grup D 1a Fase",
+      "teams": [
+        "C.E. MEDITERRANI",
+        "C.N. CATALUNYA",
+        "U.E. D'HORTA"
+      ],
+      "matches": [
+        {
+          "team1": "C.E. MEDITERRANI",
+          "team2": "C.N. CATALUNYA",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AasntmnZMsxi.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AajxOQYj1UBb.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574222/results",
+          "date": "04/10/2026",
+          "time": "09:30",
+          "date_time": "04/10/2026 09:30",
+          "iso_date": "2026-10-04",
+          "venue": "258 - Mediterrani CE, Josep Vallès - 50m"
+        },
+        {
+          "team1": "U.E. D'HORTA",
+          "team2": "C.E. MEDITERRANI",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AasntmnZMsxi.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574224/results",
+          "date": "11/10/2026",
+          "time": "12:45",
+          "date_time": "11/10/2026 12:45",
+          "iso_date": "2026-10-11",
+          "venue": "179 - D'Horta, UE - 33m"
+        },
+        {
+          "team1": "C.N. CATALUNYA",
+          "team2": "U.E. D'HORTA",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AajxOQYj1UBb.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaEBEa7OVvwB.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574226/results",
+          "date": "18/10/2026",
+          "time": "10:15",
+          "date_time": "18/10/2026 10:15",
+          "iso_date": "2026-10-18",
+          "venue": "165 - Catalunya, CN - Can Toda"
+        }
+      ]
+    },
+    {
+      "id": "3714144",
+      "name": "Grup E 1a Fase",
+      "teams": [
+        "C.N. CALDES",
+        "C.N. OLOT",
+        "C.N. TERRASSA B"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. OLOT",
+          "team2": "C.N. TERRASSA B",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaPycbuK0TPR.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574228/results",
+          "date": "04/10/2026",
+          "time": "13:30",
+          "date_time": "04/10/2026 13:30",
+          "iso_date": "2026-10-04",
+          "venue": "173 - Olot, CN"
+        },
+        {
+          "team1": "C.N. CALDES",
+          "team2": "C.N. OLOT",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AanEGUAiXoUR.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaPycbuK0TPR.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574230/results",
+          "date": "11/10/2026",
+          "time": "17:15",
+          "date_time": "11/10/2026 17:15",
+          "iso_date": "2026-10-11",
+          "venue": "177 - Caldes, C.N."
+        },
+        {
+          "team1": "C.N. TERRASSA B",
+          "team2": "C.N. CALDES",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AanEGUAiXoUR.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574232/results",
+          "date": "18/10/2026",
+          "time": "09:00",
+          "date_time": "18/10/2026 09:00",
+          "iso_date": "2026-10-18",
+          "venue": "163 - Terrassa C.N."
+        }
+      ]
+    },
+    {
+      "id": "3714145",
+      "name": "Grup F 1a Fase",
+      "teams": [
+        "C.N. BANYOLES",
+        "C.N. GRANOLLERS/CWP SANT ADRIÀ",
+        "C.N. PREMIÀ"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. GRANOLLERS/CWP SANT ADRIÀ",
+          "team2": "C.N. BANYOLES",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaX9vnrttrMX.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AamI6EetjQuj.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574234/results",
+          "date": "04/10/2026",
+          "time": "09:00",
+          "date_time": "04/10/2026 09:00",
+          "iso_date": "2026-10-04",
+          "venue": "100 - Granollers, CN - P3 - 25m coberta"
+        },
+        {
+          "team1": "C.N. PREMIÀ",
+          "team2": "C.N. GRANOLLERS/CWP SANT ADRIÀ",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AatzEPbjSvDt.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaX9vnrttrMX.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574236/results",
+          "date": "11/10/2026",
+          "time": "09:00",
+          "date_time": "11/10/2026 09:00",
+          "iso_date": "2026-10-11",
+          "venue": "181 - Premia, CN"
+        },
+        {
+          "team1": "C.N. BANYOLES",
+          "team2": "C.N. PREMIÀ",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AamI6EetjQuj.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AatzEPbjSvDt.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574238/results",
+          "date": "18/10/2026",
+          "time": "11:15",
+          "date_time": "18/10/2026 11:15",
+          "iso_date": "2026-10-18",
+          "venue": "171 - Banyoles, CN"
+        }
+      ]
+    },
+    {
+      "id": "3714146",
+      "name": "Grup G 1a Fase",
+      "teams": [
+        "C.N. MOLINS DE REI",
+        "C.N. TARRACO - C.N. Vallirana",
+        "GEiEG"
+      ],
+      "matches": [
+        {
+          "team1": "C.N. TARRACO - C.N. Vallirana",
+          "team2": "GEiEG",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaASUj4MR999.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AalgtYJpsl1y.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574240/results",
+          "date": "04/10/2026",
+          "time": "09:00",
+          "date_time": "04/10/2026 09:00",
+          "iso_date": "2026-10-04",
+          "venue": "188 - Vallirana, C.N."
+        },
+        {
+          "team1": "C.N. MOLINS DE REI",
+          "team2": "C.N. TARRACO - C.N. Vallirana",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f4fc6ccd.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaASUj4MR999.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574242/results",
+          "date": "11/10/2026",
+          "time": "10:30",
+          "date_time": "11/10/2026 10:30",
+          "iso_date": "2026-10-11",
+          "venue": "170 - Molins De Rei, CN"
+        },
+        {
+          "team1": "GEiEG",
+          "team2": "C.N. MOLINS DE REI",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AalgtYJpsl1y.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f4fc6ccd.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574244/results",
+          "date": "18/10/2026",
+          "time": "12:15",
+          "date_time": "18/10/2026 12:15",
+          "iso_date": "2026-10-18",
+          "venue": "168 - G.E.I.E.G."
+        }
+      ]
+    },
+    {
+      "id": "3714147",
+      "name": "Grup H 1a Fase",
+      "teams": [
+        "A.E. SANTA EULÀLIA",
+        "C.N. POBLE NOU",
+        "CN BADIA/CN MARTORELL"
+      ],
+      "matches": [
+        {
+          "team1": "A.E. SANTA EULÀLIA",
+          "team2": "CN BADIA/CN MARTORELL",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaFRZaLfZFUg.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaV1bbi5j78t.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574246/results",
+          "date": "04/10/2026",
+          "time": "12:10",
+          "date_time": "04/10/2026 12:10",
+          "iso_date": "2026-10-04",
+          "venue": "228 - Santa Eulàlia, AE"
+        },
+        {
+          "team1": "C.N. POBLE NOU",
+          "team2": "A.E. SANTA EULÀLIA",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AavYwrQJ36uU.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AaFRZaLfZFUg.30x30.jpg",
+          "jornada": 2,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574248/results",
+          "date": "11/10/2026",
+          "time": "17:00",
+          "date_time": "11/10/2026 17:00",
+          "iso_date": "2026-10-11",
+          "venue": "183 - Poble Nou, CN - Can Felipa"
+        },
+        {
+          "team1": "CN BADIA/CN MARTORELL",
+          "team2": "C.N. POBLE NOU",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaV1bbi5j78t.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AavYwrQJ36uU.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574250/results",
+          "date": "18/10/2026",
+          "time": "09:00",
+          "date_time": "18/10/2026 09:00",
+          "iso_date": "2026-10-18",
+          "venue": "195 - Badia, CN - 25m"
+        }
+      ]
+    }
+  ],
+  "other_cnt_teams": {
+    "C.N. TERRASSA B": {
+      "group": "Grup E 1a Fase",
+      "group_id": "3714144",
+      "matches": [
+        {
+          "team1": "C.N. OLOT",
+          "team2": "C.N. TERRASSA B",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/AaPycbuK0TPR.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "jornada": 1,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574228/results",
+          "date": "04/10/2026",
+          "time": "13:30",
+          "date_time": "04/10/2026 13:30",
+          "iso_date": "2026-10-04",
+          "venue": "173 - Olot, CN"
+        },
+        {
+          "team1": "C.N. TERRASSA B",
+          "team2": "C.N. CALDES",
+          "team1_logo": "https://cdn.leverade.com/thumbnails/rfen_f74fa6fe.30x30.jpg",
+          "team2_logo": "https://cdn.leverade.com/thumbnails/AanEGUAiXoUR.30x30.jpg",
+          "jornada": 3,
+          "url": "https://actawp.natacio.cat/ca/tournament/1339807/match/145574232/results",
+          "date": "18/10/2026",
+          "time": "09:00",
+          "date_time": "18/10/2026 09:00",
+          "iso_date": "2026-10-18",
+          "venue": "163 - Terrassa C.N."
+        }
+      ]
+    }
+  },
+  "last_update": "2026-09-11T11:16:10.119831+02:00"
+}
