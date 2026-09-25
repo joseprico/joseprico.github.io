@@ -13,6 +13,8 @@ app-nova/
 │  └─ store.js      model de dades + magatzem (localStorage) + sync Firestore
 ├─ entrada/         APP D'ENTRADA DE DADES (escriu)
 │  └─ index.html
+├─ acta/            ACTA EN DIRECTE: gols, exclusions i canvis + comparació amb l'acta FCN
+│  └─ index.html
 └─ app/             APP PRINCIPAL (llegeix) — primera llesca
    └─ index.html
 ```
@@ -30,6 +32,7 @@ python -m http.server 8000
 
 Després obrir:
 - Entrada de dades: http://localhost:8000/app-nova/entrada/
+- Acta en directe:  http://localhost:8000/app-nova/acta/
 - App principal:    http://localhost:8000/app-nova/app/
 
 Totes dues comparteixen el mateix `localStorage`, així que un partit registrat
@@ -65,6 +68,36 @@ a l'app d'entrada apareix immediatament a l'app principal (mateix navegador).
    ```
    *(Per començar a provar ràpid es pot posar `allow write: if true;` i endurir després.)*
 4. El botó ☁️ de l'app d'entrada ja escriurà a `matches/` i subcol·leccions.
+
+## Acta en directe (`acta/`) i lector de l'acta FCN
+
+App lleugera per a la piscina: per jugador, gol (⚽) i exclusió (EX), amb toast
+per precisar el tipus com a l'acta (penal, falta de penal, excl.+penal,
+brutalitat, definitiva); tocar el nom = dins/fora (temps de joc) i 🔄 canvi guiat.
+Tot és un registre d'accions (`acts`) a `localStorage` (`acta_v1_*`), d'on es
+deriven marcador, parcials, titulars i temps. Comparteix amb l'entrada
+`cntv2_currentTeam` i `cntv2_roster_<cat>`.
+
+La pestanya **🆚 Acta FCN** compara amb la federació (l'ACTAWP és Leverade):
+- **Equip** (marcador, parcials, quarts acabats): API pública
+  `api.leverade.com` directament des del mòbil, cada 30 s durant el partit.
+- **Jugador** (totes les columnes de l'acta: G, GP, G5P, EX, P, EP, ED, EB, EN,
+  PF, TG, TV...): la pàgina `stats` de l'ACTAWP té anti-bot i no permet CORS,
+  així que la llegeix [`actawp_live.py`](../actawp_live.py) amb Chrome headless
+  i la publica a la **RTDB** `federacio/{matchId}`; l'app l'escolta amb
+  `EventSource` (streaming REST, sense SDK).
+
+On corre el lector:
+1. **GitHub Actions** ([`.github/workflows/actawp_live.yml`](../.github/workflows/actawp_live.yml)):
+   cada 15 min mira el calendari; si hi ha un partit del CNT a punt (25 min
+   abans) o en joc, el segueix fins que acaba. Necessita el secret
+   `FIREBASE_SERVICE_ACCOUNT` (JSON del compte de servei de Firebase).
+2. **PC (reserva)** si l'anti-bot bloqueja GitHub:
+   `python actawp_live.py --watch --key C:\ruta\clau.json`
+   (`pip install beautifulsoup4 firebase-admin`).
+
+Proves sense credencials: `python actawp_live.py --dry-run --match <id> --tournament <id>`
+desa el JSON a `app-nova/data/federacio/`, que l'app llegeix com a reserva en local.
 
 ## Pendent (properes fases)
 

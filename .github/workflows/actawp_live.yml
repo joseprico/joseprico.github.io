@@ -1,0 +1,68 @@
+name: Acta ACTAWP en directe
+
+# Llegeix l'acta per jugador dels partits del CNT a l'ACTAWP i la publica a la
+# RTDB (federacio/{matchId}) perquè l'app app-nova/acta/ la compari en directe.
+# Cada execució programada només mira el calendari (uns segons); si hi ha un
+# partit del CNT a punt o en joc, instal·la les dependències i el segueix fins
+# que acaba. Reserva: el mateix script al PC (`python actawp_live.py --watch`).
+
+on:
+  schedule:
+    # Cada 15 min, fora de l'hora en punt (menys cua als runners de GitHub)
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+    inputs:
+      match:
+        description: "Id del partit (opcional, per seguir-ne un de concret)"
+        required: false
+      tournament:
+        description: "Id del torneig del partit (obligatori si poses partit)"
+        required: false
+
+# Mai dos lectors alhora: si un partit s'està seguint, les execucions noves esperen
+concurrency:
+  group: actawp-live
+  cancel-in-progress: false
+
+jobs:
+  lector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout (només els scripts)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            actawp_live.py
+            actawp_fetch_26_27.py
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Hi ha partit del CNT?
+        id: check
+        if: ${{ !inputs.match }}
+        run: python actawp_live.py --check
+
+      - name: Dependències
+        if: ${{ inputs.match || steps.check.outputs.active == 'true' }}
+        run: pip install beautifulsoup4 firebase-admin
+
+      - name: Segueix l'acta
+        if: ${{ inputs.match || steps.check.outputs.active == 'true' }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          LECTOR_HOST: github
+          ACTAWP_BROWSER: /usr/bin/google-chrome
+          MATCH_ID: ${{ inputs.match }}
+          TOURNAMENT_ID: ${{ inputs.tournament }}
+        run: |
+          if [ -n "$MATCH_ID" ]; then
+            python actawp_live.py --match "$MATCH_ID" --tournament "$TOURNAMENT_ID"
+          else
+            python actawp_live.py
+          fi

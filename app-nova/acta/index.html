@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CNT Acta en directe</title>
+<meta name="description" content="Anota gols, exclusions i canvis i compara-ho amb l'acta de la federació">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0891b2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CNT Acta">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="icon" href="../../cnt-ios-192.png">
+<style>
+/* ============================================================
+   CN Terrassa · Acta en directe (app v2)
+   Mateixos tokens que app-nova/shared/theme.css (light, accent per categoria).
+   ============================================================ */
+:root{
+  --bg:#f4f6f9; --surface:#fff; --surface-2:#f8fafc; --border:#e6eaf0;
+  --text:#1e293b; --muted:#64748b; --faint:#94a3b8;
+  --accent:#0891b2; --accent-soft:#e0f5fa;
+  --ok:#16a34a; --ok-soft:#dcfce7; --bad:#dc2626; --bad-soft:#fee2e2; --warn:#b45309; --warn-soft:#fef3c7;
+  --water:#0d9488; --water-soft:#ccfbf1;
+  --goal:#16a34a; --excl:#dc2626;
+  --radius:14px; --radius-sm:10px;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+.cat-alevi{--accent:#16a34a;--accent-soft:#dcfce7}
+.cat-infantil{--accent:#d97706;--accent-soft:#fef3c7}
+.cat-cadet{--accent:#475569;--accent-soft:#e2e8f0}
+.cat-juvenil{--accent:#0891b2;--accent-soft:#e0f5fa}
+.cat-absolut{--accent:#b91c1c;--accent-soft:#fee2e2}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.35;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+input{font:inherit}
+.app{max-width:720px;margin:0 auto;padding:0 12px calc(110px + env(safe-area-inset-bottom))}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .small{font-size:.82rem} .tnum{font-variant-numeric:tabular-nums}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-weight:650;min-height:44px}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn.ghost{background:transparent;border-style:dashed;color:var(--muted)}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft)}
+.btn.wide{width:100%;margin-top:12px}
+.chip{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-weight:600;font-size:.9rem;white-space:nowrap;min-height:38px}
+.chip.on{background:var(--accent);border-color:transparent;color:#fff}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:650;background:var(--surface-2);border:1px solid var(--border)}
+.pill.ok{background:var(--ok-soft);border-color:transparent;color:#166534}
+.pill.bad{background:var(--bad-soft);border-color:transparent;color:#991b1b}
+.pill.warn{background:var(--warn-soft);border-color:transparent;color:#92400e}
+
+/* ---------- Inici ---------- */
+.top{padding:18px 4px 4px}
+.brand{font-weight:800;font-size:1.25rem}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.mrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 4px;border-top:1px solid var(--border)}
+.mrow:first-of-type{border-top:0}
+.mrow .when{width:74px;flex:none;font-size:.8rem;color:var(--muted);line-height:1.25}
+.mrow .when b{display:block;color:var(--text);font-size:.92rem}
+.mrow .teams{flex:1;min-width:0;font-size:.92rem}
+.mrow .teams div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .teams .cnt{font-weight:750}
+.mrow .res{flex:none;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;font-size:.95rem}
+.mrow .res small{display:block;font-weight:600;font-size:.72rem;color:var(--accent)}
+.today{background:var(--accent-soft);border-radius:var(--radius-sm);padding-left:8px;padding-right:8px}
+.sep{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin:10px 0 2px}
+footer{text-align:center;color:var(--faint);font-size:.78rem;margin-top:22px}
+footer a{color:var(--muted)}
+
+/* ---------- Partit: capçalera fixa ---------- */
+.mhead{position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0 6px;margin:0 -12px;padding-left:12px;padding-right:12px;border-bottom:1px solid var(--border)}
+.sb{display:flex;align-items:center;gap:8px}
+.back{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-size:1.1rem;flex:none}
+.score{flex:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;min-width:0}
+.score .tm{font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score .tm.r{text-align:right}
+.score .num{font-size:1.9rem;font-weight:850;font-variant-numeric:tabular-nums;line-height:1;text-align:center;min-width:92px}
+.score .q{display:block;font-size:.72rem;font-weight:700;color:var(--accent);text-align:center;margin-top:2px}
+.menu{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-size:1.2rem;flex:none}
+.fedline{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;font-size:.8rem;min-height:22px}
+.ctrl{display:flex;gap:6px;margin-top:8px}
+.ctrl .btn{flex:1;padding:9px 8px;font-size:.92rem}
+.ctrl .btn.icon{flex:none;width:48px}
+.tabs{display:flex;gap:4px;margin-top:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:3px}
+.tabs button{flex:1;padding:8px 4px;border-radius:9px;font-weight:700;font-size:.88rem;color:var(--muted);min-height:38px}
+.tabs button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.badge{display:inline-block;min-width:18px;padding:1px 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:.7rem;margin-left:4px}
+.badge.ok{background:var(--ok)}
+
+/* ---------- Anotar ---------- */
+.notice{margin-top:10px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--warn-soft);color:#78350f;font-size:.88rem;font-weight:600}
+.notice.info{background:var(--accent-soft);color:var(--text)}
+.sect{display:flex;align-items:baseline;justify-content:space-between;margin:14px 2px 8px}
+.sect h3{font-size:.95rem;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.grid.rival{grid-template-columns:repeat(4,1fr)}
+@media (min-width:560px){.grid{grid-template-columns:repeat(4,1fr)}.grid.rival{grid-template-columns:repeat(5,1fr)}}
+.pc{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.pc.in{border-color:var(--water);box-shadow:inset 0 0 0 1px var(--water)}
+.pc.out{opacity:.5}
+.pc-h{display:flex;align-items:center;gap:5px;padding:6px 6px 5px;text-align:left;min-height:34px;width:100%}
+.pc.in .pc-h{background:var(--water-soft)}
+.pc-h .n{font-weight:850;font-size:1.02rem;min-width:18px;font-variant-numeric:tabular-nums}
+.pc-h .nm{flex:1;min-width:0;font-size:.72rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.pc.in .pc-h .nm{color:#115e59}
+.pc-h .dots{font-size:.55rem;letter-spacing:1px;color:var(--excl)}
+.pc-h .mo{font-size:1rem;color:var(--faint);padding:0 2px}
+.pc-b{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 5px 5px}
+.b{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:9px;min-height:44px;font-size:1rem;color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
+.b:active{filter:brightness(.9);transform:scale(.97)}
+.b.g{background:var(--goal)} .b.x{background:var(--excl)}
+.b b{font-size:1.05rem}
+.b.x{font-size:.8rem;letter-spacing:.02em}
+.grid.rival .b{min-height:40px;font-size:.9rem}
+.addnum{border:1.5px dashed var(--border);border-radius:12px;color:var(--muted);font-weight:700;font-size:.85rem;min-height:80px}
+.log{margin-top:6px}
+.log li{list-style:none;display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border);font-size:.88rem}
+.log li:first-child{border-top:0}
+.log .t{color:var(--faint);font-size:.75rem;width:28px;flex:none}
+.log .x{margin-left:auto;width:34px;height:34px;border-radius:8px;color:var(--faint);font-size:1rem}
+
+/* ---------- Comparació FCN ---------- */
+.stat{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.84rem}
+table.cmp{width:100%;border-collapse:collapse;font-size:.86rem;font-variant-numeric:tabular-nums}
+table.cmp th{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:6px 3px;text-align:center;border-bottom:1px solid var(--border)}
+table.cmp th:nth-child(2),table.cmp td:nth-child(2){text-align:left}
+table.cmp td{padding:8px 3px;text-align:center;border-bottom:1px solid var(--border)}
+table.cmp tr.row{cursor:pointer}
+table.cmp td.nm{max-width:0;width:40%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+table.cmp td.n{font-weight:800;width:26px}
+table.cmp .z{color:var(--faint)}
+table.cmp .d{display:inline-block;background:var(--bad-soft);color:#991b1b;border-radius:6px;padding:1px 5px;font-weight:800;white-space:nowrap}
+table.cmp .d i{font-style:normal;font-weight:600;opacity:.75}
+table.cmp .tw{display:inline-block;border-radius:6px;padding:1px 5px;font-size:.72rem;font-weight:800}
+table.cmp .tw.dif{background:var(--warn-soft);color:#92400e}
+table.cmp tr.bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+table.cmp tr.det td{background:var(--surface-2);text-align:left;font-size:.8rem;color:var(--muted)}
+table.q th:first-child,table.q td:first-child{text-align:left}
+table.q td{font-weight:700}
+.legend{font-size:.78rem;color:var(--muted);margin-top:10px}
+.legend summary{cursor:pointer;font-weight:650}
+.legend dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:8px}
+.legend dt{font-weight:800;color:var(--text)}
+
+/* ---------- Temps ---------- */
+.trow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--border)}
+.trow:first-child{border-top:0}
+.trow .n{font-weight:850;width:24px;text-align:right}
+.trow .nm{flex:1;min-width:0;font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .tt{font-weight:800;font-variant-numeric:tabular-nums;width:52px;text-align:right}
+.qbar{display:flex;gap:2px;width:96px;flex:none}
+.qbar span{flex:1;height:8px;border-radius:3px;background:var(--border);position:relative;overflow:hidden}
+.qbar span i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+
+/* ---------- Toast i fulls ---------- */
+.toast{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(calc(100% + 30px));width:min(680px,calc(100% - 24px));background:#0f172a;color:#fff;border-radius:16px;padding:11px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .2s,visibility .2s;visibility:hidden;z-index:60}
+.toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
+.toast .tx{font-weight:700;font-size:.92rem}
+.toast .ch{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.toast .ch button{background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:8px 12px;font-weight:700;font-size:.85rem;min-height:38px}
+.toast .ch button.on{background:#fff;color:#0f172a}
+.shade{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:70;display:none}
+.shade.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--surface);border-radius:20px 20px 0 0;max-height:88vh;overflow:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .2s;max-width:720px;margin:0 auto}
+.sheet.show{transform:translateY(0)}
+.sheet h3{font-size:1.05rem;font-weight:800;margin-bottom:10px}
+.srow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border)}
+.srow .l{flex:1;font-size:.88rem}
+.srow .l b{display:inline-block;min-width:34px}
+.srow .fed{font-size:.75rem;color:var(--muted);width:48px;text-align:right}
+.srow .fed.dif{color:var(--bad);font-weight:800}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);font-size:1.2rem;font-weight:700}
+.step span{min-width:22px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 14px}
+.chips .chip.sel{background:var(--text);color:#fff;border-color:transparent}
+.field{display:flex;flex-direction:column;gap:4px;margin:8px 0 12px;font-size:.8rem;color:var(--muted);font-weight:650}
+.field input{padding:10px 12px;border:1px solid var(--border);border-radius:10px;color:var(--text);font-weight:600;text-transform:uppercase}
+.mlist button{display:block;width:100%;text-align:left;padding:13px 4px;border-top:1px solid var(--border);font-weight:650}
+.mlist button:first-child{border-top:0}
+</style>
+</head>
+<body class="cat-juvenil">
+<div class="app" id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="shade" id="shade"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   Acta en directe — anotem gols, exclusions i canvis a la piscina i ho
+   comparem amb l'acta oficial de la FCN (ACTAWP = plataforma Leverade).
+   - Dades d'equip (marcador, parcials, quarts): API pública de Leverade, directa.
+   - Dades per jugador: RTDB federacio/{matchId}, escrites per actawp_live.py
+     (GitHub Actions o PC), perquè la web de l'acta té anti-bot.
+   - El partit és un registre d'accions (M.acts); tot l'estat es deriva d'aquí,
+     així desfer qualsevol cosa (també quarts i canvis) és trivial.
+   ============================================================ */
+const CATS = {
+  alevi:    {nom:'Aleví',    tid:1339810},
+  infantil: {nom:'Infantil', tid:1339809},
+  cadet:    {nom:'Cadet',    tid:1339808},
+  juvenil:  {nom:'Juvenil',  tid:1339807},
+  absolut:  {nom:'Absolut',  tid:1339803},
+};
+const API = 'https://api.leverade.com/';
+const RTDB = 'https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app';
+const ACTAWP = 'https://actawp.natacio.cat/ca';
+const QUARTER_MS = 8 * 60 * 1000;
+// Llegenda de l'acta ACTAWP (mateixes claus que escriu actawp_live.py)
+const KEYS = {
+  G:   'Gols',
+  GP:  'Gols de penal',
+  G5P: 'Gols en tanda de penals',
+  EX:  'Exclusions (20 s)',
+  P:   'Faltes per penal',
+  EP:  'Exclusió i penal',
+  ED:  'Expulsió definitiva disciplinària',
+  EB:  'Expulsió definitiva per brutalitat',
+  EN:  'Expulsió definitiva no disciplinària',
+  PF:  'Penals fallats',
+  TG:  'Targeta groga',
+  TV:  'Targeta vermella',
+};
+const STAT_KEYS = Object.keys(KEYS);
+const MAIN_KEYS = ['G', 'GP', 'EX', 'P'];
+const GOAL_KEYS = ['G', 'GP'];
+const FOUL_KEYS = ['EX', 'P', 'EP'];
+const OUT_KEYS = ['ED', 'EB', 'EN'];
+
+const IDX = 'acta_v1_index';
+const MK = id => 'acta_v1_m_' + id;
+
+/* ---------- utilitats ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const isCnt = n => /TERRASSA/i.test(n || '');
+const toArr = x => Array.isArray(x) ? x.filter(Boolean) : (x && typeof x === 'object' ? Object.values(x) : []);
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(25); } catch (e) {} };
+function short(n) {
+  const w = String(n || '').trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return '';
+  return w.length > 1 ? w[0] + ' ' + w[1][0] + '.' : w[0];
+}
+// "C.N. TERRASSA A" → "TERRASSA A" (capçalera estreta)
+const teamShort = n => String(n || '').replace(/^(C\.?\s?[NEW]\.?|U\.?\s?E\.?|CLUB\s+NATACI[OÓ])\s+/i, '').trim();
+function mmss(ms) { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function ago(t) {
+  if (!t) return '';
+  const s = Math.round((Date.now() - t) / 1000);
+  if (s < 60) return 'fa ' + Math.max(s, 1) + ' s';
+  if (s < 3600) return 'fa ' + Math.round(s / 60) + ' min';
+  return 'fa ' + Math.round(s / 3600) + ' h';
+}
+// Leverade dona les hores en UTC ("2026-10-04 07:00:00" = 09:00 a Terrassa)
+const utc = s => s ? new Date(s.replace(' ', 'T') + (s.endsWith('Z') ? '' : 'Z')) : null;
+const fmtDay = d => d.toLocaleDateString('ca-ES', {weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'Europe/Madrid'});
+const fmtTime = d => d.toLocaleTimeString('ca-ES', {hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid'});
+const dayKey = d => d.toLocaleDateString('sv-SE', {timeZone: 'Europe/Madrid'});
+
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('⚠️ No s\'ha pogut desar al mòbil'); return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+  raw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  setRaw(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+async function api(path) {
+  const r = await fetch(API + path, {headers: {Accept: 'application/vnd.api+json'}});
+  if (!r.ok) throw new Error('Federació HTTP ' + r.status);
+  return r.json();
+}
+
+/* ---------- estat ---------- */
+let cat = LS.raw('cntv2_currentTeam');           // compartit amb l'entrada v2
+if (!CATS[cat]) cat = 'juvenil';
+let M = null, D = null, tab = 'anotar';
+let fedList = {cat: null, items: [], at: 0, err: null, loading: false};
+let FED = {doc: null, team: null, teamAt: 0, teamErr: null, src: null};
+let es = null, pollTimer = null, tickTimer = null, wakeLock = null;
+const openRows = new Set();
+
+/* ============================================================
+   Derivació de l'estat a partir del registre d'accions
+   ============================================================ */
+function derive(m) {
+  const st = {
+    q: 0, running: false, qEnded: false, finished: false, segs: {}, ended: new Set(),
+    inWater: new Set(), starters: null, stats: {cnt: {}, rival: {}},
+    score: {cnt: 0, rival: 0}, shoot: {cnt: 0, rival: 0}, qScore: {}, ivs: {},
+  };
+  const closeSeg = t => { const s = st.segs[st.q]; if (s && s.length && s[s.length - 1][1] == null) s[s.length - 1][1] = t; };
+  for (const a of m.acts) {
+    switch (a.k) {
+      case 'QSTART':
+        closeSeg(a.t);
+        st.q = a.q; st.running = a.q !== 5; st.qEnded = false;
+        if (a.q !== 5) (st.segs[a.q] = st.segs[a.q] || []).push([a.t, null]);
+        if (a.q === 1 && !st.starters) st.starters = [...st.inWater];
+        break;
+      case 'PAUSE': closeSeg(a.t); st.running = false; break;
+      case 'RESUME': (st.segs[st.q] = st.segs[st.q] || []).push([a.t, null]); st.running = true; break;
+      case 'QEND': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); break;
+      case 'FINAL': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); st.finished = true; break;
+      case 'IN':
+        if (!st.inWater.has(a.num)) { st.inWater.add(a.num); (st.ivs[a.num] = st.ivs[a.num] || []).push([a.t, null]); }
+        break;
+      case 'OUT':
+        if (st.inWater.has(a.num)) { st.inWater.delete(a.num); const iv = st.ivs[a.num]; iv[iv.length - 1][1] = a.t; }
+        break;
+      default: {
+        const p = st.stats[a.team][a.num] = st.stats[a.team][a.num] || {};
+        p[a.k] = (p[a.k] || 0) + 1;
+        if (GOAL_KEYS.includes(a.k)) {
+          st.score[a.team]++;
+          const qs = st.qScore[a.q] = st.qScore[a.q] || {cnt: 0, rival: 0};
+          qs[a.team]++;
+        } else if (a.k === 'G5P') st.shoot[a.team]++;
+      }
+    }
+  }
+  return st;
+}
+
+// Temps de joc estimat: temps real a l'aigua dins dels trams actius de cada quart,
+// escalat a 8:00 oficials quan el quart s'ha acabat (el rellotge de joc s'atura a cada xiulet).
+function playTimes(now) {
+  const res = {};
+  for (const q of [1, 2, 3, 4]) {
+    const segs = (D.segs[q] || []).map(([a, b]) => [a, b == null ? now : b]);
+    const dur = segs.reduce((s, [a, b]) => s + (b - a), 0);
+    if (!dur) continue;
+    const f = D.ended.has(q) ? QUARTER_MS / dur : 1;
+    for (const [num, ivs] of Object.entries(D.ivs)) {
+      let ov = 0;
+      for (const [x, y0] of ivs) {
+        const y = y0 == null ? now : y0;
+        for (const [a, b] of segs) ov += Math.max(0, Math.min(y, b) - Math.max(x, a));
+      }
+      if (ov) { const r = res[num] = res[num] || {total: 0, q: {}}; r.q[q] = ov * f; r.total += ov * f; }
+    }
+  }
+  return res;
+}
+function quarterElapsed(now) { return (D.segs[D.q] || []).reduce((s, [a, b]) => s + ((b == null ? now : b) - a), 0); }
+function isOut(s) { s = s || {}; return FOUL_KEYS.reduce((n, k) => n + (s[k] || 0), 0) >= 3 || OUT_KEYS.some(k => s[k]); }
+
+/* ============================================================
+   Persistència (mòbil, offline-first)
+   ============================================================ */
+function saveMatch() {
+  M.updated = Date.now();
+  LS.set(MK(M.id), M);
+  const idx = LS.get(IDX, []).filter(x => x.id !== M.id);
+  idx.push({id: M.id, cat: M.cat, rival: M.rivalName, date: M.fed ? M.fed.datetime : M.created, fed: !!M.fed, updated: M.updated,
+            score: D ? D.score.cnt + '-' + D.score.rival : ''});
+  LS.set(IDX, idx);
+}
+function commit() { D = derive(M); saveMatch(); renderMatch(); }
+
+function newMatch({id, fed = null, rivalName = ''}) {
+  const saved = LS.get('cntv2_roster_' + cat, null);   // alineació habitual (entrada v2)
+  const base = Array.isArray(saved) && saved.length ? saved : Array.from({length: 14}, (_, i) => ({num: i + 1, name: ''}));
+  const cntSide = fed ? (isCnt(fed.home.name) ? 'home' : 'away') : null;
+  return {
+    v: 1, id, cat, created: Date.now(), updated: Date.now(),
+    fed: fed ? {...fed, cntSide} : null,
+    cntName: fed ? fed[cntSide].name : 'C.N. TERRASSA',
+    rivalName: fed ? fed[cntSide === 'home' ? 'away' : 'home'].name : rivalName,
+    roster: {
+      cnt: base.map(p => ({num: +p.num, name: p.name || ''})).filter(p => p.num > 0),
+      rival: Array.from({length: 14}, (_, i) => ({num: i + 1, name: ''})),
+    },
+    acts: [],
+  };
+}
+
+/* ============================================================
+   Inici: categories, partits de la federació, actes desades
+   ============================================================ */
+function parseTournament(d) {
+  const inc = d.included || [];
+  const teams = {}, groups = {}, rounds = {}, fac = {}, res = {};
+  for (const i of inc) {
+    if (i.type === 'team') teams[i.id] = i.attributes.name;
+    else if (i.type === 'group') groups[i.id] = i.attributes.name;
+    else if (i.type === 'round') rounds[i.id] = i.relationships.group.data.id;
+    else if (i.type === 'facility') fac[i.id] = i.attributes.name;
+    else if (i.type === 'result' && !(i.relationships.period && i.relationships.period.data))
+      (res[i.relationships.match.data.id] = res[i.relationships.match.data.id] || {})[i.relationships.team.data.id] = i.attributes.value;
+  }
+  const out = [];
+  for (const m of inc) {
+    if (m.type !== 'match') continue;
+    const h = m.meta.home_team, a = m.meta.away_team, dt = m.attributes.datetime;
+    if (!h || !a || !dt || !(isCnt(teams[h]) || isCnt(teams[a]))) continue;
+    const gid = rounds[m.relationships.round.data.id];
+    const r = res[m.id] || {};
+    const fid = m.relationships.facility && m.relationships.facility.data && m.relationships.facility.data.id;
+    out.push({
+      matchId: m.id, tournamentId: String(d.data.id), groupId: gid, groupName: groups[gid] || '',
+      datetime: dt.replace(' ', 'T') + 'Z', venue: fac[fid] || '',
+      home: {id: h, name: teams[h]}, away: {id: a, name: teams[a]},
+      finished: !!m.attributes.finished,
+      score: r[h] != null && r[a] != null ? {home: r[h], away: r[a]} : null,
+    });
+  }
+  return out.sort((x, y) => x.datetime.localeCompare(y.datetime));
+}
+
+async function loadFedList(force) {
+  const c = cat;
+  if (fedList.cat !== c) {
+    const cached = LS.get('acta_v1_fed_' + c, null);
+    fedList = {cat: c, items: cached ? cached.items : [], at: cached ? cached.at : 0, err: null, loading: false};
+  }
+  if (!force && fedList.items.length && Date.now() - fedList.at < 5 * 60e3) return paintFedList();
+  fedList.loading = true; paintFedList();
+  try {
+    const d = await api(`tournaments/${CATS[c].tid}?include=teams,groups.rounds.matches.results,groups.rounds.matches.facility`);
+    const items = parseTournament(d);
+    if (fedList.cat !== c) return;
+    fedList = {cat: c, items, at: Date.now(), err: null, loading: false};
+    LS.set('acta_v1_fed_' + c, {at: fedList.at, items});
+  } catch (e) {
+    if (fedList.cat !== c) return;
+    fedList.loading = false; fedList.err = e.message;
+  }
+  paintFedList();
+}
+
+function fedRow(f) {
+  const d = new Date(f.datetime), today = dayKey(d) === dayKey(new Date());
+  const cs = isCnt(f.home.name) ? 'home' : 'away';
+  const saved = LS.get(MK('fcn_' + f.matchId), null);
+  let res = '';
+  if (f.score) res = `${f.score.home}-${f.score.away}`;
+  if (saved) res += `<small>${saved.acts.length ? 'Continuar' : 'Obrir'} ›</small>`;
+  else if (!f.score) res = `<small>Obrir ›</small>`;
+  const tm = s => `<div class="${s === cs ? 'cnt' : ''}">${esc(f[s].name)}</div>`;
+  return `<button class="mrow ${today ? 'today' : ''}" data-act="openFed" data-id="${f.matchId}">
+    <div class="when"><b>${today ? 'Avui' : esc(fmtDay(d))}</b>${esc(fmtTime(d))}</div>
+    <div class="teams">${tm('home')}${tm('away')}</div>
+    <div class="res">${res}</div></button>`;
+}
+
+function paintFedList() {
+  const box = $('#fedList');
+  if (!box) return;
+  const now = Date.now(), items = fedList.items;
+  const soon = items.filter(f => !f.finished && new Date(f.datetime).getTime() > now - 3 * 3600e3);
+  const past = items.filter(f => !soon.includes(f)).reverse().slice(0, 6);
+  let h = '';
+  if (fedList.loading && !items.length) h = '<p class="muted small">Carregant el calendari de la federació…</p>';
+  else if (!items.length) h = fedList.err
+    ? `<p class="muted small">No s'ha pogut carregar la federació (${esc(fedList.err)}).</p>`
+    : '<p class="muted small">Cap partit del CNT publicat en aquesta competició.</p>';
+  if (soon.length) h += '<div class="sep">Pròxims</div>' + soon.slice(0, 6).map(fedRow).join('');
+  if (past.length) h += '<div class="sep">Jugats</div>' + past.map(fedRow).join('');
+  if (items.length) h += `<p class="faint small" style="margin-top:8px">${fedList.err ? '⚠️ Sense connexió · ' : ''}Calendari FCN ${esc(ago(fedList.at))}</p>`;
+  box.innerHTML = h;
+}
+
+function renderHome() {
+  M = null; D = null; stopLive();
+  document.body.className = 'cat-' + cat;
+  const saved = LS.get(IDX, []).filter(x => x.cat === cat).sort((a, b) => b.updated - a.updated);
+  $('#app').innerHTML = `
+    <header class="top">
+      <div class="brand">🏊 Acta en directe</div>
+      <div class="muted small">Anota gols, exclusions i canvis i compara-ho amb l'acta de la federació</div>
+    </header>
+    <nav class="cats">${Object.entries(CATS).map(([k, c]) =>
+      `<button class="chip ${k === cat ? 'on' : ''}" data-act="cat" data-k="${k}">${c.nom}</button>`).join('')}</nav>
+    <section class="card"><h2>Partits a la federació</h2><div id="fedList"></div></section>
+    <section class="card"><h2>Actes desades</h2>${saved.length ? saved.map(s => {
+      const d = new Date(s.date);
+      return `<button class="mrow" data-act="openSaved" data-id="${esc(s.id)}">
+        <div class="when"><b>${esc(fmtDay(d))}</b>${s.fed ? 'FCN' : 'Amistós'}</div>
+        <div class="teams"><div class="cnt">${esc(s.rival || 'Rival')}</div></div>
+        <div class="res">${esc(s.score)}<small>Obrir ›</small></div></button>`;
+    }).join('') : '<p class="muted small">Encara no n\'hi ha cap en aquesta categoria.</p>'}</section>
+    <button class="btn ghost wide" data-act="newFriendly">+ Partit sense federació (amistós)</button>
+    <footer><a href="../entrada/">Entrada completa</a> · <a href="../app/">App d'estadístiques</a><br>by Josep Rico</footer>`;
+  paintFedList();
+  loadFedList();
+}
+
+/* ============================================================
+   Partit
+   ============================================================ */
+function openMatch(id) {
+  const m = LS.get(MK(id), null);
+  if (!m) { location.hash = ''; return; }
+  M = m; D = derive(M); tab = 'anotar'; openRows.clear();
+  cat = M.cat; document.body.className = 'cat-' + cat;
+  FED = {doc: null, team: null, teamAt: 0, teamErr: null, src: null};
+  $('#app').innerHTML = `<div class="mhead" id="mhead"></div><div id="mbody"></div>`;
+  renderMatch();
+  startLive();
+  window.scrollTo(0, 0);
+}
+
+function sideOf(team) { if (!M.fed) return null; const cs = M.fed.cntSide; return team === 'cnt' ? cs : (cs === 'home' ? 'away' : 'home'); }
+function fedTeam() {
+  if (FED.team) return FED.team;
+  const d = FED.doc;
+  return d && d.score ? {score: d.score, periods: toArr(d.periods), finished: !!d.finished} : null;
+}
+
+function renderMatch() { renderHead(); renderBody(); }
+
+function renderHead() {
+  const h = $('#mhead'); if (!h) return;
+  const now = Date.now();
+  const qLabel = D.finished ? 'Final' : D.q === 0 ? 'Previ' : D.q === 5 ? 'Penals' : 'Q' + D.q + (D.running ? ' · ' + mmss(quarterElapsed(now)) : D.qEnded ? ' acabat' : ' · aturat');
+  const shoot = D.shoot.cnt || D.shoot.rival ? `<span class="q">(${D.shoot.cnt}-${D.shoot.rival} pen.)</span>` : '';
+  const n = D.inWater.size;
+  h.innerHTML = `
+    <div class="sb">
+      <button class="back" data-act="home" aria-label="Tornar">‹</button>
+      <div class="score">
+        <div class="tm">${esc(teamShort(M.cntName) || 'CNT')}</div>
+        <div><div class="num">${D.score.cnt} : ${D.score.rival}</div><span class="q" id="qlabel">${esc(qLabel)}</span>${shoot}</div>
+        <div class="tm r">${esc(teamShort(M.rivalName) || 'Rival')}</div>
+      </div>
+      <button class="menu" data-act="menu" aria-label="Menú">⋯</button>
+    </div>
+    <div class="fedline" id="fedline">${fedLine()}</div>
+    <div class="ctrl">${quarterButtons()}
+      <button class="btn icon" data-act="swap" aria-label="Canvi">🔄</button>
+      <button class="btn icon" data-act="undo" aria-label="Desfer" ${M.acts.length ? '' : 'disabled'}>↶</button>
+    </div>
+    <div class="tabs">
+      <button class="${tab === 'anotar' ? 'on' : ''}" data-act="tab" data-t="anotar">Anotar <span class="badge ${n === 7 ? 'ok' : ''}">💧${n}</span></button>
+      <button class="${tab === 'fcn' ? 'on' : ''}" data-act="tab" data-t="fcn">🆚 Acta FCN${diffBadge()}</button>
+      <button class="${tab === 'temps' ? 'on' : ''}" data-act="tab" data-t="temps">⏱ Temps</button>
+    </div>`;
+}
+
+function quarterButtons() {
+  if (D.finished) return `<button class="btn" data-act="reopen">🏁 Acabat · Reobrir</button>`;
+  if (D.q === 0) return `<button class="btn primary" data-act="qstart" data-q="1">▶ Inicia Q1</button>`;
+  if (D.q === 5) return `<button class="btn primary" data-act="final">🏁 Final</button>`;
+  if (D.running) return `<button class="btn" data-act="pause">⏸ Temps mort</button><button class="btn primary" data-act="qend">⏹ Fi Q${D.q}</button>`;
+  if (!D.qEnded) return `<button class="btn primary" data-act="resume">▶ Continua</button><button class="btn" data-act="qend">⏹ Fi Q${D.q}</button>`;
+  if (D.q < 4) return `<button class="btn primary" data-act="qstart" data-q="${D.q + 1}">▶ Inicia Q${D.q + 1}</button>`;
+  return `<button class="btn" data-act="qstart" data-q="5">🎯 Penals</button><button class="btn primary" data-act="final">🏁 Final</button>`;
+}
+
+function fedLine() {
+  if (!M.fed) return '<span class="pill">Amistós · sense acta FCN</span>';
+  const t = fedTeam();
+  const cs = M.fed.cntSide, rs = sideOf('rival');
+  let h = '';
+  if (t && t.score && t.score.home != null) {
+    const fc = t.score[cs], fr = t.score[rs];
+    const same = fc === D.score.cnt && fr === D.score.rival;
+    const lastQ = toArr(t.periods).filter(p => p.finished && /^(I|II|III|IV)$/.test(p.name)).length;
+    h += `<span class="pill ${same ? 'ok' : 'bad'}">FCN ${fc} : ${fr}${t.finished ? ' · final' : lastQ ? ' · ' + lastQ + 'Q tancats' : ''} ${same ? '✓' : '≠'}</span>`;
+  } else h += '<span class="pill">FCN: sense marcador encara</span>';
+  const doc = FED.doc;
+  if (doc && doc.statsAt) h += `<span class="pill" id="actaAgo">acta ${esc(ago(doc.statsAt))}</span>`;
+  else if (doc && doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">acta bloquejada</span>';
+  return h;
+}
+
+/* ---------- Anotar ---------- */
+function renderBody() {
+  const b = $('#mbody'); if (!b) return;
+  b.innerHTML = tab === 'fcn' ? renderFcn() : tab === 'temps' ? renderTemps() : renderAnotar();
+}
+
+function playerCard(team, p) {
+  const s = D.stats[team][p.num] || {};
+  const goals = (s.G || 0) + (s.GP || 0) + (s.G5P || 0);
+  const fouls = FOUL_KEYS.reduce((n, k) => n + (s[k] || 0), 0);
+  const out = isOut(s);
+  const dots = fouls ? '●'.repeat(Math.min(fouls, 3)) : '';
+  if (team === 'rival') {
+    return `<div class="pc ${out ? 'out' : ''}">
+      <button class="pc-h" data-act="more" data-team="rival" data-n="${p.num}"><span class="n">${p.num}</span><span class="nm">${esc(short(p.name))}</span><span class="dots">${dots}</span></button>
+      <div class="pc-b"><button class="b g" data-act="add" data-team="rival" data-n="${p.num}" data-k="G" aria-label="Gol rival ${p.num}">⚽<b>${goals || ''}</b></button>
+      <button class="b x" data-act="add" data-team="rival" data-n="${p.num}" data-k="EX" aria-label="Exclusió rival ${p.num}">EX<b>${fouls || ''}</b></button></div></div>`;
+  }
+  const inW = D.inWater.has(p.num);
+  return `<div class="pc ${inW ? 'in' : ''} ${out ? 'out' : ''}">
+    <div class="pc-h"><button style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;text-align:left" data-act="toggle" data-n="${p.num}" aria-label="${inW ? 'Treure' : 'Entrar'} ${p.num}">
+      <span class="n">${p.num}</span><span class="nm">${esc(short(p.name))}</span></button>
+      <span class="dots">${dots}</span><button class="mo" data-act="more" data-team="cnt" data-n="${p.num}" aria-label="Més ${p.num}">⋯</button></div>
+    <div class="pc-b"><button class="b g" data-act="add" data-team="cnt" data-n="${p.num}" data-k="G" aria-label="Gol ${p.num}">⚽<b>${goals || ''}</b></button>
+    <button class="b x" data-act="add" data-team="cnt" data-n="${p.num}" data-k="EX" aria-label="Exclusió ${p.num}">EX<b>${fouls || ''}</b></button></div></div>`;
+}
+
+function actText(a) {
+  const who = a.team === 'rival' ? `Rival #${a.num}` : `#${a.num} ${short(nameOf('cnt', a.num))}`;
+  switch (a.k) {
+    case 'QSTART': return a.q === 5 ? '🎯 Tanda de penals' : `▶ Inici Q${a.q}`;
+    case 'QEND': return '⏹ Fi del quart';
+    case 'PAUSE': return '⏸ Temps mort';
+    case 'RESUME': return '▶ Continua';
+    case 'FINAL': return '🏁 Final del partit';
+    case 'IN': return `💧 Entra ${who}`;
+    case 'OUT': return `⬅️ Surt ${who}`;
+    case 'G': return `⚽ Gol ${who}`;
+    case 'GP': return `🎯 Gol de penal ${who}`;
+    case 'G5P': return `🎯 Gol a la tanda ${who}`;
+    case 'EX': return `🟥 Exclusió ${who}`;
+    default: return `${a.k} · ${KEYS[a.k] || ''} ${who}`;
+  }
+}
+function nameOf(team, num) { const p = M.roster[team].find(x => x.num === num); return p ? p.name : ''; }
+
+function renderAnotar() {
+  let h = '';
+  if (D.q === 0) {
+    const n = D.inWater.size;
+    h += `<div class="notice ${n === 7 ? 'info' : ''}">Toca el nom dels <b>7 titulars</b> per posar-los a l'aigua (${n}/7). Després, <b>▶ Inicia Q1</b>.</div>`;
+  } else if (!D.finished && D.q !== 5 && D.inWater.size !== 7) {
+    h += `<div class="notice">Hi ha ${D.inWater.size} jugadors del CNT a l'aigua. Revisa els canvis (han de ser 7, o menys si n'hi ha d'exclosos).</div>`;
+  }
+  h += `<div class="sect"><h3>${esc(M.cntName)}</h3><span class="muted small">toca el nom = dins/fora</span></div>
+    <div class="grid">${M.roster.cnt.map(p => playerCard('cnt', p)).join('')}
+    <button class="addnum" data-act="addnum" data-team="cnt">+ dorsal</button></div>
+    <div class="sect"><h3>${esc(M.rivalName || 'Rival')}</h3><span class="muted small">toca el dorsal = detall</span></div>
+    <div class="grid rival">${M.roster.rival.map(p => playerCard('rival', p)).join('')}
+    <button class="addnum" data-act="addnum" data-team="rival">+ dorsal</button></div>`;
+  const last = M.acts.slice(-10).reverse();
+  if (last.length) {
+    h += `<div class="card"><h2>Últimes accions</h2><ul class="log">${last.map(a =>
+      `<li><span class="t">${a.q && a.q < 5 ? 'Q' + a.q : a.q === 5 ? 'P' : ''}</span>${esc(actText(a))}
+       <button class="x" data-act="del" data-id="${a.id}" aria-label="Esborrar">✕</button></li>`).join('')}</ul></div>`;
+  }
+  return h;
+}
+
+/* ---------- Comparació amb l'acta FCN ---------- */
+function fedPlayers(team) {
+  const d = FED.doc;
+  if (!d || !d.players) return null;
+  return toArr(d.players[sideOf(team)]);
+}
+// L'acta té dades de jugadors si algun valor és > 0 (abans del partit surten tots a zero).
+function fedHasData() {
+  for (const t of ['cnt', 'rival']) for (const p of fedPlayers(t) || []) for (const k of STAT_KEYS) if (p.s && p.s[k]) return true;
+  return false;
+}
+function compareTeam(team) {
+  const fp = fedPlayers(team) || [];
+  const byNum = new Map(fp.map(p => [p.num, p]));
+  const nums = new Set([...M.roster[team].map(p => p.num), ...fp.map(p => p.num)]);
+  const ready = fedHasData();
+  const rows = [];
+  for (const num of [...nums].sort((a, b) => a - b)) {
+    const ours = D.stats[team][num] || {}, f = byNum.get(num);
+    const fs = (f && f.s) || {};
+    const diffs = ready ? STAT_KEYS.filter(k => (ours[k] || 0) !== (fs[k] || 0)) : [];
+    const any = STAT_KEYS.some(k => ours[k] || fs[k]);
+    const ourTit = team === 'cnt' && D.starters ? D.starters.includes(num) : null;
+    const titDiff = ready && f && ourTit != null && ourTit !== !!f.titular;
+    if (!any && !f && !(team === 'cnt' && D.ivs[num])) continue;
+    rows.push({num, name: (f && f.name) || nameOf(team, num), ours, fs, f, diffs, ourTit, titDiff});
+  }
+  return {rows, ready, count: rows.reduce((n, r) => n + r.diffs.length, 0)};
+}
+function totalDiffs() {
+  if (!M.fed || !fedHasData()) return null;
+  return compareTeam('cnt').count + compareTeam('rival').count;
+}
+function diffBadge() {
+  const n = totalDiffs();
+  return n == null ? '' : `<span class="badge ${n ? '' : 'ok'}">${n || '✓'}</span>`;
+}
+
+function cell(o, f, ready) {
+  o = o || 0; f = f || 0;
+  if (!ready || o === f) return o ? `<b>${o}</b>` : '<span class="z">·</span>';
+  return `<span class="d">${o}<i> · ${f}</i></span>`;
+}
+
+function teamTable(team) {
+  const c = compareTeam(team);
+  const title = team === 'cnt' ? M.cntName : M.rivalName;
+  let h = `<section class="card"><h2>${esc(title)} ${c.ready ? (c.count ? `<span class="pill bad">${c.count} diferències</span>` : '<span class="pill ok">tot quadra</span>') : ''}</h2>
+    <table class="cmp"><thead><tr><th>#</th><th>Jugador</th>${MAIN_KEYS.map(k => `<th title="${esc(KEYS[k])}">${k}</th>`).join('')}<th title="Altres columnes de l'acta">+</th>${team === 'cnt' ? '<th title="Titular">T</th>' : ''}</tr></thead><tbody>`;
+  if (!c.rows.length) h += `<tr><td colspan="8" class="muted small" style="text-align:left">Encara no hi ha dades.</td></tr>`;
+  for (const r of c.rows) {
+    const other = STAT_KEYS.filter(k => !MAIN_KEYS.includes(k));
+    const oDiff = r.diffs.filter(k => !MAIN_KEYS.includes(k)).length;
+    const oAny = other.some(k => r.ours[k] || r.fs[k]);
+    const key = team + r.num;
+    let tit = '';
+    if (team === 'cnt') {
+      const o = r.ourTit == null ? '' : r.ourTit ? 'T' : 'S';
+      const f = r.f ? (r.f.titular ? 'T' : 'S') : '';
+      tit = `<td>${r.titDiff ? `<span class="tw dif" title="Nosaltres ${o} · FCN ${f}">${o}·${f}</span>` : `<span class="tw faint">${o || f}</span>`}</td>`;
+    }
+    h += `<tr class="row ${r.diffs.length ? 'bad' : ''}" data-act="row" data-k="${key}"><td class="n">${r.num}</td><td class="nm">${esc(r.name) || '<span class="faint">—</span>'}</td>
+      ${MAIN_KEYS.map(k => `<td>${cell(r.ours[k], r.fs[k], c.ready)}</td>`).join('')}
+      <td>${oDiff ? `<span class="d">${oDiff}</span>` : oAny ? '<b>•</b>' : '<span class="z">·</span>'}</td>${tit}</tr>`;
+    if (openRows.has(key)) {
+      const parts = STAT_KEYS.filter(k => r.ours[k] || r.fs[k]).map(k =>
+        `${k}: <b>${r.ours[k] || 0}</b>${c.ready ? ' · FCN <b>' + (r.fs[k] || 0) + '</b>' : ''}`);
+      h += `<tr class="det"><td></td><td colspan="${team === 'cnt' ? 7 : 6}">${parts.join(' &nbsp;·&nbsp; ') || 'Sense accions.'}${r.f && r.f.captain ? ' &nbsp;·&nbsp; capità' : ''}</td></tr>`;
+    }
+  }
+  return h + '</tbody></table></section>';
+}
+
+function renderFcn() {
+  if (!M.fed) return `<div class="card"><p>Aquesta acta és d'un partit sense federació (amistós), no hi ha acta oficial per comparar.</p></div>`;
+  const doc = FED.doc || {}, t = fedTeam();
+  const cs = M.fed.cntSide, rs = sideOf('rival');
+  let h = '<section class="card"><h2>Estat de l\'acta FCN</h2><div class="stat">';
+  h += FED.teamAt ? `<span class="pill">Marcador ${esc(ago(FED.teamAt))}</span>` : FED.teamErr ? `<span class="pill warn">Marcador: ${esc(FED.teamErr)}</span>` : '<span class="pill">Marcador: carregant…</span>';
+  if (doc.statsAt) h += `<span class="pill ok">Jugadors ${esc(ago(doc.statsAt))}${doc.lector ? ' · lector ' + esc(doc.lector.host) : ''}</span>`;
+  else if (doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">El lector no pot entrar a l\'acta (anti-bot)</span>';
+  else h += '<span class="pill">Jugadors: el lector comença 25 min abans del partit</span>';
+  h += `</div>`;
+  if (doc.statsAt && !fedHasData()) h += '<p class="muted small" style="margin-top:8px">L\'acta encara no té gols ni exclusions. Quan la federació els publiqui, apareixeran aquí sols.</p>';
+  h += `<p class="small" style="margin-top:8px"><a href="${esc(doc.actaUrl || `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats`)}" target="_blank" rel="noopener">Obre l'acta a l'ACTAWP ↗</a></p></section>`;
+
+  // Marcador per quarts
+  const per = t ? toArr(t.periods) : [];
+  const qs = [1, 2, 3, 4];
+  const fq = q => { const p = per[q - 1]; return p && p.home != null ? [p[cs], p[rs]] : null; };
+  const oq = q => { const s = D.qScore[q] || {cnt: 0, rival: 0}; return [s.cnt, s.rival]; };
+  const ftot = t && t.score && t.score.home != null ? [t.score[cs], t.score[rs]] : null;
+  const fCell = (o, f) => !f ? '<span class="z">·</span>' : (o[0] === f[0] && o[1] === f[1]) ? `${f[0]}-${f[1]}` : `<span class="d">${f[0]}-${f[1]}</span>`;
+  h += `<section class="card"><h2>Marcador per quarts</h2><table class="cmp q"><thead><tr><th></th>${qs.map(q => `<th>Q${q}</th>`).join('')}<th>Total</th></tr></thead><tbody>
+    <tr><td class="muted small">Nosaltres</td>${qs.map(q => `<td>${oq(q)[0]}-${oq(q)[1]}</td>`).join('')}<td>${D.score.cnt}-${D.score.rival}</td></tr>
+    <tr><td class="muted small">FCN</td>${qs.map(q => `<td>${fCell(oq(q), fq(q))}</td>`).join('')}<td>${fCell([D.score.cnt, D.score.rival], ftot)}</td></tr>
+    </tbody></table><p class="faint small" style="margin-top:6px">En vermell, el que no quadra amb el nostre marcador.</p></section>`;
+
+  h += teamTable('cnt') + teamTable('rival');
+  h += `<details class="legend card"><summary>Llegenda de l'acta</summary><p style="margin-top:6px">Cada casella: <b>nosaltres</b> · FCN. Toca un jugador per veure totes les columnes.</p><dl>${STAT_KEYS.map(k => `<dt>${k}</dt><dd>${esc(KEYS[k])}</dd>`).join('')}<dt>T</dt><dd>Titular (T) o suplent (S)</dd></dl></details>`;
+  return h;
+}
+
+/* ---------- Temps de joc ---------- */
+function renderTemps() {
+  const now = Date.now(), pt = playTimes(now);
+  const rows = M.roster.cnt.map(p => ({...p, t: pt[p.num] || {total: 0, q: {}}})).sort((a, b) => b.t.total - a.t.total || a.num - b.num);
+  const qEnded = q => D.ended.has(q);
+  return `<section class="card"><h2>Temps a l'aigua (estimat)</h2>
+    <p class="muted small" style="margin-bottom:8px">Els quarts acabats s'escalen a 8:00; el quart en joc mostra temps real. ⏸ Temps mort atura el comptador.</p>
+    ${rows.map(r => `<div class="trow"><span class="n">${r.num}</span><span class="nm">${D.inWater.has(r.num) ? '💧 ' : ''}${esc(r.name) || '—'}</span>${D.starters && D.starters.includes(r.num) ? '<span class="pill" title="Titular">T</span>' : ''}
+      <span class="qbar">${[1, 2, 3, 4].map(q => `<span title="Q${q}"><i style="width:${Math.min(100, (r.t.q[q] || 0) / (qEnded(q) ? QUARTER_MS : Math.max(quarterSpan(q, now), 1)) * 100)}%"></i></span>`).join('')}</span>
+      <span class="tt">${mmss(r.t.total)}</span></div>`).join('')}</section>`;
+}
+function quarterSpan(q, now) { return (D.segs[q] || []).reduce((s, [a, b]) => s + ((b == null ? now : b) - a), 0); }
+
+/* ============================================================
+   Accions
+   ============================================================ */
+function push(a) { const act = {id: uid(), t: Date.now(), ...a}; M.acts.push(act); return act; }
+
+function addStat(team, num, k) {
+  if (D.finished) return toast('El partit està tancat. Reobre\'l per anotar.');
+  const q = D.q || 1;
+  if (k === 'G' && D.q === 5) k = 'G5P';
+  const a = push({q, team, num, k});
+  buzz(); commit(); refineToast(a);
+}
+
+function refineToast(a) {
+  const chips = [];
+  if (a.k === 'G' || a.k === 'GP') chips.push(['GP', a.k === 'GP' ? '⚽ Era de jugada' : '🎯 Era penal']);
+  if (['EX', 'P', 'EP', 'EB', 'ED'].includes(a.k)) {
+    for (const [k, l] of [['EX', '20 s'], ['P', 'Falta de penal'], ['EP', 'Excl. + penal'], ['EB', 'Brutalitat'], ['ED', 'Definitiva']])
+      if (k !== a.k) chips.push([k, l]);
+  }
+  toast(actText(a) + (a.q && a.q < 5 ? ' · Q' + a.q : ''), [
+    ...chips.map(([k, l]) => ({label: l, fn: () => { refine(a.id, a.k === 'GP' && k === 'GP' ? 'G' : k); }})),
+    {label: '↶ Desfer', fn: () => { removeAct(a.id); toast('Desfet'); }},
+  ], 6000);
+}
+function refine(id, k) {
+  const a = M.acts.find(x => x.id === id);
+  if (!a) return toast('Aquesta acció ja no hi és');
+  a.k = k; commit(); refineToast(a);
+}
+function removeAct(id) {
+  const a = M.acts.find(x => x.id === id);
+  if (!a) return;
+  M.acts = M.acts.filter(x => x.id !== id && !(a.grp && x.grp === a.grp));
+  commit();
+}
+function undo() {
+  const a = M.acts[M.acts.length - 1];
+  if (!a) return;
+  removeAct(a.id);
+  toast('↶ Desfet: ' + actText(a));
+}
+
+function toggleWater(num) {
+  if (D.finished) return toast('El partit està tancat.');
+  const inW = D.inWater.has(num);
+  if (!inW && isOut(D.stats.cnt[num]) && !confirm(`El #${num} ja té 3 faltes o expulsió definitiva. Entrar-lo igualment?`)) return;
+  const a = push({q: D.q, team: 'cnt', num, k: inW ? 'OUT' : 'IN'});
+  buzz(); commit();
+  toast(actText(a), [{label: '↶ Desfer', fn: () => removeAct(a.id)}], 2500);
+}
+
+function quarter(k, q) {
+  if (k === 'qstart' && q === 1 && D.inWater.size !== 7 &&
+      !confirm(`Hi ha ${D.inWater.size} jugadors del CNT a l'aigua (han de ser 7 titulars). Començar igualment?`)) return;
+  const map = {qstart: 'QSTART', qend: 'QEND', pause: 'PAUSE', resume: 'RESUME', final: 'FINAL'};
+  const a = push({q: k === 'qstart' ? q : D.q, k: map[k]});
+  commit(); keepAwake();
+  toast(actText(a), [{label: '↶ Desfer', fn: () => removeAct(a.id)}], 3000);
+}
+
+/* ---------- fulls (sheets) ---------- */
+function openSheet(html) { $('#sheet').innerHTML = html; $('#sheet').classList.add('show'); $('#shade').classList.add('show'); }
+function closeSheet() { $('#sheet').classList.remove('show'); $('#shade').classList.remove('show'); }
+
+function moreSheet(team, num) {
+  const s = D.stats[team][num] || {};
+  const fp = (fedPlayers(team) || []).find(p => p.num === num);
+  const ready = fedHasData();
+  const p = M.roster[team].find(x => x.num === num) || {num, name: ''};
+  const inW = team === 'cnt' && D.inWater.has(num);
+  openSheet(`<h3>${team === 'cnt' ? '' : 'Rival '}#${num} ${esc(p.name || (fp && fp.name) || '')}</h3>
+    ${team === 'cnt' ? `<button class="btn ${inW ? '' : 'primary'}" style="width:100%" data-act="toggle" data-n="${num}" data-close="1">${inW ? '⬅️ Treure de l\'aigua' : '💧 Entrar a l\'aigua'}</button>` : ''}
+    <label class="field">Nom<input id="pname" value="${esc(p.name)}" placeholder="${esc((fp && fp.name) || 'Nom del jugador')}" autocomplete="off"></label>
+    ${STAT_KEYS.map(k => {
+      const f = fp && fp.s ? fp.s[k] || 0 : null;
+      return `<div class="srow"><span class="l"><b>${k}</b>${esc(KEYS[k])}</span>
+        ${fp ? `<span class="fed ${ready && f !== (s[k] || 0) ? 'dif' : ''}">FCN ${f}</span>` : ''}
+        <span class="step"><button data-act="dec" data-team="${team}" data-n="${num}" data-k="${k}" aria-label="Menys ${k}">−</button><span>${s[k] || 0}</span>
+        <button data-act="inc" data-team="${team}" data-n="${num}" data-k="${k}" aria-label="Més ${k}">+</button></span></div>`;
+    }).join('')}
+    <button class="btn wide" data-act="closeSheet">Fet</button>`);
+  const inp = $('#pname');
+  inp.addEventListener('change', () => {
+    const r = M.roster[team];
+    let pl = r.find(x => x.num === num);
+    if (!pl) { pl = {num, name: ''}; r.push(pl); r.sort((a, b) => a.num - b.num); }
+    pl.name = inp.value.trim().toUpperCase();
+    saveMatch(); renderMatch();
+  });
+}
+function stepStat(team, num, k, inc) {
+  if (inc > 0) { push({q: D.q || 1, team, num, k}); }
+  else {
+    const i = M.acts.map(a => a.team === team && a.num === num && a.k === k).lastIndexOf(true);
+    if (i < 0) return;
+    M.acts.splice(i, 1);
+  }
+  commit(); moreSheet(team, num);
+}
+
+let swapSel = {out: null, in: null};
+function swapSheet() {
+  const outs = M.roster.cnt.filter(p => D.inWater.has(p.num));
+  const ins = M.roster.cnt.filter(p => !D.inWater.has(p.num) && !isOut(D.stats.cnt[p.num]));
+  const chip = (p, side) => `<button class="chip ${swapSel[side] === p.num ? 'sel' : ''}" data-act="swapPick" data-side="${side}" data-n="${p.num}">${p.num} ${esc(short(p.name))}</button>`;
+  openSheet(`<h3>🔄 Canvi</h3>
+    <div class="muted small">Surt (a l'aigua)</div><div class="chips">${outs.map(p => chip(p, 'out')).join('') || '<span class="faint small">Ningú a l\'aigua</span>'}</div>
+    <div class="muted small">Entra (banqueta)</div><div class="chips">${ins.map(p => chip(p, 'in')).join('') || '<span class="faint small">Ningú a la banqueta</span>'}</div>
+    <button class="btn wide" data-act="closeSheet">Tancar</button>`);
+}
+function swapPick(side, num) {
+  swapSel[side] = swapSel[side] === num ? null : num;
+  if (swapSel.out != null && swapSel.in != null) {
+    const grp = uid(), o = swapSel.out, i = swapSel.in;
+    push({q: D.q, team: 'cnt', num: o, k: 'OUT', grp});
+    push({q: D.q, team: 'cnt', num: i, k: 'IN', grp});
+    swapSel = {out: null, in: null};
+    buzz(); commit(); closeSheet();
+    toast(`🔄 Surt #${o} · entra #${i}`, [{label: '↶ Desfer', fn: () => { const a = M.acts.find(x => x.grp === grp); if (a) removeAct(a.id); }}], 4000);
+    return;
+  }
+  swapSheet();
+}
+
+function menuSheet() {
+  const url = M.fed ? `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats` : '';
+  openSheet(`<h3>${esc(M.cntName)} – ${esc(M.rivalName)}</h3>
+    <div class="mlist">
+      ${url ? `<button data-act="link" data-url="${esc(url)}">🌐 Obre l'acta a l'ACTAWP</button>` : ''}
+      <button data-act="export">⬇️ Exporta l'acta (JSON)</button>
+      <button data-act="rename">✏️ Canvia el nom del rival</button>
+      <button data-act="delete" style="color:var(--bad)">🗑️ Esborra aquesta acta</button>
+    </div><button class="btn wide" data-act="closeSheet">Tancar</button>`);
+}
+
+/* ---------- toast ---------- */
+let toastTimer = null, toastFns = [];
+function toast(text, chips = [], ms = 2500) {
+  const t = $('#toast');
+  toastFns = chips.map(c => c.fn);
+  t.innerHTML = `<div class="tx">${esc(text)}</div>${chips.length ? `<div class="ch">${chips.map((c, i) => `<button data-toast="${i}">${esc(c.label)}</button>`).join('')}</div>` : ''}`;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+$('#toast').addEventListener('click', e => {
+  const b = e.target.closest('[data-toast]'); if (!b) return;
+  const fn = toastFns[+b.dataset.toast];
+  $('#toast').classList.remove('show');
+  if (fn) fn();
+});
+
+/* ============================================================
+   Dades de la federació en directe
+   ============================================================ */
+function parseTeamState(d, mid) {
+  const inc = d.included || [];
+  const by = new Map(inc.map(i => [i.type + ':' + i.id, i]));
+  const m = by.get('match:' + mid); if (!m) return null;
+  const home = m.meta.home_team, away = m.meta.away_team;
+  const per = r => r.relationships.period && r.relationships.period.data && r.relationships.period.data.id;
+  const res = inc.filter(i => i.type === 'result' && i.relationships.match.data.id === mid);
+  const tot = {}; res.filter(r => !per(r)).forEach(r => tot[r.relationships.team.data.id] = r.attributes.value);
+  const periods = ((m.relationships.periods || {}).data || []).map(ref => {
+    const p = by.get('period:' + ref.id); if (!p) return null;
+    const pv = {}; res.filter(r => per(r) === p.id).forEach(r => pv[r.relationships.team.data.id] = r.attributes.value);
+    return {name: p.attributes.name, finished: !!p.attributes.finished, home: pv[home], away: pv[away]};
+  }).filter(Boolean);
+  return {finished: !!m.attributes.finished, score: {home: tot[home], away: tot[away]}, periods};
+}
+
+async function pollTeam() {
+  if (!M || !M.fed || !M.fed.groupId || document.hidden) return;
+  try {
+    const d = await api(`groups/${M.fed.groupId}?include=rounds.matches.results,rounds.matches.periods.results`);
+    if (!M || !M.fed) return;
+    FED.team = parseTeamState(d, M.fed.matchId); FED.teamAt = Date.now(); FED.teamErr = null;
+  } catch (e) { FED.teamErr = navigator.onLine === false ? 'sense connexió' : e.message; }
+  paintFed();
+}
+
+function applyPath(root, path, data) {
+  const parts = path.split('/').filter(Boolean);
+  if (!parts.length) return data;
+  root = root && typeof root === 'object' ? root : {};
+  let o = root;
+  for (let i = 0; i < parts.length - 1; i++) { if (!o[parts[i]] || typeof o[parts[i]] !== 'object') o[parts[i]] = {}; o = o[parts[i]]; }
+  if (data === null) delete o[parts[parts.length - 1]]; else o[parts[parts.length - 1]] = data;
+  return root;
+}
+
+function onFedDoc() {
+  // Omple noms buits de la plantilla amb els oficials de l'acta (mai trepitja noms posats a mà)
+  let changed = false;
+  for (const team of ['cnt', 'rival']) {
+    for (const fp of fedPlayers(team) || []) {
+      if (!fp || !fp.num) continue;
+      let p = M.roster[team].find(x => x.num === fp.num);
+      if (!p) { p = {num: fp.num, name: ''}; M.roster[team].push(p); M.roster[team].sort((a, b) => a.num - b.num); changed = true; }
+      if (!p.name && fp.name) { p.name = fp.name; changed = true; }
+    }
+  }
+  if (changed) saveMatch();
+  paintFed(changed);
+}
+
+function paintFed(full) {
+  if (!M) return;
+  if (full || tab === 'fcn') return renderMatch();
+  renderHead();
+}
+
+function startLive() {
+  stopLive();
+  tickTimer = setInterval(() => {
+    if (!M) return;
+    const now = Date.now();
+    if (D.running) {
+      const q = $('#qlabel'); if (q) q.textContent = 'Q' + D.q + ' · ' + mmss(quarterElapsed(now));
+      if (tab === 'temps' && now % 5000 < 1000) renderBody();
+    }
+    const aa = $('#actaAgo'); if (aa && FED.doc && FED.doc.statsAt) aa.textContent = 'acta ' + ago(FED.doc.statsAt);
+  }, 1000);
+  if (!M.fed) return;
+  pollTeam();
+  const loop = () => {
+    const start = new Date(M.fed.datetime).getTime(), now = Date.now();
+    const live = now > start - 30 * 60e3 && now < start + 3 * 3600e3 && !(FED.team && FED.team.finished);
+    pollTimer = setTimeout(() => { pollTeam(); loop(); }, live ? 30e3 : 5 * 60e3);
+  };
+  loop();
+  const mid = M.fed.matchId;
+  try {
+    // Streaming REST de la RTDB (no cal SDK): events "put"/"patch" amb {path, data}
+    es = new EventSource(`${RTDB}/federacio/${mid}.json`);
+    es.addEventListener('put', e => { const {path, data} = JSON.parse(e.data); if (data == null && path === '/') return; FED.doc = applyPath(FED.doc, path, data); FED.src = 'rtdb'; onFedDoc(); });
+    es.addEventListener('patch', e => { const {path, data} = JSON.parse(e.data); for (const k in data) FED.doc = applyPath(FED.doc, (path === '/' ? '' : path) + '/' + k, data[k]); onFedDoc(); });
+  } catch (e) {}
+  // Proves en local: `python actawp_live.py --dry-run` desa l'acta a app-nova/data/federacio/
+  fetch(`../data/federacio/${mid}.json`, {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(j => {
+    if (j && M && M.fed && M.fed.matchId === mid && !(FED.doc && FED.doc.statsAt)) { FED.doc = j; FED.src = 'local'; onFedDoc(); }
+  }).catch(() => {});
+}
+function stopLive() {
+  if (es) { es.close(); es = null; }
+  clearTimeout(pollTimer); clearInterval(tickTimer); pollTimer = tickTimer = null;
+  releaseAwake();
+}
+
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && D && D.q && !D.finished && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
+}
+function releaseAwake() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && M) { keepAwake(); pollTeam(); } });
+
+/* ============================================================
+   Esdeveniments (delegació)
+   ============================================================ */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) { if (e.target.id === 'shade') closeSheet(); return; }
+  const {act, team, k, id} = el.dataset;
+  const n = el.dataset.n != null ? +el.dataset.n : null;
+  switch (act) {
+    case 'cat': cat = k; LS.setRaw('cntv2_currentTeam', k); renderHome(); break;
+    case 'openFed': {
+      const f = fedList.items.find(x => x.matchId === id); if (!f) return;
+      const mid = 'fcn_' + id;
+      if (!LS.get(MK(mid), null)) { M = newMatch({id: mid, fed: f}); D = derive(M); saveMatch(); }
+      location.hash = '#/m/' + mid; break;
+    }
+    case 'openSaved': location.hash = '#/m/' + id; break;
+    case 'newFriendly': {
+      const r = prompt('Nom del rival:'); if (!r) return;
+      const mid = 'am_' + uid();
+      M = newMatch({id: mid, rivalName: r.trim().toUpperCase()}); D = derive(M); saveMatch();
+      location.hash = '#/m/' + mid; break;
+    }
+    case 'home': location.hash = ''; break;
+    case 'tab': tab = el.dataset.t; renderMatch(); window.scrollTo(0, 0); break;
+    case 'add': addStat(team, n, k); break;
+    case 'toggle': toggleWater(n); if (el.dataset.close) closeSheet(); break;
+    case 'more': moreSheet(team, n); break;
+    case 'inc': stepStat(team, n, k, 1); break;
+    case 'dec': stepStat(team, n, k, -1); break;
+    case 'del': removeAct(id); break;
+    case 'undo': undo(); break;
+    case 'qstart': quarter('qstart', +el.dataset.q); break;
+    case 'qend': case 'pause': case 'resume': case 'final': quarter(act); break;
+    case 'reopen': { const a = [...M.acts].reverse().find(x => x.k === 'FINAL'); if (a) removeAct(a.id); break; }
+    case 'swap': swapSel = {out: null, in: null}; swapSheet(); break;
+    case 'swapPick': swapPick(el.dataset.side, n); break;
+    case 'addnum': {
+      const v = parseInt(prompt('Dorsal:'), 10); if (!v || v < 1 || v > 99) return;
+      if (M.roster[team].some(p => p.num === v)) return toast('Aquest dorsal ja hi és');
+      M.roster[team].push({num: v, name: ''}); M.roster[team].sort((a, b) => a.num - b.num); saveMatch(); renderMatch(); break;
+    }
+    case 'row': openRows.has(k) ? openRows.delete(k) : openRows.add(k); renderBody(); break;
+    case 'menu': menuSheet(); break;
+    case 'closeSheet': closeSheet(); break;
+    case 'link': window.open(el.dataset.url, '_blank', 'noopener'); break;
+    case 'export': {
+      const blob = new Blob([JSON.stringify(M, null, 2)], {type: 'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `acta_${M.cat}_${(M.fed ? M.fed.datetime : new Date(M.created).toISOString()).slice(0, 10)}_${(M.rivalName || 'rival').replace(/[^A-Z0-9]+/gi, '_')}.json`;
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); closeSheet(); break;
+    }
+    case 'rename': { const r = prompt('Nom del rival:', M.rivalName); if (r) { M.rivalName = r.trim().toUpperCase(); saveMatch(); renderMatch(); } closeSheet(); break; }
+    case 'delete':
+      if (!confirm('Esborrar aquesta acta del mòbil? No es pot desfer.')) return;
+      LS.del(MK(M.id)); LS.set(IDX, LS.get(IDX, []).filter(x => x.id !== M.id)); closeSheet(); location.hash = ''; break;
+  }
+});
+
+/* ---------- navegació ---------- */
+function route() {
+  closeSheet();
+  const m = location.hash.match(/^#\/m\/([^/]+)(?:\/(anotar|fcn|temps))?$/);
+  if (m) { openMatch(decodeURIComponent(m[1])); if (m[2] && M) { tab = m[2]; renderMatch(); } }
+  else renderHome();
+}
+window.addEventListener('hashchange', route);
+route();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(() => {});
+</script>
+</body>
+</html>
