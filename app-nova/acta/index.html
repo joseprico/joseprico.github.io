@@ -202,13 +202,11 @@ table.q td{font-weight:700}
    - El partit és un registre d'accions (M.acts); tot l'estat es deriva d'aquí,
      així desfer qualsevol cosa (també quarts i canvis) és trivial.
    ============================================================ */
+// Només el Juvenil A (decisió de l'usuari, 25/09/2026): ni altres categories ni el Terrassa B.
 const CATS = {
-  alevi:    {nom:'Aleví',    tid:1339810},
-  infantil: {nom:'Infantil', tid:1339809},
-  cadet:    {nom:'Cadet',    tid:1339808},
   juvenil:  {nom:'Juvenil',  tid:1339807},
-  absolut:  {nom:'Absolut',  tid:1339803},
 };
+const CNT_TEAM = 'C.N. TERRASSA A';   // nom exacte a l'ACTAWP
 const API = 'https://api.leverade.com/';
 const RTDB = 'https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app';
 const ACTAWP = 'https://actawp.natacio.cat/ca';
@@ -241,7 +239,7 @@ const MK = id => 'acta_v1_m_' + id;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const isCnt = n => /TERRASSA/i.test(n || '');
+const isCnt = n => String(n || '').trim().toUpperCase() === CNT_TEAM;
 const toArr = x => Array.isArray(x) ? x.filter(Boolean) : (x && typeof x === 'object' ? Object.values(x) : []);
 const buzz = () => { try { navigator.vibrate && navigator.vibrate(25); } catch (e) {} };
 function short(n) {
@@ -280,8 +278,7 @@ async function api(path) {
 }
 
 /* ---------- estat ---------- */
-let cat = LS.raw('cntv2_currentTeam');           // compartit amb l'entrada v2
-if (!CATS[cat]) cat = 'juvenil';
+let cat = 'juvenil';
 let M = null, D = null, tab = 'anotar';
 let fedList = {cat: null, items: [], at: 0, err: null, loading: false};
 let FED = {doc: null, team: null, teamAt: 0, teamErr: null, src: null};
@@ -364,7 +361,7 @@ function saveMatch() {
             score: D ? D.score.cnt + '-' + D.score.rival : ''});
   LS.set(IDX, idx);
 }
-function commit() { D = derive(M); saveMatch(); renderMatch(); }
+function commit() { D = derive(M); saveMatch(); renderMatch(); schedulePublish(); }
 
 function newMatch({id, fed = null, rivalName = ''}) {
   const saved = LS.get('cntv2_roster_' + cat, null);   // alineació habitual (entrada v2)
@@ -382,6 +379,168 @@ function newMatch({id, fed = null, rivalName = ''}) {
     acts: [],
   };
 }
+
+/* ============================================================
+   Publicació a Firestore → app d'estadístiques (app-nova/app)
+   Mateix format que publicava l'entrada v2 (jugadors, periodScores,
+   chronologicalActions, lineups, playerWaterChanges...) + source:'acta'.
+   El temps es converteix a "temps de joc": cada quart acabat dura 8:00
+   exactes, així l'app calcula els mateixos minuts que la pestanya ⏱.
+   ============================================================ */
+const FS_DOCS = 'https://firestore.googleapis.com/v1/projects/cnt-wp-stats-bb7dc/databases/(default)/documents/matches/';
+const docIdOf = m => 'acta_' + m.id;
+const EMPTY_STATS = () => ({
+  gols: 0, goalTypes: {normal: 0, 'h+': 0, penalty: 0, contra: 0, boya: 0},
+  exclusions: 0, exclusionTypes: {normal: 0, penalty: 0}, penaltyMissed: 0,
+  parades: 0, paradeTypes: {corner: 0, rebuig: 0, atrapa: 0, penal: 0}, golsRebuts: 0, golsRebutsZones: {},
+  assistencies: 0, robatoris: 0, perdues: 0, xutsFallats: 0, blocks: 0, faltesRebudes: 0, contrafaltes: 0,
+});
+function fillStats(e, s) {
+  s = s || {};
+  e.gols = (s.G || 0) + (s.GP || 0);
+  e.goalTypes.normal = s.G || 0; e.goalTypes.penalty = s.GP || 0;
+  e.exclusions = (s.EX || 0) + (s.P || 0) + (s.EP || 0);
+  e.exclusionTypes.normal = s.EX || 0; e.exclusionTypes.penalty = (s.P || 0) + (s.EP || 0);
+  e.penaltyMissed = s.PF || 0;
+  e.acta = Object.fromEntries(STAT_KEYS.map(k => [k, s[k] || 0]));   // totes les columnes de l'acta
+  return e;
+}
+const GOALKEEPERS = [1, 13];
+
+function toStatsMatch() {
+  const now = Date.now();
+  const qi = {};
+  for (const q of [1, 2, 3, 4]) {
+    const segs = (D.segs[q] || []).map(([a, b]) => [a, b == null ? now : b]);
+    if (!segs.length) continue;
+    const dur = segs.reduce((s, [a, b]) => s + (b - a), 0);
+    const done = D.ended.has(q);
+    qi[q] = {start: segs[0][0], segs, f: done && dur ? QUARTER_MS / dur : 1, len: done ? QUARTER_MS : dur};
+  }
+  // temps real → temps de joc (des de l'inici del quart, escalat a 8:00)
+  const gameT = (q, t) => {
+    const x = qi[q]; if (!x) return t;
+    let el = 0;
+    for (const [a, b] of x.segs) { if (t <= a) break; el += Math.min(t, b) - a; }
+    return Math.round(x.start + Math.min(el * x.f, x.len));
+  };
+  const lineups = {q1: [], q2: [], q3: [], q4: []}, changes = [], chrono = [];
+  const gkConceded = {};
+  const inW = new Set();
+  let q = 0, live = false;
+  for (const a of M.acts) {
+    if (a.k === 'QSTART') { q = a.q; live = q < 5; if (live) lineups['q' + q] = [...inW]; continue; }
+    if (a.k === 'QEND' || a.k === 'FINAL') { live = false; continue; }
+    if (a.k === 'PAUSE' || a.k === 'RESUME') continue;
+    if (a.k === 'IN' || a.k === 'OUT') {
+      if (a.k === 'IN') inW.add(a.num); else inW.delete(a.num);
+      if (live) changes.push({timestamp: gameT(q, a.t), playerNum: a.num, action: a.k === 'IN' ? 'in' : 'out', quarter: 'q' + q});
+      continue;
+    }
+    const aq = Math.min(a.q || 1, 4);
+    const isGoal = a.k === 'G' || a.k === 'GP', isExc = a.k === 'EX' || a.k === 'P' || a.k === 'EP';
+    if (isGoal && a.team === 'rival') for (const gk of GOALKEEPERS) if (inW.has(gk)) gkConceded[gk] = (gkConceded[gk] || 0) + 1;
+    if (!isGoal && !isExc && a.k !== 'PF') continue;   // ED/EB/EN/TG/TV i tanda: només a estadistiques.acta
+    chrono.push({
+      timestamp: gameT(aq, a.t), quarter: 'q' + aq, team: a.team, playerNum: a.num, playerName: nameOf(a.team, a.num),
+      type: isGoal ? 'goal' : isExc ? 'exclusion' : 'penalty-missed',
+      ...(isGoal ? {goalType: a.k === 'GP' ? 'penalty' : 'normal'} : {}),
+      ...(isExc ? {exclusionType: a.k === 'EX' ? 'normal' : 'penalty'} : {}),
+    });
+  }
+  const played = n => D.stats.cnt[n] || D.ivs[n];
+  const jugadors = M.roster.cnt.filter(p => p.name || played(p.num)).map(p => {
+    const e = fillStats(EMPTY_STATS(), D.stats.cnt[p.num]);
+    if (GOALKEEPERS.includes(p.num)) e.golsRebuts = gkConceded[p.num] || 0;
+    return {numero: p.num, nom: p.name || ('#' + p.num), estadistiques: e};
+  });
+  const rivalStats = M.roster.rival.filter(p => p.name || D.stats.rival[p.num]).map(p => {
+    const e = fillStats(EMPTY_STATS(), D.stats.rival[p.num]);
+    return {num: p.num, name: p.name || '', gols: e.gols, goalTypes: e.goalTypes, exclusions: e.exclusions,
+            exclusionTypes: e.exclusionTypes, penaltyMissed: e.penaltyMissed, acta: e.acta};
+  });
+  const periodScores = {};
+  for (const q of [1, 2, 3, 4]) { const s = D.qScore[q] || {cnt: 0, rival: 0}; periodScores['q' + q] = {cnt: s.cnt, rival: s.rival}; }
+  const quarterStartTimes = {}, quarterRealEndTimes = {};
+  for (const q of [1, 2, 3, 4]) {
+    quarterStartTimes['q' + q] = qi[q] ? qi[q].start : null;
+    quarterRealEndTimes['q' + q] = qi[q] ? qi[q].start + Math.round(qi[q].len) : null;
+  }
+  // Còpia de l'acta oficial (si el lector ja l'ha llegida), per consultar-la des de l'app
+  let fcn = null;
+  if (M.fed && FED.doc && FED.doc.statsAt) {
+    const slim = t => (fedPlayers(t) || []).map(p => ({num: p.num, name: p.name || '', titular: !!p.titular, s: p.s || {}}));
+    const t = fedTeam();
+    fcn = {matchId: M.fed.matchId, tournamentId: M.fed.tournamentId, statsAt: FED.doc.statsAt,
+           score: t && t.score ? {cnt: t.score[M.fed.cntSide] ?? null, rival: t.score[sideOf('rival')] ?? null} : null,
+           players: {cnt: slim('cnt'), rival: slim('rival')}};
+  }
+  return {
+    id: docIdOf(M), source: 'acta', actaId: M.id, teamId: M.cat, temporada: '2026-27 ' + M.cat.toUpperCase(),
+    data: M.fed ? M.fed.datetime : new Date(M.created).toISOString(),
+    equip: 'CN TERRASSA', rivalTeam: M.rivalName || 'RIVAL',
+    matchLocation: M.fed ? M.fed.cntSide : 'home', estat: D.finished ? 'finished' : 'live',
+    scoreCNT: D.score.cnt, scoreRival: D.score.rival,
+    ...(D.shoot.cnt || D.shoot.rival ? {penaltyShootout: {cnt: D.shoot.cnt, rival: D.shoot.rival}} : {}),
+    periodScores, tempsMortCNT: 0, tempsMortRival: 0, observacions: '',
+    jugadors, rivalStats, chronologicalActions: chrono,
+    lineups, playerWaterChanges: changes, quarterStartTimes, quarterRealEndTimes,
+    starters: D.starters || [],
+    fedMatchId: M.fed ? M.fed.matchId : null, fcn,
+    lastUpdate: now,
+  };
+}
+
+// JSON → valors tipats de l'API REST de Firestore (sense SDK)
+function fsVal(v) {
+  if (v === null || v === undefined) return {nullValue: null};
+  if (typeof v === 'boolean') return {booleanValue: v};
+  if (typeof v === 'number') return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  if (typeof v === 'string') return {stringValue: v};
+  if (Array.isArray(v)) return {arrayValue: {values: v.map(fsVal)}};
+  return {mapValue: {fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fsVal(x)]))}};
+}
+
+let pubTimer = null, publishing = false;
+function schedulePublish(now) {
+  if (!M || !D || !D.q) return;          // abans del Q1 no hi ha res a publicar
+  M.sync = {...(M.sync || {}), pending: true};
+  LS.set(MK(M.id), M);
+  clearTimeout(pubTimer);
+  pubTimer = setTimeout(publish, now ? 0 : 4000);
+}
+async function publish() {
+  if (!M || !M.sync || !M.sync.pending || publishing) return;
+  if (navigator.onLine === false) return paintSync();
+  publishing = true;
+  const m = M, body = toStatsMatch();
+  try {
+    const r = await fetch(FS_DOCS + encodeURIComponent(body.id), {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({fields: fsVal(body).mapValue.fields}),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    m.sync = {at: Date.now(), pending: m.updated > body.lastUpdate};
+  } catch (e) {
+    m.sync = {...(m.sync || {}), err: e.message, errAt: Date.now()};
+    clearTimeout(pubTimer); pubTimer = setTimeout(publish, 30e3);   // reintent
+  }
+  LS.set(MK(m.id), m);
+  publishing = false;
+  if (M === m) { if (M.sync.pending && !M.sync.errAt) schedulePublish(); paintSync(); }
+}
+function syncPill() {
+  if (!M || !D || !D.q) return '';
+  const s = M.sync || {};
+  if (s.pending && s.errAt) return `<span class="pill warn" id="syncPill">☁️ no desat${navigator.onLine === false ? ' (sense xarxa)' : ''}</span>`;
+  if (s.pending) return '<span class="pill" id="syncPill">☁️ desant…</span>';
+  return s.at ? '<span class="pill ok" id="syncPill">☁️ a l\'app</span>' : '';
+}
+function paintSync() { const e = $('#syncPill'); if (e) e.outerHTML = syncPill(); else renderHead(); }
+async function unpublish(m) {
+  try { await fetch(FS_DOCS + encodeURIComponent(docIdOf(m)), {method: 'DELETE'}); } catch (e) {}
+}
+window.addEventListener('online', () => { if (M && M.sync && M.sync.pending) schedulePublish(true); });
 
 /* ============================================================
    Inici: categories, partits de la federació, actes desades
@@ -478,8 +637,7 @@ function renderHome() {
       <div class="brand">🏊 Acta en directe</div>
       <div class="muted small">Anota gols, exclusions i canvis i compara-ho amb l'acta de la federació</div>
     </header>
-    <nav class="cats">${Object.entries(CATS).map(([k, c]) =>
-      `<button class="chip ${k === cat ? 'on' : ''}" data-act="cat" data-k="${k}">${c.nom}</button>`).join('')}</nav>
+    <div class="cats"><span class="chip on">Juvenil · ${esc(CNT_TEAM)}</span></div>
     <section class="card"><h2>Partits a la federació</h2><div id="fedList"></div></section>
     <section class="card"><h2>Actes desades</h2>${saved.length ? saved.map(s => {
       const d = new Date(s.date);
@@ -487,7 +645,7 @@ function renderHome() {
         <div class="when"><b>${esc(fmtDay(d))}</b>${s.fed ? 'FCN' : 'Amistós'}</div>
         <div class="teams"><div class="cnt">${esc(s.rival || 'Rival')}</div></div>
         <div class="res">${esc(s.score)}<small>Obrir ›</small></div></button>`;
-    }).join('') : '<p class="muted small">Encara no n\'hi ha cap en aquesta categoria.</p>'}</section>
+    }).join('') : '<p class="muted small">Encara no n\'hi ha cap.</p>'}</section>
     <button class="btn ghost wide" data-act="newFriendly">+ Partit sense federació (amistós)</button>
     <footer><a href="../entrada/">Entrada completa</a> · <a href="../app/">App d'estadístiques</a><br>by Josep Rico</footer>`;
   paintFedList();
@@ -506,6 +664,7 @@ function openMatch(id) {
   $('#app').innerHTML = `<div class="mhead" id="mhead"></div><div id="mbody"></div>`;
   renderMatch();
   startLive();
+  if (M.sync && M.sync.pending) schedulePublish(true);
   window.scrollTo(0, 0);
 }
 
@@ -557,7 +716,7 @@ function quarterButtons() {
 }
 
 function fedLine() {
-  if (!M.fed) return '<span class="pill">Amistós · sense acta FCN</span>';
+  if (!M.fed) return '<span class="pill">Amistós · sense acta FCN</span>' + syncPill();
   const t = fedTeam();
   const cs = M.fed.cntSide, rs = sideOf('rival');
   let h = '';
@@ -570,7 +729,7 @@ function fedLine() {
   const doc = FED.doc;
   if (doc && doc.statsAt) h += `<span class="pill" id="actaAgo">acta ${esc(ago(doc.statsAt))}</span>`;
   else if (doc && doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">acta bloquejada</span>';
-  return h;
+  return h + syncPill();
 }
 
 /* ---------- Anotar ---------- */
@@ -816,6 +975,7 @@ function quarter(k, q) {
   const map = {qstart: 'QSTART', qend: 'QEND', pause: 'PAUSE', resume: 'RESUME', final: 'FINAL'};
   const a = push({q: k === 'qstart' ? q : D.q, k: map[k]});
   commit(); keepAwake();
+  if (k === 'final' || k === 'qend') schedulePublish(true);
   toast(actText(a), [{label: '↶ Desfer', fn: () => removeAct(a.id)}], 3000);
 }
 
@@ -1023,7 +1183,6 @@ document.addEventListener('click', e => {
   const {act, team, k, id} = el.dataset;
   const n = el.dataset.n != null ? +el.dataset.n : null;
   switch (act) {
-    case 'cat': cat = k; LS.setRaw('cntv2_currentTeam', k); renderHome(); break;
     case 'openFed': {
       const f = fedList.items.find(x => x.matchId === id); if (!f) return;
       const mid = 'fcn_' + id;
@@ -1068,7 +1227,8 @@ document.addEventListener('click', e => {
     }
     case 'rename': { const r = prompt('Nom del rival:', M.rivalName); if (r) { M.rivalName = r.trim().toUpperCase(); saveMatch(); renderMatch(); } closeSheet(); break; }
     case 'delete':
-      if (!confirm('Esborrar aquesta acta del mòbil? No es pot desfer.')) return;
+      if (!confirm('Esborrar aquesta acta del mòbil i de l\'app d\'estadístiques? No es pot desfer.')) return;
+      if (M.sync) unpublish(M);
       LS.del(MK(M.id)); LS.set(IDX, LS.get(IDX, []).filter(x => x.id !== M.id)); closeSheet(); location.hash = ''; break;
   }
 });

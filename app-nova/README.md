@@ -75,8 +75,22 @@ App lleugera per a la piscina: per jugador, gol (⚽) i exclusió (EX), amb toas
 per precisar el tipus com a l'acta (penal, falta de penal, excl.+penal,
 brutalitat, definitiva); tocar el nom = dins/fora (temps de joc) i 🔄 canvi guiat.
 Tot és un registre d'accions (`acts`) a `localStorage` (`acta_v1_*`), d'on es
-deriven marcador, parcials, titulars i temps. Comparteix amb l'entrada
-`cntv2_currentTeam` i `cntv2_roster_<cat>`.
+deriven marcador, parcials, titulars i temps. Agafa la plantilla de l'entrada
+(`cntv2_roster_juvenil`).
+
+**Només Juvenil, equip `C.N. TERRASSA A`** (el B i les altres categories estan
+fora; per tornar-les a afegir: `CATS`/`CNT_TEAM` a l'acta i
+`TOURNAMENTS`/`CNT_TEAMS` a `actawp_live.py`).
+
+**Font de l'app d'estadístiques (`app/`):** cada canvi es publica (4 s de
+debounce, REST sense SDK) a Firestore `matches/acta_<id>` amb `source:'acta'`,
+en el mateix format que l'entrada v2 (`jugadors`, `periodScores`,
+`chronologicalActions`, `lineups`, `playerWaterChanges`...). El temps es
+converteix a temps de joc (cada quart acabat = 8:00 exactes), així
+`calculateMatchPlayingTimes` de l'app dona els mateixos minuts que l'acta.
+Cada jugador porta també `estadistiques.acta` (totes les columnes) i el
+partit, `fcn` (còpia de l'acta oficial). L'app `app/` només mostra Juvenil i
+només partits amb `source:'acta'`.
 
 La pestanya **🆚 Acta FCN** compara amb la federació (l'ACTAWP és Leverade):
 - **Equip** (marcador, parcials, quarts acabats): API pública

@@ -42,15 +42,14 @@ BASE = "https://actawp.natacio.cat/ca"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CNT-WP-Stats"
 RTDB_URL = "https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app"
 DRY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app-nova", "data", "federacio")
-CNT_MATCH = "TERRASSA"
-
-# Tornejos 26/27 on juga el CNT (ids d'ACTAWP = ids de Leverade)
+# Tornejos 26/27 que seguim (ids d'ACTAWP = ids de Leverade) i el nom EXACTE
+# del nostre equip. Només el Juvenil A (decisió de l'usuari, 25/09/2026);
+# per afegir-ne un altre: cadet 1339808, infantil 1339809, absolut 1339803, aleví 1339810.
 TOURNAMENTS = {
-    "alevi": 1339810,
-    "infantil": 1339809,
-    "cadet": 1339808,
     "juvenil": 1339807,
-    "absolut": 1339803,
+}
+CNT_TEAMS = {
+    "juvenil": "C.N. TERRASSA A",
 }
 
 PRE_START = timedelta(minutes=25)    # comença a vigilar abans de l'hora oficial
@@ -110,11 +109,12 @@ def parse_dt(s):
 
 
 def cnt_matches(cat, tid):
-    """Partits d'un torneig on juga algun equip TERRASSA (les hores de Leverade són UTC)."""
+    """Partits d'un torneig on juga el nostre equip (les hores de Leverade són UTC)."""
     d = api(f"tournaments/{tid}?include=teams,groups.rounds.matches")
     inc = d.get("included", [])
     teams = {i["id"]: i["attributes"]["name"] for i in inc if i["type"] == "team"}
     round_group = {i["id"]: i["relationships"]["group"]["data"]["id"] for i in inc if i["type"] == "round"}
+    ours = norm(CNT_TEAMS[cat])
     out = []
     for m in inc:
         if m["type"] != "match":
@@ -122,7 +122,7 @@ def cnt_matches(cat, tid):
         h, a = m["meta"].get("home_team"), m["meta"].get("away_team")
         if not h or not a or not m["attributes"].get("datetime"):
             continue
-        if CNT_MATCH not in norm(teams.get(h)) and CNT_MATCH not in norm(teams.get(a)):
+        if ours not in (norm(teams.get(h)), norm(teams.get(a))):
             continue
         out.append({
             "matchId": m["id"], "tournamentId": str(tid), "category": cat,

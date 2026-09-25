@@ -1,6 +1,6 @@
 // Service Worker — CNT Waterpolo Stats v2 (app de visualització)
 // Network-first amb fallback a cache. Només recursos GET del mateix origen.
-const CACHE_NAME = 'cntv2-app-v2';
+const CACHE_NAME = 'cntv2-app-v3';
 
 const PRECACHE = [
   './',

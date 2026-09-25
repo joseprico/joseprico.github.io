@@ -3719,15 +3719,6 @@ body:not(.theme-cadet) .es-card { display: none; }
         </div>
     </div>
     <p id="coachName" style="font-size: 16px; color: #fde047; margin-top: 8px; font-weight: 600;"></p>
-    <div style="text-align:center;margin-top:10px;">
-      <select id="catSelect" onchange="selectTeam(this.value)" style="padding:8px 14px;font-size:15px;font-weight:700;border-radius:10px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;">
-        <option value="alevi">🐟 Aleví</option>
-        <option value="infantil">🐬 Infantil</option>
-        <option value="cadet">⬛ Cadet</option>
-        <option value="juvenil">🟦 Juvenil</option>
-        <option value="absolut">🏆 Absolut</option>
-      </select>
-    </div>
 </div>
 	
         <!-- TABS SEMPRE VISIBLES -->
@@ -3754,7 +3745,7 @@ body:not(.theme-cadet) .es-card { display: none; }
 
             <div id="matchesView" class="hidden">
 	<!-- 🏆 ÚLTIMS PARTITS JUGATS -->
-<div id="ultims-partits-resum" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;"></div>
+<div id="ultims-partits-resum" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 15px;"></div>
 	
 <!-- 🇪🇸 CAMPIONAT D'ESPANYA CADET · CAMÍ DEL TERRASSA (auto des de Leverade) -->
 <div class="card ct-bracket-card es-card" id="esEspanyaCard">
@@ -4899,6 +4890,8 @@ body:not(.theme-cadet) .es-card { display: none; }
 </div>
 
     <script>
+// Només Juvenil (decisió de l'usuari, 25/09/2026). Les dades venen de l'app d'acta (app-nova/acta).
+try { localStorage.setItem('selectedTeam', 'juvenil'); } catch (e) {}
 // ============================================
 // 🔥 VARIABLES GLOBALS FIREBASE
 // ============================================
@@ -15740,20 +15733,16 @@ function getQuarterEndTime(quarterStartTimes, quarterRealEndTimes, quarter) {
 // ✅ GESTIÓ DE SELECCIÓ D'EQUIP
 // Multi-categoria (v2)
 const CATS = {
-  alevi:{name:'ALEVÍ',emoji:'🐟',coach:'',theme:'theme-alevi'},
-  infantil:{name:'INFANTIL',emoji:'🐬',coach:'',theme:'theme-infantil'},
-  cadet:{name:'CADET',emoji:'⬛',coach:'Dídac Cobacho',theme:'theme-cadet'},
-  juvenil:{name:'JUVENIL',emoji:'🟦',coach:'Jordi Busquets',theme:'theme-juvenil'},
-  absolut:{name:'ABSOLUT',emoji:'🏆',coach:'Sergi Mora',theme:'theme-absolut'}
+  juvenil:{name:'JUVENIL',emoji:'🟦',coach:'Jordi Busquets',theme:'theme-juvenil'}
 };
 function applyTeamHeader(team){
-  const c = CATS[team] || CATS.cadet;
+  const c = CATS[team] || CATS.juvenil;
   document.body.className = c.theme;
   const mt=document.getElementById('mainTitle'); if(mt) mt.innerHTML = c.emoji+' 📊 Estadístiques CN Terrassa - '+c.name+' '+c.emoji;
   const cn=document.getElementById('coachName'); if(cn) cn.innerHTML = c.coach ? '👨‍🏫 Entrenador: '+c.coach : '';
   const sel=document.getElementById('catSelect'); if(sel) sel.value = team;
 }
-let selectedTeam = localStorage.getItem('selectedTeam') || 'cadet';
+let selectedTeam = 'juvenil';
 
 function selectTeam(team) {
     console.log('🔍 Team seleccionat:', team);
@@ -22932,11 +22921,11 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   const db = getFirestore(app);
   window.cntListMatches = async function(teamId){
     const snap = await getDocs(collection(db,'matches'));
-    return snap.docs.map(d=>({id:d.id, ...d.data()})).filter(m=>m.teamId===teamId).sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));
+    return snap.docs.map(d=>({id:d.id, ...d.data()})).filter(m=>m.teamId===teamId && m.source==='acta').sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));
   };
   window.cntListAllMatches = async function(){
     const snap = await getDocs(collection(db,'matches'));
-    return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    return snap.docs.map(d=>({id:d.id, ...d.data()})).filter(m=>m.source==='acta');
   };
   console.log('☁️ Lector Firestore llest');
 </script>
