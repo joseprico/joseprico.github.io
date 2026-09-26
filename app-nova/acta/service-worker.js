@@ -1,6 +1,6 @@
 // Service Worker — CNT Waterpolo v2 (acta en directe)
 // Network-first amb fallback a cache. Només recursos GET del mateix origen.
-const CACHE_NAME = 'cntv2-acta-v2';
+const CACHE_NAME = 'cntv2-acta-v3';
 
 const PRECACHE = [
   './',

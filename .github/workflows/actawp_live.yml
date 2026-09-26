@@ -1,7 +1,8 @@
 name: Acta ACTAWP en directe
 
-# Llegeix l'acta per jugador dels partits del CNT a l'ACTAWP i la publica a la
-# RTDB (federacio/{matchId}) perquè l'app app-nova/acta/ la compari en directe.
+# Llegeix l'acta per jugador i el minut a minut dels partits del CNT a l'ACTAWP
+# (cada 10 s amb el partit en joc) i els publica a la RTDB (federacio/{matchId})
+# perquè l'app app-nova/acta/ els compari en directe.
 # Cada execució programada només mira el calendari (uns segons); si hi ha un
 # partit del CNT a punt o en joc, instal·la les dependències i el segueix fins
 # que acaba. Reserva: el mateix script al PC (`python actawp_live.py --watch`).
@@ -50,7 +51,7 @@ jobs:
 
       - name: Dependències
         if: ${{ inputs.match || steps.check.outputs.active == 'true' }}
-        run: pip install beautifulsoup4 firebase-admin
+        run: pip install beautifulsoup4 firebase-admin websocket-client
 
       - name: Segueix l'acta
         if: ${{ inputs.match || steps.check.outputs.active == 'true' }}

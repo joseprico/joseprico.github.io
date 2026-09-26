@@ -123,6 +123,10 @@ footer a{color:var(--muted)}
 .log li:first-child{border-top:0}
 .log .t{color:var(--faint);font-size:.75rem;width:28px;flex:none}
 .log .x{margin-left:auto;width:34px;height:34px;border-radius:8px;color:var(--faint);font-size:1rem}
+.log .t.fe{width:42px;line-height:1.25;font-variant-numeric:tabular-nums}
+.log .sc{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.log li.cnt{box-shadow:inset 3px 0 0 var(--accent)}
+.log details summary{cursor:pointer;padding:8px 2px}
 
 /* ---------- Comparació FCN ---------- */
 .stat{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.84rem}
@@ -675,6 +679,40 @@ function fedTeam() {
   return d && d.score ? {score: d.score, periods: toArr(d.periods), finished: !!d.finished} : null;
 }
 
+// Minut a minut de l'acta FCN (actawp_live.py, cada 10 s): [{q, t:'06:50', side, num, name, k, txt, score:'3-2'}]
+function fedEvents() { return toArr(FED.doc && FED.doc.events); }
+// Marcador segons el minut a minut: total i per quarts (hi ha quart des de la seva primera acció)
+function fedEvScore() {
+  const ev = fedEvents(); if (!ev.length) return null;
+  const score = {home: 0, away: 0}, q = {};
+  for (const e of ev) {
+    if (e.q >= 1 && e.q <= 4) q[e.q] = q[e.q] || {home: 0, away: 0};
+    if (!GOAL_KEYS.includes(e.k) || !q[e.q]) continue;
+    score[e.side]++; q[e.q][e.side]++;
+  }
+  const last = [...ev].reverse().find(e => e.score && /^\d+-\d+$/.test(e.score));
+  if (last) { const [h, a] = last.score.split('-').map(Number); score.home = h; score.away = a; }
+  return {score, q};
+}
+// Marcador FCN a mostrar: el minut a minut va per davant de l'API mentre es juga; l'API mana en tancar l'acta
+function fedScore() {
+  const t = fedTeam(), ev = fedEvScore();
+  const api = t && t.score && t.score.home != null;
+  if (ev && !(api && t.finished)) return {score: ev.score, q: ev.q, src: 'mm'};
+  return api ? {score: t.score, src: 'api'} : null;
+}
+const EV_ICON = {G: '⚽', GP: '🎯', G5P: '🎯', EX: '🟥', EP: '🟥', ED: '⛔', EB: '⛔', EN: '⛔', P: '✋', PF: '❌', TG: '🟨', TV: '🟥', TM: '⏸'};
+function evWho(e) {
+  const ours = M.fed && e.side === M.fed.cntSide;
+  if (typeof e.num !== 'number') return ours ? 'CNT (banqueta)' : 'Rival (banqueta)';
+  return ours ? `#${e.num} ${short(e.name)}` : `Rival #${e.num}`;
+}
+function evItem(e) {
+  const ours = M.fed && e.side === M.fed.cntSide;
+  return `<li class="${ours ? 'cnt' : ''}"><span class="t fe">${e.q >= 1 && e.q <= 4 ? 'Q' + e.q : 'P'}<br>${esc(e.t)}</span>
+    <span>${EV_ICON[e.k] || '•'} ${esc(e.txt)} · ${esc(evWho(e))}</span>${e.score ? `<span class="sc">${esc(e.score.replace('-', ' - '))}</span>` : ''}</li>`;
+}
+
 function renderMatch() { renderHead(); renderBody(); }
 
 function renderHead() {
@@ -717,15 +755,17 @@ function quarterButtons() {
 
 function fedLine() {
   if (!M.fed) return '<span class="pill">Amistós · sense acta FCN</span>' + syncPill();
-  const t = fedTeam();
+  const t = fedTeam(), fs = fedScore();
   const cs = M.fed.cntSide, rs = sideOf('rival');
   let h = '';
-  if (t && t.score && t.score.home != null) {
-    const fc = t.score[cs], fr = t.score[rs];
+  if (fs) {
+    const fc = fs.score[cs], fr = fs.score[rs];
     const same = fc === D.score.cnt && fr === D.score.rival;
-    const lastQ = toArr(t.periods).filter(p => p.finished && /^(I|II|III|IV)$/.test(p.name)).length;
-    h += `<span class="pill ${same ? 'ok' : 'bad'}">FCN ${fc} : ${fr}${t.finished ? ' · final' : lastQ ? ' · ' + lastQ + 'Q tancats' : ''} ${same ? '✓' : '≠'}</span>`;
+    const lastQ = t ? toArr(t.periods).filter(p => p.finished && /^(I|II|III|IV)$/.test(p.name)).length : 0;
+    h += `<span class="pill ${same ? 'ok' : 'bad'}">FCN ${fc} : ${fr}${t && t.finished ? ' · final' : lastQ ? ' · ' + lastQ + 'Q tancats' : ''} ${same ? '✓' : '≠'}</span>`;
   } else h += '<span class="pill">FCN: sense marcador encara</span>';
+  const ev = fedEvents(), le = ev[ev.length - 1];
+  if (le) h += `<span class="pill" title="Última acció de l'acta FCN">${EV_ICON[le.k] || '•'} ${esc(evWho(le))} · ${le.q >= 1 && le.q <= 4 ? 'Q' + le.q : 'P'} ${esc(le.t)}</span>`;
   const doc = FED.doc;
   if (doc && doc.statsAt) h += `<span class="pill" id="actaAgo">acta ${esc(ago(doc.statsAt))}</span>`;
   else if (doc && doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">acta bloquejada</span>';
@@ -883,16 +923,31 @@ function renderFcn() {
   if (doc.statsAt) h += `<span class="pill ok">Jugadors ${esc(ago(doc.statsAt))}${doc.lector ? ' · lector ' + esc(doc.lector.host) : ''}</span>`;
   else if (doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">El lector no pot entrar a l\'acta (anti-bot)</span>';
   else h += '<span class="pill">Jugadors: el lector comença 25 min abans del partit</span>';
+  if (doc.eventsAt) h += `<span class="pill">Minut a minut: ${fedEvents().length} accions</span>`;
   h += `</div>`;
   if (doc.statsAt && !fedHasData()) h += '<p class="muted small" style="margin-top:8px">L\'acta encara no té gols ni exclusions. Quan la federació els publiqui, apareixeran aquí sols.</p>';
   h += `<p class="small" style="margin-top:8px"><a href="${esc(doc.actaUrl || `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats`)}" target="_blank" rel="noopener">Obre l'acta a l'ACTAWP ↗</a></p></section>`;
 
-  // Marcador per quarts
+  // Minut a minut: les últimes accions a dalt (per veure si ja hi ha el que acaba de passar)
+  const ev = fedEvents();
+  if (ev.length) {
+    const rev = [...ev].reverse();
+    h += `<section class="card"><h2>Minut a minut FCN</h2><ul class="log">${rev.slice(0, 12).map(evItem).join('')}</ul>
+      ${rev.length > 12 ? `<details><summary class="small muted">Totes les accions (${rev.length})</summary><ul class="log">${rev.slice(12).map(evItem).join('')}</ul></details>` : ''}</section>`;
+  }
+
+  // Marcador per quarts (API de Leverade; si encara no el té, el del minut a minut)
   const per = t ? toArr(t.periods) : [];
+  const fs = fedScore();
   const qs = [1, 2, 3, 4];
-  const fq = q => { const p = per[q - 1]; return p && p.home != null ? [p[cs], p[rs]] : null; };
+  const fq = q => {
+    const p = per[q - 1];
+    if (p && p.home != null) return [p[cs], p[rs]];
+    const e = fs && fs.q && fs.q[q];
+    return e ? [e[cs], e[rs]] : null;
+  };
   const oq = q => { const s = D.qScore[q] || {cnt: 0, rival: 0}; return [s.cnt, s.rival]; };
-  const ftot = t && t.score && t.score.home != null ? [t.score[cs], t.score[rs]] : null;
+  const ftot = fs ? [fs.score[cs], fs.score[rs]] : null;
   const fCell = (o, f) => !f ? '<span class="z">·</span>' : (o[0] === f[0] && o[1] === f[1]) ? `${f[0]}-${f[1]}` : `<span class="d">${f[0]}-${f[1]}</span>`;
   h += `<section class="card"><h2>Marcador per quarts</h2><table class="cmp q"><thead><tr><th></th>${qs.map(q => `<th>Q${q}</th>`).join('')}<th>Total</th></tr></thead><tbody>
     <tr><td class="muted small">Nosaltres</td>${qs.map(q => `<td>${oq(q)[0]}-${oq(q)[1]}</td>`).join('')}<td>${D.score.cnt}-${D.score.rival}</td></tr>
