@@ -1,6 +1,7 @@
 // Service Worker — CNT Waterpolo v2 (acta en directe)
 // Network-first amb fallback a cache. Només recursos GET del mateix origen.
-const CACHE_NAME = 'cntv2-acta-v3';
+const CACHE_NAME = 'cntv2-acta-v4';
+const NET_TIMEOUT = 3000;   // ms: més enllà, si hi ha còpia a la cache es fa servir
 
 const PRECACHE = [
   './',
@@ -41,26 +42,36 @@ self.addEventListener('fetch', event => {
   }
 
   // Network-first amb fallback a cache: sempre intentar la versió nova
-  // primer, però funcionar a la piscina sense cobertura.
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        if ((event.request.headers.get('accept') || '').includes('text/html')) {
-          return new Response(
-            '<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>Sense connexió</title></head>' +
-            '<body style="font-family:sans-serif;background:#f1f5f9;color:#0f172a;text-align:center;padding:60px 20px;">' +
-            '<h1>📡 Sense connexió</h1><p>No es pot carregar l\'acta. Revisa la connexió i torna-ho a provar.</p></body></html>',
-            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-          );
-        }
-      }))
-  );
+  // primer, però funcionar a la piscina sense cobertura. Amb cobertura
+  // dolenta la xarxa pot trigar minuts a fallar: si passats NET_TIMEOUT ms
+  // no ha respost i hi ha còpia, es serveix la còpia i la xarxa segueix
+  // actualitzant la cache en segon pla.
+  const net = fetch(event.request);
+  event.waitUntil(net.then(response => {
+    if (response && response.status === 200) {
+      const clone = response.clone();
+      return caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+    }
+  }).catch(() => {}));
+
+  event.respondWith((async () => {
+    const timeout = new Promise(resolve => setTimeout(resolve, NET_TIMEOUT));
+    try {
+      const response = await Promise.race([net, timeout]);
+      if (response) return response;
+    } catch (e) {}
+    const cached = await caches.match(event.request);
+    if (cached) return cached;
+    // Sense còpia: esperar la xarxa fins al final
+    try { return await net; } catch (e) {}
+    if ((event.request.headers.get('accept') || '').includes('text/html')) {
+      return new Response(
+        '<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>Sense connexió</title></head>' +
+        '<body style="font-family:sans-serif;background:#f1f5f9;color:#0f172a;text-align:center;padding:60px 20px;">' +
+        '<h1>📡 Sense connexió</h1><p>No es pot carregar l\'acta. Revisa la connexió i torna-ho a provar.</p></body></html>',
+        { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      );
+    }
+    return Response.error();
+  })());
 });

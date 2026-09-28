@@ -536,7 +536,8 @@ async function publish() {
 function syncPill() {
   if (!M || !D || !D.q) return '';
   const s = M.sync || {};
-  if (s.pending && s.errAt) return `<span class="pill warn" id="syncPill">☁️ no desat${navigator.onLine === false ? ' (sense xarxa)' : ''}</span>`;
+  const offline = navigator.onLine === false;
+  if (s.pending && (s.errAt || offline)) return `<span class="pill warn" id="syncPill">☁️ no desat${offline ? ' (sense xarxa)' : ''}</span>`;
   if (s.pending) return '<span class="pill" id="syncPill">☁️ desant…</span>';
   return s.at ? '<span class="pill ok" id="syncPill">☁️ a l\'app</span>' : '';
 }
@@ -544,7 +545,8 @@ function paintSync() { const e = $('#syncPill'); if (e) e.outerHTML = syncPill()
 async function unpublish(m) {
   try { await fetch(FS_DOCS + encodeURIComponent(docIdOf(m)), {method: 'DELETE'}); } catch (e) {}
 }
-window.addEventListener('online', () => { if (M && M.sync && M.sync.pending) schedulePublish(true); });
+window.addEventListener('online', () => { if (M && M.sync && M.sync.pending) schedulePublish(true); else if (M && D) paintSync(); });
+window.addEventListener('offline', () => { if (M && D) paintSync(); });
 
 /* ============================================================
    Inici: categories, partits de la federació, actes desades
