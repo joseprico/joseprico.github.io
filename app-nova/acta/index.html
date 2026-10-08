@@ -770,8 +770,21 @@ function fedLine() {
   if (le) h += `<span class="pill" title="Última acció de l'acta FCN">${EV_ICON[le.k] || '•'} ${esc(evWho(le))} · ${le.q >= 1 && le.q <= 4 ? 'Q' + le.q : 'P'} ${esc(le.t)}</span>`;
   const doc = FED.doc;
   if (doc && doc.statsAt) h += `<span class="pill" id="actaAgo">acta ${esc(ago(doc.statsAt))}</span>`;
-  else if (doc && doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">acta bloquejada</span>';
+  else { const li = lectorInfo(); if (li.short) h += `<span class="pill warn">${esc(li.short)}</span>`; }
   return h + syncPill();
+}
+
+// Hora oficial: la del lector (calendari d'avui) mana sobre la desada en crear l'acta (partits ajornats)
+function fedStart() { return new Date((FED.doc && FED.doc.datetime) || M.fed.datetime).getTime(); }
+// Estat del lector de l'acta (actawp_live.py) mentre encara no ha llegit res
+function lectorInfo() {
+  const l = (FED.doc && FED.doc.lector) || {}, start = fedStart(), now = Date.now();
+  if (l.status === 'blocked') return {warn: true, short: 'acta bloquejada', long: 'El lector no pot entrar a l\'acta (anti-bot).'};
+  // Es connecta 2 h abans: si 1 h 40 min abans encara no ha llegit res, alguna cosa falla
+  if (now > start - 100 * 60e3 && now < start + 3 * 3600e3)
+    return {warn: true, short: '⚠️ lector sense connectar', long: '⚠️ El lector encara no s\'ha connectat a l\'acta (ho fa 2 h abans del partit). Engega\'l a mà: GitHub → Actions → «Acta ACTAWP en directe» → Run workflow, o al PC.'};
+  if (l.status === 'waiting' && l.connectAt) return {short: '', long: `Lector a punt: es connecta a l'acta ${fmtDay(new Date(l.connectAt))} a les ${fmtTime(new Date(l.connectAt))}`};
+  return {short: '', long: 'Jugadors: el lector es connecta a l\'acta 2 h abans del partit'};
 }
 
 /* ---------- Anotar ---------- */
@@ -922,11 +935,12 @@ function renderFcn() {
   const cs = M.fed.cntSide, rs = sideOf('rival');
   let h = '<section class="card"><h2>Estat de l\'acta FCN</h2><div class="stat">';
   h += FED.teamAt ? `<span class="pill">Marcador ${esc(ago(FED.teamAt))}</span>` : FED.teamErr ? `<span class="pill warn">Marcador: ${esc(FED.teamErr)}</span>` : '<span class="pill">Marcador: carregant…</span>';
+  const li = doc.statsAt ? null : lectorInfo();
   if (doc.statsAt) h += `<span class="pill ok">Jugadors ${esc(ago(doc.statsAt))}${doc.lector ? ' · lector ' + esc(doc.lector.host) : ''}</span>`;
-  else if (doc.lector && doc.lector.status === 'blocked') h += '<span class="pill warn">El lector no pot entrar a l\'acta (anti-bot)</span>';
-  else h += '<span class="pill">Jugadors: el lector comença 25 min abans del partit</span>';
+  else if (!li.warn) h += `<span class="pill">${esc(li.long)}</span>`;
   if (doc.eventsAt) h += `<span class="pill">Minut a minut: ${fedEvents().length} accions</span>`;
   h += `</div>`;
+  if (li && li.warn) h += `<div class="notice">${esc(li.long)}</div>`;
   if (doc.statsAt && !fedHasData()) h += '<p class="muted small" style="margin-top:8px">L\'acta encara no té gols ni exclusions. Quan la federació els publiqui, apareixeran aquí sols.</p>';
   h += `<p class="small" style="margin-top:8px"><a href="${esc(doc.actaUrl || `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats`)}" target="_blank" rel="noopener">Obre l'acta a l'ACTAWP ↗</a></p></section>`;
 
@@ -1202,7 +1216,8 @@ function startLive() {
   if (!M.fed) return;
   pollTeam();
   const loop = () => {
-    const start = new Date(M.fed.datetime).getTime(), now = Date.now();
+    if (!M || !M.fed) return;
+    const start = fedStart(), now = Date.now();
     const live = now > start - 30 * 60e3 && now < start + 3 * 3600e3 && !(FED.team && FED.team.finished);
     pollTimer = setTimeout(() => { pollTeam(); loop(); }, live ? 30e3 : 5 * 60e3);
   };
@@ -1243,7 +1258,13 @@ document.addEventListener('click', e => {
     case 'openFed': {
       const f = fedList.items.find(x => x.matchId === id); if (!f) return;
       const mid = 'fcn_' + id;
-      if (!LS.get(MK(mid), null)) { M = newMatch({id: mid, fed: f}); D = derive(M); saveMatch(); }
+      const saved = LS.get(MK(mid), null);
+      if (!saved) { M = newMatch({id: mid, fed: f}); D = derive(M); saveMatch(); }
+      else if (saved.fed && (saved.fed.datetime !== f.datetime || saved.fed.groupId !== f.groupId)) {
+        // Partit ajornat després de crear l'acta: hora nova (ritme de lectura i data publicada)
+        M = saved; M.fed = {...M.fed, datetime: f.datetime, groupId: f.groupId, venue: f.venue}; D = derive(M); saveMatch();
+        if (D.q) schedulePublish();
+      }
       location.hash = '#/m/' + mid; break;
     }
     case 'openSaved': location.hash = '#/m/' + id; break;

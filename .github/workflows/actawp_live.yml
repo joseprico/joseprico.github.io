@@ -3,9 +3,12 @@ name: Acta ACTAWP en directe
 # Llegeix l'acta per jugador i el minut a minut dels partits del CNT a l'ACTAWP
 # (cada 10 s amb el partit en joc) i els publica a la RTDB (federacio/{matchId})
 # perquè l'app app-nova/acta/ els compari en directe.
-# Cada execució programada només mira el calendari (uns segons); si hi ha un
-# partit del CNT a punt o en joc, instal·la les dependències i el segueix fins
-# que acaba. Reserva: el mateix script al PC (`python actawp_live.py --watch`).
+# El cron demana una execució cada 15 min, però GitHub només n'executa una cada
+# 3-9 h. Per això cada execució mira si hi ha un partit del CNT en les 12 h
+# següents (uns segons, sense dependències): si n'hi ha, s'hi queda esperant,
+# es connecta a l'acta 2 h abans i el segueix fins que acaba. Si el partit no hi
+# cap abans del límit de 6 h de GitHub, engega una altra execució (relleu).
+# Reserva: el mateix script al PC (`python actawp_live.py --watch`).
 
 on:
   schedule:
@@ -25,14 +28,19 @@ concurrency:
   group: actawp-live
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: write   # el relleu engega aquest mateix workflow
+
 jobs:
   lector:
-    runs-on: ubuntu-latest
-    timeout-minutes: 240
+    # Fixat: ubuntu-latest passa a Ubuntu 26 el 19/10/2026 (Chrome i Python sense provar)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355   # màxim de GitHub: 360; l'script plega als 345 i demana relleu
 
     steps:
       - name: Checkout (només els scripts)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             actawp_live.py
@@ -40,7 +48,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -54,6 +62,7 @@ jobs:
         run: pip install beautifulsoup4 firebase-admin websocket-client
 
       - name: Segueix l'acta
+        id: follow
         if: ${{ inputs.match || steps.check.outputs.active == 'true' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -67,3 +76,9 @@ jobs:
           else
             python actawp_live.py
           fi
+
+      - name: Relleu (el partit no hi cap en aquesta execució)
+        if: ${{ steps.follow.outputs.relay == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run actawp_live.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"

@@ -15,9 +15,13 @@ L'acta dels partits del juvenil s'omple en directe (no la de tots els partits:
 els de Copa Catalunya del 25/09/2026 no es van omplir durant el joc).
 
 Un sol script per als dos llocs on pot córrer:
-  - GitHub Actions (.github/workflows/actawp_live.yml): cada 15 min mira el
-    calendari; si hi ha un partit del CNT a punt o en joc, el segueix fins que
-    acaba.
+  - GitHub Actions (.github/workflows/actawp_live.yml): el cron demana cada
+    15 min, però GitHub només n'executa una cada 3-9 h (vist a l'octubre del
+    2026: el Juvenil A – Rubí del 07/10 a les 19:00 UTC no es va connectar fins
+    a les 19:34). Per això, la primera execució que veu un partit del CNT dins
+    de les 12 h següents s'hi queda esperant, es connecta a l'acta 2 h abans i
+    el segueix fins que acaba. Una feina de GitHub dura com a molt 6 h: si no hi
+    cap, abans d'acabar n'engega una altra (relleu, `relay=true`).
   - PC (reserva si l'anti-bot bloqueja GitHub): `python actawp_live.py --watch`
 
 Ús:
@@ -60,10 +64,14 @@ CNT_TEAMS = {
     "juvenil": "C.N. TERRASSA A",
 }
 
-PRE_START = timedelta(minutes=25)    # comença a vigilar abans de l'hora oficial
+LOOKAHEAD = timedelta(hours=12)      # GitHub: una execució que veu un partit dins d'aquest marge l'espera
+PRE_START = timedelta(hours=2)       # es connecta a l'acta 2 h abans de l'hora oficial (noms i plantilles)
 MAX_AFTER = timedelta(minutes=150)   # deixa de vigilar si l'acta no es tanca mai
+JOB_BUDGET = 345                     # min per feina de GitHub (el límit és 360): després, relleu
+RELAY_LEAD = timedelta(minutes=60)   # el relleu es demana 1 h abans de connectar-se (marge per a la cua)
 READ_EVERY_LIVE = 10                 # s entre lectures del minut a minut amb el partit en joc (~0,5 s cadascuna)
 READ_EVERY_PRE = 300                 # s entre lectures abans de començar
+READ_EVERY_SOON = 60                 # s entre lectures la darrera mitja hora (la FCN hi posa la convocatòria)
 STATS_EVERY = 60                     # s màxim entre lectures per jugador (abans si el minut a minut canvia)
 API_EVERY = 45                       # s entre lectures de l'API pública
 AFTER_FINISH_READS = (180, 600)      # lectures extra després d'acabar (correccions de l'acta)
@@ -448,6 +456,18 @@ class Sink:
 # ----------------------------------------------------------------------------
 # Seguiment
 # ----------------------------------------------------------------------------
+def acta_url(m):
+    return f"{BASE}/tournament/{m['tournamentId']}/match/{m['matchId']}/stats"
+
+
+def match_meta(m):
+    return {
+        "matchId": m["matchId"], "tournamentId": m["tournamentId"], "groupId": m["groupId"],
+        "category": m["category"], "datetime": m["start"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "home": m["home"], "away": m["away"], "actaUrl": acta_url(m),
+    }
+
+
 class Tracker:
     def __init__(self, match, sink, host):
         self.m, self.sink, self.host = match, sink, host
@@ -460,12 +480,8 @@ class Tracker:
         self.browser = None
         self.done = False
         m = match
-        self.url = f"{BASE}/tournament/{m['tournamentId']}/match/{m['matchId']}/stats"
-        sink.update(m["matchId"], {
-            "matchId": m["matchId"], "tournamentId": m["tournamentId"], "groupId": m["groupId"],
-            "category": m["category"], "datetime": m["start"].strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "home": m["home"], "away": m["away"], "actaUrl": self.url,
-        })
+        self.url = acta_url(m)
+        sink.update(m["matchId"], match_meta(m))
 
     def label(self):
         return f"{self.m['home']['name']} – {self.m['away']['name']} ({self.m['matchId']})"
@@ -548,7 +564,9 @@ class Tracker:
                     log(f"🏁 {self.label()}: acta final desada")
                     return
             else:
-                gap = READ_EVERY_LIVE if now >= self.m["start"] - timedelta(minutes=3) else READ_EVERY_PRE
+                to_start = self.m["start"] - now
+                gap = (READ_EVERY_LIVE if to_start <= timedelta(minutes=3) else
+                       READ_EVERY_SOON if to_start <= timedelta(minutes=30) else READ_EVERY_PRE)
                 self.next_read = now + timedelta(seconds=max(gap, self.backoff))
 
         if now > self.m["start"] + MAX_AFTER:
@@ -568,7 +586,7 @@ def active_matches(now, only=None):
     for cat, tid in TOURNAMENTS.items():
         try:
             for m in cnt_matches(cat, tid):
-                if m["start"] - PRE_START <= now <= m["start"] + MAX_AFTER:
+                if m["start"] - LOOKAHEAD <= now <= m["start"] + MAX_AFTER:
                     found.append(m)
         except Exception as e:
             log(f"⚠️ calendari {cat}: {e}")
@@ -591,16 +609,30 @@ def all_matches_of(tid):
                    "finished": bool(m["attributes"].get("finished"))}
 
 
+def gh_output(**kv):
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as f:
+            for k, v in kv.items():
+                f.write(f"{k}={v}\n")
+
+
 def check():
     """Per GitHub Actions: `active=true|false` sense instal·lar res (només biblioteca estàndard)."""
     ms_ = active_matches(utc_now())
     for m in ms_:
         log(f"⏳ {m['category']}: {m['home']['name']} – {m['away']['name']} ({m['start']:%d/%m %H:%M} UTC)")
-    out = os.environ.get("GITHUB_OUTPUT")
-    if out:
-        with open(out, "a", encoding="utf-8") as f:
-            f.write(f"active={'true' if ms_ else 'false'}\n")
-    log("Partit actiu" if ms_ else "Cap partit del CNT a punt o en joc.")
+    gh_output(active="true" if ms_ else "false")
+    log("Partit a punt o en joc" if ms_ else f"Cap partit del CNT en les properes {LOOKAHEAD.seconds // 3600} h.")
+
+
+def relay_due(now, job_end, trackers, upcoming):
+    """GitHub: cal engegar una feina nova? Sí si en aquesta no hi cap el seguiment d'un partit.
+    Es demana 1 h abans de connectar-se, perquè la nova arribi a temps i tingui 6 h senceres."""
+    if now >= job_end:
+        return bool(trackers or upcoming)
+    return any(job_end < m["start"] + MAX_AFTER and now >= m["start"] - PRE_START - RELAY_LEAD
+               for m in upcoming.values())
 
 
 def run(args):
@@ -617,33 +649,50 @@ def run(args):
 
 def follow(args, sink, host, only, trackers):
     started = utc_now()
+    # Una feina de GitHub té un límit de durada; al PC (--watch) no n'hi ha
+    job_end = None if args.watch else started + timedelta(minutes=args.max_minutes)
     next_discover = started
+    upcoming, done = {}, set()  # partits que encara no és hora de seguir / ja seguits en aquesta feina
     while True:
         now = utc_now()
         if now >= next_discover:
             next_discover = now + timedelta(minutes=5 if trackers or args.watch else 10)
+            seen = {}
             for m in active_matches(now, only):
-                if m["matchId"] not in trackers:
-                    log(f"👀 Segueixo {m['home']['name']} – {m['away']['name']} ({m['category']}, {m['start']:%d/%m %H:%M} UTC)")
-                    trackers[m["matchId"]] = Tracker(m, sink, host)
-                    if only and m["finished"]:  # partit ja jugat: una lectura i prou
-                        trackers[m["matchId"]].after_reads = []
-                        trackers[m["matchId"]].finished_at = now
-            if not trackers and not args.watch:
-                log("Cap partit del CNT a punt o en joc. Surto.")
-                return
+                mid = m["matchId"]
+                if mid in trackers or mid in done:
+                    continue
+                seen[mid] = m
+                connect = m["start"] - PRE_START
+                if not only and mid not in upcoming and now < connect:
+                    log(f"⏳ {m['home']['name']} – {m['away']['name']} ({m['start']:%d/%m %H:%M} UTC): "
+                        f"em connecto a l'acta a les {connect:%H:%M} UTC")
+                    sink.update(mid, {**match_meta(m), "lector": {
+                        "host": host, "status": "waiting", "msg": "", "at": ms(), "connectAt": ms(connect)}})
+            upcoming = seen  # el calendari mana: si s'ajorna, l'hora nova; si desapareix, fora
+        for mid, m in list(upcoming.items()):
+            fits = not job_end or job_end >= m["start"] + MAX_AFTER
+            if only or (now >= m["start"] - PRE_START and fits):
+                upcoming.pop(mid)
+                log(f"👀 Segueixo {m['home']['name']} – {m['away']['name']} ({m['category']}, {m['start']:%d/%m %H:%M} UTC)")
+                trackers[mid] = Tracker(m, sink, host)
+                if only and m["finished"]:  # partit ja jugat: una lectura i prou
+                    trackers[mid].after_reads = []
+                    trackers[mid].finished_at = now
         for t in list(trackers.values()):
             t.tick()
             if t.done:
                 t.close()
                 trackers.pop(t.m["matchId"])
-        if not trackers and (only or not args.watch):
-            log("Fet.")
+                done.add(t.m["matchId"])
+        if not trackers and not upcoming and (only or not args.watch):
+            log("Fet." if done else "Cap partit del CNT a punt o en joc. Surto.")
             return
-        if not args.watch and now - started > timedelta(minutes=args.max_minutes):
-            log("Límit de temps de la feina assolit.")
+        if job_end and relay_due(now, job_end, trackers, upcoming):
+            log("🔁 Aquesta feina no arriba al final del partit: en demano una altra (relleu).")
+            gh_output(relay="true")
             return
-        time.sleep(5 if trackers else 60)
+        time.sleep(5 if trackers else 30)
 
 
 if __name__ == "__main__":
@@ -654,7 +703,7 @@ if __name__ == "__main__":
     ap.add_argument("--dry-run", action="store_true", help="no escriu a Firebase; JSON a app-nova/data/federacio/")
     ap.add_argument("--key", help="ruta al JSON del compte de servei")
     ap.add_argument("--check", action="store_true", help="només diu si hi ha partit actiu (GitHub Actions)")
-    ap.add_argument("--max-minutes", type=int, default=225, help="durada màxima en mode un cop (GitHub)")
+    ap.add_argument("--max-minutes", type=int, default=JOB_BUDGET, help="durada màxima en mode un cop (GitHub)")
     a = ap.parse_args()
     if a.match and not a.tournament:
         ap.error("--match necessita --tournament")
