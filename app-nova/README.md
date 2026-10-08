@@ -15,7 +15,7 @@ app-nova/
 │  └─ index.html
 ├─ acta/            ACTA EN DIRECTE: gols, exclusions i canvis + comparació amb l'acta FCN
 │  └─ index.html
-└─ app/             APP PRINCIPAL (llegeix) — primera llesca
+└─ app/             ESTADÍSTIQUES (llegeix): acta nostra vs acta FCN, per partit i totals
    └─ index.html
 ```
 
@@ -44,8 +44,8 @@ a l'app d'entrada apareix immediatament a l'app principal (mateix navegador).
 - ✅ Entrada: categories, plantilla, crear partit, registrar gols/exclusions/
   penals fallats/parades per jugador i quart, marcador i parcials automàtics,
   registre cronològic amb desfer, finalitzar partit.
-- ✅ App principal: llista de partits, detall amb marcador, parcials, golejadors
-  i taula d'estadístiques CNT.
+- ✅ Estadístiques (`app/`, refeta l'octubre del 2026): partits jugats i totals per
+  jugador (vegeu sota).
 - ⏳ Sync a Firestore: el codi hi és (`store.syncMatch` + botó ☁️), però cal
   **activar Firestore a la consola** perquè funcioni (veure sota).
 
@@ -89,8 +89,18 @@ en el mateix format que l'entrada v2 (`jugadors`, `periodScores`,
 converteix a temps de joc (cada quart acabat = 8:00 exactes), així
 `calculateMatchPlayingTimes` de l'app dona els mateixos minuts que l'acta.
 Cada jugador porta també `estadistiques.acta` (totes les columnes) i el
-partit, `fcn` (còpia de l'acta oficial). L'app `app/` només mostra Juvenil i
-només partits amb `source:'acta'`.
+partit, `fcn` (còpia de l'acta oficial).
+
+**App d'estadístiques (`app/`)**, mateix disseny que l'acta, sense SDK:
+llegeix les actes (`matches` amb `source:'acta'`, només Juvenil) i, per a cada
+partit, l'acta oficial de la RTDB `federacio/{matchId}` (si no hi és, la còpia
+`fcn`). Pestanya **Partits** (resum de temporada i un partit per fila amb
+"✓ quadra / ≠ N dif.") i **Jugadors** (PJ, titularitats, minuts, gols i
+expulsions). Gols i expulsions sempre els nostres; en vermell, `nosaltres · FCN`
+quan no quadra. Expulsions = EX + P + EP (com el botó EX de l'acta). Minuts i
+titulars només surten de la nostra acta (`lineups` + `playerWaterChanges`). Els
+totals agrupen per nom (el dorsal pot canviar). Els partits que el lector ha
+llegit però sense acta nostra surten com a "només FCN" i no compten als totals.
 
 La pestanya **🆚 Acta FCN** compara amb la federació (l'ACTAWP és Leverade):
 - **Equip** (marcador, parcials, quarts acabats): API pública
@@ -103,8 +113,14 @@ La pestanya **🆚 Acta FCN** compara amb la federació (l'ACTAWP és Leverade):
 
 On corre el lector:
 1. **GitHub Actions** ([`.github/workflows/actawp_live.yml`](../.github/workflows/actawp_live.yml)):
-   cada 15 min mira el calendari; si hi ha un partit del CNT a punt (25 min
-   abans) o en joc, el segueix fins que acaba. Necessita el secret
+   el cron demana cada 15 min, però **GitHub només n'executa una cada 3-9 h**
+   (el 07/10/2026 el lector va arribar al tercer quart). Per això la primera
+   execució que veu un partit del CNT en les **12 h** següents s'hi queda
+   esperant (a la RTDB, `lector.status:'waiting'` + `connectAt`), es connecta a
+   l'acta **2 h abans** i el segueix fins que acaba; si no hi cap abans del
+   límit de 6 h d'una feina, n'engega una altra (relleu amb
+   `gh workflow run`). L'acta avisa "⚠️ lector sense connectar" si 1 h 40 min
+   abans encara no ha llegit res. Necessita el secret
    `FIREBASE_SERVICE_ACCOUNT` (JSON del compte de servei de Firebase).
 2. **PC (reserva)** si l'anti-bot bloqueja GitHub:
    `python actawp_live.py --watch --key C:\ruta\clau.json`
@@ -118,5 +134,4 @@ desa el JSON a `app-nova/data/federacio/`, que l'app llegeix com a reserva en lo
 - Firebase Auth a l'app d'entrada (només entrenadors escriuen).
 - Escriptura de plantilles/equips a Firestore (ara només local).
 - Zones de gol/camp i temps de joc a l'entrada.
-- App principal: llegir de Firestore, selector de categoria, gràfics, temporada.
 - Federació (FCN/RFEN) per validació — quan les webs tornin a estar actives.

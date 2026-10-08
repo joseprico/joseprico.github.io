@@ -1,6 +1,6 @@
-// Service Worker — CNT Waterpolo Stats v2 (app de visualització)
+// Service Worker — CNT Estadístiques v2 (Juvenil A: acta nostra vs acta FCN)
 // Network-first amb fallback a cache. Només recursos GET del mateix origen.
-const CACHE_NAME = 'cntv2-app-v3';
+const CACHE_NAME = 'cntv2-app-v4';
 
 const PRECACHE = [
   './',
@@ -55,7 +55,7 @@ self.addEventListener('fetch', event => {
         if ((event.request.headers.get('accept') || '').includes('text/html')) {
           return new Response(
             '<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>Sense connexió</title></head>' +
-            '<body style="font-family:sans-serif;background:#1e293b;color:#fff;text-align:center;padding:60px 20px;">' +
+            '<body style="font-family:sans-serif;background:#f4f6f9;color:#1e293b;text-align:center;padding:60px 20px;">' +
             '<h1>📡 Sense connexió</h1><p>No es pot carregar l\'app. Revisa la connexió i torna-ho a provar.</p></body></html>',
             { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
           );
