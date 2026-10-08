@@ -1,6 +1,6 @@
 // Service Worker — CNT Estadístiques v2 (Juvenil A: acta nostra vs acta FCN)
 // Network-first amb fallback a cache. Només recursos GET del mateix origen.
-const CACHE_NAME = 'cntv2-app-v4';
+const CACHE_NAME = 'cntv2-app-v5';
 
 const PRECACHE = [
   './',

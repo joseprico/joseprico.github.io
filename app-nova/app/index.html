@@ -108,6 +108,14 @@ table.cmp tr.np td.nm{font-weight:500}
 table.cmp tr.det td{background:var(--surface-2);text-align:left;font-size:.8rem;color:var(--muted);line-height:1.5}
 table.cmp th[data-sort]{cursor:pointer;user-select:none}
 table.cmp th.on{color:var(--accent)}
+table.qt{font-size:.8rem}
+table.qt td,table.qt th{padding-left:2px;padding-right:2px}
+table.cmp .qs{display:inline-block;background:var(--accent-soft);color:#155e75;border-radius:6px;padding:1px 4px;font-weight:700}
+table.cmp small.qn{display:block;font-size:.66rem;color:var(--accent);font-weight:700;margin-top:1px;white-space:nowrap}
+table.cmp tr.sum td{border-bottom:0;font-size:.76rem;color:var(--muted);padding-top:9px}
+.seg{display:inline-flex;gap:2px;margin-left:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:2px}
+.seg button{padding:5px 10px;border-radius:8px;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:none;letter-spacing:0}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 table.q th:first-child,table.q td:first-child{text-align:left}
 table.q td{font-weight:700}
 .legend{font-size:.78rem;color:var(--muted);margin-top:10px}
@@ -146,7 +154,7 @@ const CNT_TEAM = 'C.N. TERRASSA A';   // nom exacte a l'ACTAWP
 const FS = 'https://firestore.googleapis.com/v1/projects/cnt-wp-stats-bb7dc/databases/(default)/documents';
 const RTDB = 'https://cnt-wp-stats-bb7dc-default-rtdb.europe-west1.firebasedatabase.app';
 const ACTAWP = 'https://actawp.natacio.cat/ca';
-const CACHE = 'stats_v1_cache', SORT = 'stats_v1_sort';
+const CACHE = 'stats_v1_cache', SORT = 'stats_v1_sort', PVIEW = 'stats_v1_pview';
 const QNAMES = ['I', 'II', 'III', 'IV'];
 // Columnes de l'acta (mateixes claus a la nostra acta i a la de la FCN)
 const KEYS = {
@@ -237,6 +245,7 @@ let busy = false, err = null;
 let MATCHES = [], PLAYERS = [];
 const openRows = new Set();
 let sort = LS.get(SORT, {k: 'num', dir: 1});
+let pview = LS.get(PVIEW, 'resum');   // pestanya Jugadors: 'resum' o 'quarts'
 
 async function refresh() {
   if (busy) return;
@@ -269,11 +278,16 @@ function ourStats(j) {
   const pen = (e.goalTypes && e.goalTypes.penalty) || 0, epen = (e.exclusionTypes && e.exclusionTypes.penalty) || 0;
   return {G: (e.gols || 0) - pen, GP: pen, EX: (e.exclusions || 0) - epen, P: epen};
 }
-// Temps de joc de cada dorsal (ms). L'acta publica temps de joc: cada quart acabat dura 8:00.
+// Temps de joc de cada dorsal (ms), total i per quarts. L'acta publica temps de joc: cada quart acabat dura 8:00.
 function playMs(a) {
   const res = {};
-  const add = (n, ms) => { if (ms > 0) res[n] = (res[n] || 0) + ms; };
-  for (let q = 1; q <= 4; q++) {
+  let q;
+  const add = (n, ms) => {
+    if (ms <= 0) return;
+    const r = res[n] = res[n] || {total: 0, q: {}};
+    r.total += ms; r.q[q] = (r.q[q] || 0) + ms;
+  };
+  for (q = 1; q <= 4; q++) {
     const s = a.quarterStartTimes && a.quarterStartTimes['q' + q], e = a.quarterRealEndTimes && a.quarterRealEndTimes['q' + q];
     if (s == null || e == null) continue;
     const inW = new Map(toArr(a.lineups && a.lineups['q' + q]).map(n => [n, s]));
@@ -311,6 +325,10 @@ function makeMatch(a, f) {
 
   const ms = a ? playMs(a) : {};
   const starters = a ? (toArr(a.starters).length ? toArr(a.starters) : toArr(a.lineups && a.lineups.q1)) : [];
+  // Qui era a l'aigua a l'inici de cada quart (només els quarts que s'han començat)
+  const qStarted = q => !!(a && a.quarterStartTimes && a.quarterStartTimes['q' + q] != null);
+  const lineups = {};
+  for (let q = 1; q <= 4; q++) lineups[q] = qStarted(q) ? (q === 1 ? starters : toArr(a.lineups && a.lineups['q' + q])) : null;
   const fl = f && f.players ? toArr(f.players[side]) : [];
   const fBy = new Map(fl.map(p => [+p.num, p]));
   const oBy = new Map((a ? toArr(a.jugadors) : []).map(j => [+j.numero, j]));
@@ -322,11 +340,13 @@ function makeMatch(a, f) {
     const name = (fp && fp.name) || ourName;
     const os = a ? ourStats(o) : null;
     const fs = fReady ? ((fp && fp.s) || {}) : null;
-    const t = a ? (ms[num] || 0) : null;
+    const t = a ? ((ms[num] && ms[num].total) || 0) : null;
+    const qms = a ? ((ms[num] && ms[num].q) || {}) : null;
+    const qst = a ? [1, 2, 3, 4].filter(q => lineups[q] && lineups[q].includes(num)) : null;
     const starter = a ? starters.includes(num) : null;
-    const played = a ? (t > 0 || starter || GOALS(os) + EXCL(os) + OUTS(os) > 0) : !!(fs && GOALS(fs) + EXCL(fs) + OUTS(fs));
+    const played = a ? (t > 0 || starter || qst.length > 0 || GOALS(os) + EXCL(os) + OUTS(os) > 0) : !!(fs && GOALS(fs) + EXCL(fs) + OUTS(fs));
     if (!name && !played && !(fs && GOALS(fs) + EXCL(fs))) continue;   // dorsal buit de la plantilla
-    players.push({num, name, key: norm(name) || '#' + num, ours: os, fcn: fs, ms: t, starter, played,
+    players.push({num, name, key: norm(name) || '#' + num, ours: os, fcn: fs, ms: t, qms, qst, starter, played,
                   captain: !!(fp && fp.captain), dG: !!fs && a && GOALS(os) !== GOALS(fs), dE: !!fs && a && EXCL(os) !== EXCL(fs)});
   }
 
@@ -339,7 +359,7 @@ function makeMatch(a, f) {
     rival: (f && f[rs] && f[rs].name) || (a && a.rivalTeam) || 'Rival',
     home: side === 'home', friendly: !!a && !a.fedMatchId,
     live: a ? a.estat !== 'finished' : !f.finished,
-    ours, fScore, fReady, quarters, players, scoreDiff, qDiffs, pDiffs,
+    ours, fScore, fReady, quarters, players, scoreDiff, qDiffs, pDiffs, lineups,
     diffs: (a && fReady) ? pDiffs + qDiffs + (scoreDiff ? 1 : 0) : 0,
   };
 }
@@ -368,12 +388,18 @@ function aggregate(ms) {
     if (!p.played && !(p.fcn && GOALS(p.fcn) + EXCL(p.fcn))) continue;
     let t = map.get(p.key);
     if (!t) map.set(p.key, t = {key: p.key, name: p.name, nums: {}, pj: 0, tit: 0, ms: 0, g: 0, exc: 0, outs: 0,
+                                qms: {1: 0, 2: 0, 3: 0, 4: 0}, qst: {1: 0, 2: 0, 3: 0, 4: 0}, qn: {1: 0, 2: 0, 3: 0, 4: 0},
                                 gC: 0, gF: 0, eC: 0, eF: 0, cmp: 0, rows: []});
     if (!t.name && p.name) t.name = p.name;
     t.nums[p.num] = (t.nums[p.num] || 0) + 1;
     if (p.played) t.pj++;
     if (p.starter) t.tit++;
     t.ms += p.ms || 0;
+    for (let q = 1; q <= 4; q++) {
+      t.qms[q] += (p.qms && p.qms[q]) || 0;
+      if (p.qst && p.qst.includes(q)) t.qst[q]++;
+      if (p.played && m.lineups[q]) t.qn[q]++;   // quarts jugats per l'equip mentre ell hi era convocat
+    }
     t.g += GOALS(p.ours); t.exc += EXCL(p.ours); t.outs += OUTS(p.ours);
     if (p.fcn) { t.cmp++; t.gC += GOALS(p.ours); t.gF += GOALS(p.fcn); t.eC += EXCL(p.ours); t.eF += EXCL(p.fcn); }
     t.rows.push({m, p});
@@ -479,6 +505,7 @@ function renderMatches() {
 const SORTS = {
   num: [t => t.num, 1], name: [t => short(t.name || ''), 1], pj: [t => t.pj, -1], tit: [t => t.tit, -1],
   min: [t => t.ms, -1], g: [t => t.g, -1], exc: [t => t.exc, -1],
+  q1: [t => t.qms[1], -1], q2: [t => t.qms[2], -1], q3: [t => t.qms[3], -1], q4: [t => t.qms[4], -1],
 };
 function sortedPlayers() {
   const [f] = SORTS[sort.k] || SORTS.num;
@@ -495,8 +522,10 @@ function renderPlayers() {
   const n = MATCHES.filter(m => m.acta).length, onlyF = MATCHES.filter(m => !m.acta).length;
   const noF = MATCHES.filter(m => m.acta && !m.fReady).length;
   const th = (k, l, t) => `<th data-sort="${k}" class="${sort.k === k ? 'on' : ''}" ${t ? `title="${esc(t)}"` : ''}>${l}${sort.k === k ? (sort.dir > 0 ? ' ▴' : ' ▾') : ''}</th>`;
-  let h = `<section class="card"><h2>Totals · ${n} ${n === 1 ? 'partit' : 'partits'}</h2>`;
+  let h = `<section class="card"><h2>Totals · ${n} ${n === 1 ? 'partit' : 'partits'}
+    <span class="seg"><button class="${pview === 'quarts' ? '' : 'on'}" data-act="pview" data-v="resum">Resum</button><button class="${pview === 'quarts' ? 'on' : ''}" data-act="pview" data-v="quarts">Per quarts</button></span></h2>`;
   if (!PLAYERS.length) return h + '<p class="muted small">Encara no hi ha dades de jugadors.</p></section>';
+  if (pview === 'quarts') return h + playersByQuarter(th) + '</section>';
   h += `<table class="cmp"><thead><tr>${th('num', '#')}${th('name', 'Jugador')}${th('pj', 'PJ', 'Partits jugats')}${th('tit', 'Tit', 'Partits de titular')}${th('min', 'Min', 'Minuts jugats')}${th('g', 'Gols')}${th('exc', 'Exp', 'Expulsions (faltes personals)')}</tr></thead><tbody>`;
   for (const t of sortedPlayers()) {
     const bad = t.g !== t.gFcn || t.exc !== t.eFcn;
@@ -517,6 +546,19 @@ function renderPlayers() {
   return h + '</section>';
 }
 
+// Minuts de cada quart (suma de la temporada) i quantes vegades l'ha començat a l'aigua
+function playersByQuarter(th) {
+  const qs = [1, 2, 3, 4];
+  let h = `<table class="cmp qt"><thead><tr>${th('num', '#')}${th('name', 'Jugador')}${qs.map(q => th('q' + q, 'Q' + q, `Minuts al Q${q}`)).join('')}${th('min', 'Total', 'Minuts jugats')}</tr></thead><tbody>`;
+  for (const t of sortedPlayers()) {
+    h += `<tr class="row" data-act="player" data-k="${esc(t.key)}"><td class="n">${t.num}</td><td class="nm">${esc(short(t.name)) || '<span class="faint">—</span>'}</td>
+      ${qs.map(q => `<td>${t.qms[q] ? mins(t.qms[q]) + '′' : '<span class="z">·</span>'}${t.qst[q] ? `<small class="qn">▶ ${t.qst[q]}/${t.qn[q]}</small>` : ''}</td>`).join('')}
+      <td><b>${t.ms ? mins(t.ms) + '′' : '<span class="z">·</span>'}</b></td></tr>`;
+  }
+  return h + `</tbody></table>
+    <p class="faint small" style="margin-top:8px">Minuts de joc a cada quart, sumant tots els partits. <b style="color:var(--accent)">▶ 3/4</b>: ha començat aquell quart a l'aigua 3 vegades en 4 partits jugats.</p>`;
+}
+
 function playerSheet(key) {
   const t = PLAYERS.find(x => x.key === key); if (!t) return;
   const avg = t.pj ? t.ms / t.pj : 0;
@@ -535,6 +577,7 @@ function playerSheet(key) {
       <div class="kpi"><b>${mins(t.ms)}′</b><span>${t.pj ? 'mitj. ' + mmss(avg) : 'Minuts'}</span></div>
       <div class="kpi ${t.g !== t.gFcn ? 'bad' : ''}"><b>${t.g}</b><span>Gols</span></div>
     </div>
+    <div class="kpis" style="margin-top:0">${[1, 2, 3, 4].map(q => `<div class="kpi"><b>${mins(t.qms[q])}′</b><span>Q${q} · ▶ ${t.qst[q]}/${t.qn[q]}</span></div>`).join('')}</div>
     <table class="cmp" style="margin-top:6px"><thead><tr><th>#</th><th>Partit</th><th>T</th><th>Min</th><th>Gols</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="faint small" style="margin-top:8px">Expulsions: ${t.exc}${t.exc !== t.eFcn ? ` (FCN ${t.eFcn})` : ''}${t.outs ? ` · ${t.outs} definitiva` : ''}. En vermell: nosaltres · FCN. Toca un partit per obrir-lo.</p>`);
 }
@@ -598,12 +641,31 @@ function renderMatch(m) {
       <dt>Exp</dt><dd>Expulsions de 20 s + faltes de penal + expulsió i penal. ⛔ expulsió definitiva.</dd>
       <dt><span class="pill bad">3 · 2</span></dt><dd>No quadra: nosaltres · FCN. Toca un jugador per veure-ho per columnes de l'acta.</dd>
     </dl></details></section>`;
+  if (a) h += matchQuarters(m);
 
   if (f && f.matchId) {
     const url = f.actaUrl || `${ACTAWP}/tournament/${f.tournamentId}/match/${f.matchId}/stats`;
     h += `<p class="small" style="margin:14px 4px 0"><a href="${esc(url)}" target="_blank" rel="noopener">Obre l'acta a l'ACTAWP ↗</a></p>`;
   }
   $('#app').innerHTML = h;
+}
+
+// Minuts de cada jugador a cada quart; en blau, qui era a l'aigua a l'inici del quart
+function matchQuarters(m) {
+  const qs = [1, 2, 3, 4];
+  let h = `<section class="card"><h2>Minuts i inicis per quarts</h2><table class="cmp qt"><thead><tr><th>#</th><th>Jugador</th>${qs.map(q => `<th>Q${q}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
+  for (const p of m.players.filter(x => x.played)) {
+    h += `<tr><td class="n">${p.num}</td><td class="nm">${esc(short(p.name)) || '<span class="faint">—</span>'}</td>${qs.map(q => {
+      const v = p.qms[q] || 0, st = p.qst.includes(q);
+      return `<td>${st ? `<span class="qs">${mmss(v)}</span>` : v ? mmss(v) : '<span class="z">·</span>'}</td>`;
+    }).join('')}<td><b>${p.ms ? mmss(p.ms) : '<span class="z">·</span>'}</b></td></tr>`;
+  }
+  // Han de començar 7 (porter inclòs): si no, a l'acta falta (o sobra) algú a l'aigua
+  h += `<tr class="sum"><td></td><td>A l'aigua a l'inici</td>${qs.map(q => {
+    const n = m.lineups[q] ? m.lineups[q].length : null;
+    return `<td>${n == null ? '<span class="z">·</span>' : n === 7 ? n : `<span class="d" title="Han de ser 7">${n}</span>`}</td>`;
+  }).join('')}<td></td></tr>`;
+  return h + `</tbody></table><p class="faint small" style="margin-top:8px">En blau, a l'aigua a l'inici del quart. Cada quart són 8:00 de joc.</p></section>`;
 }
 
 function fedPills(m) {
@@ -644,6 +706,7 @@ document.addEventListener('click', e => {
     }
     case 'refresh': refresh(); break;
     case 'player': playerSheet(el.dataset.k); break;
+    case 'pview': pview = el.dataset.v; LS.set(PVIEW, pview); render(); break;
     case 'row': { const k = el.dataset.k; openRows.has(k) ? openRows.delete(k) : openRows.add(k); render(); break; }
     case 'close': closeSheet(); break;
   }
