@@ -89,7 +89,7 @@ footer a{color:var(--muted)}
 .score .q{display:block;font-size:.72rem;font-weight:700;color:var(--accent);text-align:center;margin-top:2px}
 .fedline{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:6px;min-height:22px}
 
-/* ---------- Taules (com a l'acta: nosaltres · FCN) ---------- */
+/* ---------- Taules: columnes Acta (la nostra) i FCN (la federació) ---------- */
 table.cmp{width:100%;border-collapse:collapse;font-size:.86rem;font-variant-numeric:tabular-nums}
 table.cmp th{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap}
 table.cmp th:nth-child(2),table.cmp td:nth-child(2){text-align:left}
@@ -108,6 +108,9 @@ table.cmp tr.np td.nm{font-weight:500}
 table.cmp tr.det td{background:var(--surface-2);text-align:left;font-size:.8rem;color:var(--muted);line-height:1.5}
 table.cmp th[data-sort]{cursor:pointer;user-select:none}
 table.cmp th.on{color:var(--accent)}
+table.cmp th.grp{border-bottom:2px solid var(--border);padding-bottom:3px}
+table.cmp th.sub{font-size:.6rem;color:var(--faint);padding-top:3px}
+table.cmp .ga{border-left:1px solid var(--border)}
 table.qt{font-size:.8rem}
 table.qt td,table.qt th{padding-left:2px;padding-right:2px}
 table.cmp .qs{display:inline-block;background:var(--accent-soft);color:#155e75;border-radius:6px;padding:1px 4px;font-weight:700}
@@ -406,8 +409,7 @@ function aggregate(ms) {
   }
   return [...map.values()].map(t => {
     const num = +Object.entries(t.nums).sort((x, y) => y[1] - x[1] || x[0] - y[0])[0][0];   // dorsal més habitual
-    // "Segons la FCN": la FCN on hi ha acta FCN, la nostra on no n'hi ha
-    return {...t, num, gFcn: t.g - t.gC + t.gF, eFcn: t.exc - t.eC + t.eF};
+    return {...t, num};
   });
 }
 
@@ -515,34 +517,51 @@ function sortedPlayers() {
     return c * sort.dir || a.num - b.num;
   });
 }
-// Total nostre; en vermell, el total que surt amb la FCN (on hi ha acta FCN)
-function totCell(o, fcn) { return o === fcn ? (o ? `<b>${o}</b>` : '<span class="z">·</span>') : `<span class="d">${o}<i> · ${fcn}</i></span>`; }
+// Dues caselles: el que diu la nostra acta i el que diu la FCN (en vermell si no coincideix).
+// null = no n'hi ha dades (sense acta nostra o sense acta FCN).
+function pairTds(o, f, bad, mark = '') {
+  const acta = o == null ? '<span class="z">–</span>' : o ? `<b>${o}</b>` : '<span class="z">·</span>';
+  const fcn = f == null ? '<span class="z">–</span>' : bad ? `<span class="d">${f}</span>` : f ? `<span class="f">${f}</span>` : '<span class="z">·</span>';
+  return `<td class="ga">${acta}${mark}</td><td>${fcn}</td>`;
+}
+// Capçalera de dues files: les columnes de `first` (rowspan=2) i els grups Gols i Exp partits en Acta | FCN
+const GRP = l => `<th colspan="2" class="grp">${l}</th>`;
+function pairHead(first, golsTh = GRP('Gols'), expTh = GRP('Exp')) {
+  return `<tr>${first}${golsTh}${expTh}</tr>
+    <tr><th class="sub">Acta</th><th class="sub">FCN</th><th class="sub">Acta</th><th class="sub">FCN</th></tr>`;
+}
+const LEGEND_PAIR = `<dt>Acta</dt><dd>El que hem anotat nosaltres a l'acta en directe.</dd>
+  <dt>FCN</dt><dd>L'acta oficial de la federació. <span class="pill bad">2</span> en vermell quan no coincideix amb la nostra. Un guió (–) vol dir que no hi ha dades.</dd>`;
 
 function renderPlayers() {
   const n = MATCHES.filter(m => m.acta).length, onlyF = MATCHES.filter(m => !m.acta).length;
   const noF = MATCHES.filter(m => m.acta && !m.fReady).length;
-  const th = (k, l, t) => `<th data-sort="${k}" class="${sort.k === k ? 'on' : ''}" ${t ? `title="${esc(t)}"` : ''}>${l}${sort.k === k ? (sort.dir > 0 ? ' ▴' : ' ▾') : ''}</th>`;
+  const th = (k, l, t, attrs = '') => `<th data-sort="${k}" class="${sort.k === k ? 'on' : ''} ${attrs.includes('colspan') ? 'grp' : ''}" ${attrs} ${t ? `title="${esc(t)}"` : ''}>${l}${sort.k === k ? (sort.dir > 0 ? ' ▴' : ' ▾') : ''}</th>`;
   let h = `<section class="card"><h2>Totals · ${n} ${n === 1 ? 'partit' : 'partits'}
     <span class="seg"><button class="${pview === 'quarts' ? '' : 'on'}" data-act="pview" data-v="resum">Resum</button><button class="${pview === 'quarts' ? 'on' : ''}" data-act="pview" data-v="quarts">Per quarts</button></span></h2>`;
   if (!PLAYERS.length) return h + '<p class="muted small">Encara no hi ha dades de jugadors.</p></section>';
   if (pview === 'quarts') return h + playersByQuarter(th) + '</section>';
-  h += `<table class="cmp"><thead><tr>${th('num', '#')}${th('name', 'Jugador')}${th('pj', 'PJ', 'Partits jugats')}${th('tit', 'Tit', 'Partits de titular')}${th('min', 'Min', 'Minuts jugats')}${th('g', 'Gols')}${th('exc', 'Exp', 'Expulsions (faltes personals)')}</tr></thead><tbody>`;
+  const r2 = 'rowspan="2"';
+  h += `<table class="cmp qt"><thead>${pairHead(
+    th('num', '#', '', r2) + th('name', 'Jugador', '', r2) + th('pj', 'PJ', 'Partits jugats', r2) + th('tit', 'Tit', 'Partits de titular', r2) + th('min', 'Min', 'Minuts jugats', r2),
+    th('g', 'Gols', 'Ordena pels gols de la nostra acta', 'colspan="2"'),
+    th('exc', 'Exp', 'Expulsions (faltes personals): ordena per la nostra acta', 'colspan="2"'))}</thead><tbody>`;
   for (const t of sortedPlayers()) {
-    const bad = t.g !== t.gFcn || t.exc !== t.eFcn;
-    h += `<tr class="row ${bad ? 'bad' : ''}" data-act="player" data-k="${esc(t.key)}"><td class="n">${t.num}</td><td class="nm">${esc(short(t.name)) || '<span class="faint">—</span>'}</td>
+    const bG = t.gC !== t.gF, bE = t.eC !== t.eF;
+    h += `<tr class="row ${bG || bE ? 'bad' : ''}" data-act="player" data-k="${esc(t.key)}"><td class="n">${t.num}</td><td class="nm">${esc(short(t.name)) || '<span class="faint">—</span>'}</td>
       <td>${t.pj || '<span class="z">·</span>'}</td><td>${t.tit || '<span class="z">·</span>'}</td><td>${t.ms ? mins(t.ms) + '′' : '<span class="z">·</span>'}</td>
-      <td>${totCell(t.g, t.gFcn)}</td><td>${totCell(t.exc, t.eFcn)}${t.outs ? ' ⛔' : ''}</td></tr>`;
+      ${pairTds(t.g, t.cmp ? t.gF : null, bG)}${pairTds(t.exc, t.cmp ? t.eF : null, bE, t.outs ? '⛔' : '')}</tr>`;
   }
   h += `</tbody></table>
-    <details class="legend"><summary>Com es compta</summary><dl>
+    <details class="legend" open><summary>Com es compta</summary><dl>
+      ${LEGEND_PAIR}
       <dt>PJ</dt><dd>Partits on ha entrat a l'aigua (segons la nostra acta).</dd>
       <dt>Tit</dt><dd>Partits que ha començat a l'aigua al Q1.</dd>
       <dt>Min</dt><dd>Minuts de joc: cada quart són 8:00 de rellotge de partit.</dd>
-      <dt>Gols</dt><dd>Gols de jugada i de penal que hem anotat nosaltres.</dd>
+      <dt>Gols</dt><dd>De jugada i de penal.</dd>
       <dt>Exp</dt><dd>Faltes personals: expulsions de 20 s, faltes de penal i expulsió + penal (com el botó EX de l'acta). ⛔ = alguna expulsió definitiva.</dd>
-      <dt><span class="pill bad">3 · 2</span></dt><dd>No quadra amb la FCN: el nostre total · el total amb les dades de l'acta FCN.</dd>
     </dl></details>`;
-  if (noF || onlyF) h += `<p class="faint small" style="margin-top:8px">${noF ? `${noF} ${noF === 1 ? 'partit' : 'partits'} sense acta FCN (no es poden comparar). ` : ''}${onlyF ? `${onlyF} ${onlyF === 1 ? 'partit' : 'partits'} sense acta nostra (no compten als totals).` : ''}</p>`;
+  if (noF || onlyF) h += `<p class="faint small" style="margin-top:8px">${noF ? `${noF} ${noF === 1 ? 'partit' : 'partits'} sense acta FCN: la columna FCN no els compta. ` : ''}${onlyF ? `${onlyF} ${onlyF === 1 ? 'partit' : 'partits'} sense acta nostra (no compten als totals).` : ''}</p>`;
   return h + '</section>';
 }
 
@@ -562,12 +581,11 @@ function playersByQuarter(th) {
 function playerSheet(key) {
   const t = PLAYERS.find(x => x.key === key); if (!t) return;
   const avg = t.pj ? t.ms / t.pj : 0;
-  const cell = (o, f) => f == null || o === f ? (o ? `<b>${o}</b>` : '<span class="z">·</span>') : `<span class="d">${o}<i> · ${f}</i></span>`;
   const rows = [...t.rows].sort((a, b) => b.m.date - a.m.date).map(({m, p}) => `
     <tr class="row ${p.dG || p.dE ? 'bad' : ''} ${p.played ? '' : 'np'}" data-act="go" data-h="#/p/${esc(encodeURIComponent(m.id))}">
       <td class="n">${p.num}</td><td class="nm">${esc(fmtDay(new Date(m.date)))} · ${esc(teamShort(m.rival))}</td>
       <td>${p.starter ? '<span class="tw">T</span>' : '<span class="z">·</span>'}</td><td>${p.ms ? mmss(p.ms) : '<span class="z">·</span>'}</td>
-      <td>${cell(GOALS(p.ours), p.fcn ? GOALS(p.fcn) : null)}</td><td>${cell(EXCL(p.ours), p.fcn ? EXCL(p.fcn) : null)}</td></tr>`).join('');
+      ${pairTds(GOALS(p.ours), p.fcn ? GOALS(p.fcn) : null, p.dG)}${pairTds(EXCL(p.ours), p.fcn ? EXCL(p.fcn) : null, p.dE)}</tr>`).join('');
   openSheet(`<button class="x" data-act="close" aria-label="Tancar">✕</button>
     <h3>${esc(title(t.name) || '#' + t.num)}</h3>
     <div class="muted small">Dorsal ${Object.keys(t.nums).sort((a, b) => a - b).join(', ')}</div>
@@ -575,11 +593,11 @@ function playerSheet(key) {
       <div class="kpi"><b>${t.pj}</b><span>Partits</span></div>
       <div class="kpi"><b>${t.tit}</b><span>Titular${t.pj ? ' ' + Math.round(t.tit / t.pj * 100) + '%' : ''}</span></div>
       <div class="kpi"><b>${mins(t.ms)}′</b><span>${t.pj ? 'mitj. ' + mmss(avg) : 'Minuts'}</span></div>
-      <div class="kpi ${t.g !== t.gFcn ? 'bad' : ''}"><b>${t.g}</b><span>Gols</span></div>
+      <div class="kpi ${t.gC !== t.gF ? 'bad' : ''}"><b>${t.g}</b><span>Gols${t.cmp ? ' · FCN ' + t.gF : ''}</span></div>
     </div>
     <div class="kpis" style="margin-top:0">${[1, 2, 3, 4].map(q => `<div class="kpi"><b>${mins(t.qms[q])}′</b><span>Q${q} · ▶ ${t.qst[q]}/${t.qn[q]}</span></div>`).join('')}</div>
-    <table class="cmp" style="margin-top:6px"><thead><tr><th>#</th><th>Partit</th><th>T</th><th>Min</th><th>Gols</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="faint small" style="margin-top:8px">Expulsions: ${t.exc}${t.exc !== t.eFcn ? ` (FCN ${t.eFcn})` : ''}${t.outs ? ` · ${t.outs} definitiva` : ''}. En vermell: nosaltres · FCN. Toca un partit per obrir-lo.</p>`);
+    <table class="cmp qt" style="margin-top:6px"><thead>${pairHead('<th rowspan="2">#</th><th rowspan="2">Partit</th><th rowspan="2">T</th><th rowspan="2">Min</th>')}</thead><tbody>${rows}</tbody></table>
+    <p class="faint small" style="margin-top:8px">Acta = la nostra; FCN = la de la federació, en vermell quan no coincideix.${t.outs ? ` ${t.outs} expulsió definitiva.` : ''} Toca un partit per obrir-lo.</p>`);
 }
 
 /* ---------- Partit ---------- */
@@ -604,42 +622,36 @@ function renderMatch(m) {
     const qc = (o, fq) => !fq ? '<span class="z">·</span>' : !o || (o[0] === fq[0] && o[1] === fq[1]) ? `${fq[0]}-${fq[1]}` : `<span class="d">${fq[0]}-${fq[1]}</span>`;
     const fT = m.fScore ? [m.fScore.cnt, m.fScore.rival] : null, oT = m.ours ? [m.ours.cnt, m.ours.rival] : null;
     h += `<section class="card"><h2>Marcador per quarts</h2><table class="cmp q"><thead><tr><th></th>${m.quarters.map(x => `<th>Q${x.q}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
-    if (a) h += `<tr><td class="muted small">Nosaltres</td>${m.quarters.map(x => `<td>${x.ours ? x.ours.join('-') : '<span class="z">·</span>'}</td>`).join('')}<td>${oT.join('-')}</td></tr>`;
+    if (a) h += `<tr><td class="muted small">Acta</td>${m.quarters.map(x => `<td>${x.ours ? x.ours.join('-') : '<span class="z">·</span>'}</td>`).join('')}<td>${oT.join('-')}</td></tr>`;
     if (!m.friendly) h += `<tr><td class="muted small">FCN</td>${m.quarters.map(x => `<td>${qc(x.ours, x.fcn)}</td>`).join('')}<td>${qc(oT, fT)}</td></tr>`;
-    h += `</tbody></table>${a && !m.friendly ? '<p class="faint small" style="margin-top:6px">En vermell, el que no quadra amb el nostre marcador.</p>' : ''}</section>`;
+    h += `</tbody></table>${a && !m.friendly ? '<p class="faint small" style="margin-top:6px">Acta = la nostra; FCN = la de la federació, en vermell quan no coincideix.</p>' : ''}</section>`;
   }
 
   // Jugadors
-  const c = (o, fv) => {
-    if (fv == null) return o ? `<b>${o}</b>` : '<span class="z">·</span>';
-    if (o == null) return fv ? `<span class="f">${fv}</span>` : '<span class="z">·</span>';
-    return o === fv ? (o ? `<b>${o}</b>` : '<span class="z">·</span>') : `<span class="d">${o}<i> · ${fv}</i></span>`;
-  };
   const cmpN = m.pDiffs;
   h += `<section class="card"><h2>Jugadors · ${esc(teamShort(CNT_TEAM))} ${a && m.fReady ? (cmpN ? `<span class="pill bad">${cmpN} ${cmpN === 1 ? 'diferència' : 'diferències'}</span>` : '<span class="pill ok">tot quadra</span>') : ''}</h2>
-    <table class="cmp"><thead><tr><th>#</th><th>Jugador</th><th title="Titular">T</th><th title="Minuts jugats">Min</th><th>Gols</th><th title="Expulsions (faltes personals)">Exp</th></tr></thead><tbody>`;
-  if (!m.players.length) h += '<tr><td colspan="6" class="muted small" style="text-align:left">Encara no hi ha dades.</td></tr>';
+    <table class="cmp qt"><thead>${pairHead('<th rowspan="2">#</th><th rowspan="2">Jugador</th><th rowspan="2" title="Titular">T</th><th rowspan="2" title="Minuts jugats">Min</th>')}</thead><tbody>`;
+  if (!m.players.length) h += '<tr><td colspan="8" class="muted small" style="text-align:left">Encara no hi ha dades.</td></tr>';
   for (const p of m.players) {
     const key = m.id + ':' + p.num;
-    const fG = p.fcn ? GOALS(p.fcn) : null, fE = p.fcn ? EXCL(p.fcn) : null;
     h += `<tr class="row ${p.dG || p.dE ? 'bad' : ''} ${p.played ? '' : 'np'}" data-act="row" data-k="${esc(key)}">
       <td class="n">${p.num}</td><td class="nm">${esc(short(p.name)) || '<span class="faint">—</span>'}${p.captain ? ' <span class="faint small">(c)</span>' : ''}</td>
       <td>${p.starter ? '<span class="tw">T</span>' : '<span class="z">·</span>'}</td>
       <td>${p.ms ? mmss(p.ms) : '<span class="z">·</span>'}</td>
-      <td>${c(a ? GOALS(p.ours) : null, fG)}</td><td>${c(a ? EXCL(p.ours) : null, fE)}${OUTS(p.ours) || OUTS(p.fcn) ? ' ⛔' : ''}</td></tr>`;
+      ${pairTds(a ? GOALS(p.ours) : null, p.fcn ? GOALS(p.fcn) : null, p.dG)}${pairTds(a ? EXCL(p.ours) : null, p.fcn ? EXCL(p.fcn) : null, p.dE, OUTS(p.ours) || OUTS(p.fcn) ? '⛔' : '')}</tr>`;
     if (openRows.has(key)) {
       const ks = Object.keys(KEYS).filter(k => (p.ours && p.ours[k]) || (p.fcn && p.fcn[k]));
-      const parts = ks.map(k => `${esc(KEYS[k])}: ${a ? `<b>${(p.ours && p.ours[k]) || 0}</b>` : ''}${p.fcn ? `${a ? ' · ' : ''}FCN <b>${p.fcn[k] || 0}</b>` : ''}`);
-      h += `<tr class="det"><td></td><td colspan="5">${esc(title(p.name))}${p.ms ? ` · ${mmss(p.ms)} jugats` : ''}<br>${parts.join('<br>') || 'Sense gols ni expulsions.'}</td></tr>`;
+      const parts = ks.map(k => `${esc(KEYS[k])}: ${a ? `acta <b>${(p.ours && p.ours[k]) || 0}</b>` : ''}${p.fcn ? `${a ? ' · ' : ''}FCN <b>${p.fcn[k] || 0}</b>` : ''}`);
+      h += `<tr class="det"><td></td><td colspan="7">${esc(title(p.name))}${p.ms ? ` · ${mmss(p.ms)} jugats` : ''}<br>${parts.join('<br>') || 'Sense gols ni expulsions.'}</td></tr>`;
     }
   }
   h += `</tbody></table>
-    <details class="legend"><summary>Llegenda</summary><dl>
+    <details class="legend" open><summary>Llegenda</summary><dl>
+      ${LEGEND_PAIR}
       <dt>T</dt><dd>Titular: a l'aigua a l'inici del Q1 (la nostra acta).</dd>
       <dt>Min</dt><dd>Temps de joc (cada quart, 8:00).</dd>
       <dt>Gols</dt><dd>Jugada + penal.</dd>
-      <dt>Exp</dt><dd>Expulsions de 20 s + faltes de penal + expulsió i penal. ⛔ expulsió definitiva.</dd>
-      <dt><span class="pill bad">3 · 2</span></dt><dd>No quadra: nosaltres · FCN. Toca un jugador per veure-ho per columnes de l'acta.</dd>
+      <dt>Exp</dt><dd>Expulsions de 20 s + faltes de penal + expulsió i penal. ⛔ expulsió definitiva. Toca un jugador per veure el detall per columnes de l'acta.</dd>
     </dl></details></section>`;
   if (a) h += matchQuarters(m);
 
