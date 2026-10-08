@@ -19,7 +19,7 @@
 :root{
   --bg:#f4f6f9; --surface:#fff; --surface-2:#f8fafc; --border:#e6eaf0;
   --text:#1e293b; --muted:#64748b; --faint:#94a3b8;
-  --accent:#0891b2; --accent-soft:#e0f5fa;
+  --accent:#0891b2; --accent-soft:#e0f5fa; --water:#0d9488; --water-soft:#ccfbf1;
   --ok:#16a34a; --ok-soft:#dcfce7; --bad:#dc2626; --bad-soft:#fee2e2; --warn:#b45309; --warn-soft:#fef3c7;
   --radius:14px; --radius-sm:10px;
   --shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.05);
@@ -134,12 +134,55 @@ table.q td{font-weight:700}
 .sheet h3{font-size:1.05rem;font-weight:800;margin-bottom:2px;padding-right:44px}
 .sheet .x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);color:var(--muted)}
 .sheet .kpis{margin:12px 0 4px}
+
+/* ---------- Editor de l'acta ---------- */
+.btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn.ghost{background:transparent;border-style:dashed;color:var(--muted)}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft)}
+.btn.wide{width:100%;margin-top:10px}
+.btn:disabled{opacity:.45}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 4px}
+.chips.qsel{margin-top:12px}
+.chip{padding:8px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-weight:600;font-size:.86rem;white-space:nowrap;min-height:38px}
+.chip.on{background:var(--accent);border-color:transparent;color:#fff}
+.chip.sel{background:var(--text);border-color:transparent;color:#fff}
+.chip.in{box-shadow:inset 0 0 0 2px var(--water)}
+.lbl{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:14px}
+.lbl .faint{text-transform:none;letter-spacing:0;font-weight:600}
+.row2{display:flex;gap:8px;margin-top:18px}
+.row2 .btn{flex:1}
+.alist{list-style:none}
+.alist li{border-top:1px solid var(--border)}
+.alist li:first-child{border-top:0}
+.alist button{display:flex;align-items:center;gap:6px;width:100%;text-align:left;padding:10px 2px;font-size:.9rem;min-height:44px}
+.alist .t{color:var(--muted);width:40px;flex:none;font-variant-numeric:tabular-nums;font-weight:700}
+.alist .go{margin-left:auto;color:var(--faint);font-size:1.1rem}
+.hint{list-style:none;font-size:.86rem}
+.hint li{padding:6px 0;border-top:1px solid var(--border)}
+.hint li:first-child{border-top:0}
+.ebar{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:720px;margin:0 auto;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--border)}
+.ebar .btn{flex:1}
+body.editing .app{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+.tfield{display:flex;gap:8px;align-items:center;margin:6px 0 4px}
+.tfield input{flex:1;min-width:0;text-align:center;font:inherit;font-size:1.3rem;font-weight:800;padding:8px;border:1px solid var(--border);border-radius:10px;font-variant-numeric:tabular-nums;color:var(--text)}
+.trow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--border)}
+.trow:first-of-type{border-top:0}
+.trow .n{font-weight:850;width:24px;text-align:right}
+.trow .nm{flex:1;min-width:0;font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .tt{font-weight:800;font-variant-numeric:tabular-nums;width:46px;text-align:right}
+.qbar{width:90px;height:8px;border-radius:4px;background:var(--border);overflow:hidden;flex:none}
+.qbar i{display:block;height:100%;background:var(--accent)}
+.tw{display:inline-block;border-radius:6px;padding:1px 5px;font-size:.72rem;font-weight:800;background:var(--accent-soft);color:#155e75}
+.toast{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(calc(100% + 30px));width:min(680px,calc(100% - 24px));background:#0f172a;color:#fff;border-radius:14px;padding:12px 14px;font-weight:700;font-size:.92rem;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .2s,visibility .2s;visibility:hidden;z-index:90}
+.toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
+body.editing .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body class="cat-juvenil">
 <div class="app" id="app"></div>
 <div class="shade" id="shade"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 'use strict';
@@ -163,8 +206,12 @@ const QNAMES = ['I', 'II', 'III', 'IV'];
 const KEYS = {
   G: 'Gols', GP: 'Gols de penal', EX: 'Expulsions de 20 s', P: 'Faltes de penal', EP: 'Expulsió i penal',
   ED: 'Expulsió definitiva disciplinària', EB: 'Expulsió definitiva per brutalitat', EN: 'Expulsió definitiva no disciplinària',
-  PF: 'Penals fallats', TG: 'Targeta groga', TV: 'Targeta vermella',
+  PF: 'Penals fallats', TG: 'Targeta groga', TV: 'Targeta vermella', G5P: 'Gols a la tanda de penals',
 };
+const STAT_ORDER = Object.keys(KEYS);
+// Etiquetes curtes per a l'editor
+const SHORTK = {G: '⚽ Gol', GP: '🎯 Gol de penal', EX: '🟥 Exp. 20 s', P: '✋ Falta de penal', EP: '🟥 Exp. + penal',
+  ED: '⛔ Definitiva', EB: '⛔ Brutalitat', EN: '⛔ Def. no disc.', PF: '❌ Penal fallat', TG: '🟨 Groga', TV: '🟥 Vermella', G5P: '🎯 Gol a la tanda'};
 // Gols = jugada + penal (la tanda no compta). Expulsions = faltes personals, com el botó EX de l'acta.
 const GOALS = s => s ? (s.G || 0) + (s.GP || 0) : 0;
 const EXCL = s => s ? (s.EX || 0) + (s.P || 0) + (s.EP || 0) : 0;
@@ -196,6 +243,7 @@ const fmtTime = d => d.toLocaleTimeString('ca-ES', {hour: '2-digit', minute: '2-
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
 
 /* ============================================================
@@ -219,19 +267,30 @@ async function getJson(url, opt) {
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
-// Les nostres actes (una per partit; l'app de l'acta les publica a Firestore)
-async function loadActas() {
+// Documents de matches amb un source concret
+async function loadSource(source) {
   const rows = await getJson(FS + ':runQuery', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({structuredQuery: {from: [{collectionId: 'matches'}],
-      where: {fieldFilter: {field: {fieldPath: 'source'}, op: 'EQUAL', value: {stringValue: 'acta'}}}}}),
-  }).catch(e => { throw new Error('No puc llegir les actes (' + e.message + ')'); });
-  return rows.filter(r => r.document).map(r => fromFs({mapValue: {fields: r.document.fields}})).filter(a => a && a.teamId === CAT);
+      where: {fieldFilter: {field: {fieldPath: 'source'}, op: 'EQUAL', value: {stringValue: source}}}}}),
+  });
+  return rows.filter(r => r.document).map(r => fromFs({mapValue: {fields: r.document.fields}})).filter(Boolean);
+}
+// Les nostres actes (una per partit; l'app de l'acta les publica a Firestore)
+async function loadActas() {
+  const rows = await loadSource('acta').catch(e => { throw new Error('No puc llegir les actes (' + e.message + ')'); });
+  return rows.filter(a => a.teamId === CAT);
 }
 // Actes oficials que ha llegit el lector (només el que fem servir: el minut a minut no cal)
 function slimFed(d) {
   const keep = ['matchId', 'tournamentId', 'category', 'datetime', 'home', 'away', 'score', 'periods', 'finished', 'players', 'statsAt', 'actaUrl'];
   return Object.fromEntries(keep.filter(k => d[k] !== undefined).map(k => [k, d[k]]));
+}
+// Correccions fetes des d'aquesta app: matches/edit_<id de l'acta> amb source:'acta_edit' i sense teamId
+// (les regles de Firestore només deixen escriure a matches; sense teamId cap altra app les llista)
+const editDoc = id => `${FS}/matches/${encodeURIComponent('edit_' + id)}`;
+async function loadEdits() {
+  return Object.fromEntries((await loadSource('acta_edit')).filter(e => e.matchId).map(e => [e.matchId, e]));
 }
 async function loadFeds(extraIds) {
   const ids = new Set(extraIds);
@@ -243,7 +302,7 @@ async function loadFeds(extraIds) {
   return out;
 }
 
-let S = {actas: [], feds: {}, at: 0};
+let S = {actas: [], feds: {}, edits: {}, at: 0};
 let busy = false, err = null;
 let MATCHES = [], PLAYERS = [];
 const openRows = new Set();
@@ -254,16 +313,18 @@ async function refresh() {
   if (busy) return;
   busy = true; err = null; paintUpd();
   try {
-    const actas = await loadActas();
+    // Si les correccions no es poden llegir, es mantenen les que ja teníem (mai es mostra l'acta sense corregir per error)
+    const [actas, edits] = await Promise.all([loadActas(), loadEdits().catch(() => S.edits || {})]);
     const feds = await loadFeds(actas.map(a => a.fedMatchId).filter(Boolean).map(String));
-    S = {actas, feds, at: Date.now()};
+    S = {actas, feds, edits, at: Date.now()};
     LS.set(CACHE, S);
     build();
   } catch (e) {
     err = navigator.onLine === false ? 'Sense connexió: dades desades al mòbil' : e.message;
   }
   busy = false;
-  render();
+  if (EDIT && route().view === 'edit') paintUpd();   // no trepitjar l'editor obert
+  else render();
 }
 
 /* ---------- model ---------- */
@@ -281,31 +342,105 @@ function ourStats(j) {
   const pen = (e.goalTypes && e.goalTypes.penalty) || 0, epen = (e.exclusionTypes && e.exclusionTypes.penalty) || 0;
   return {G: (e.gols || 0) - pen, GP: pen, EX: (e.exclusions || 0) - epen, P: epen};
 }
-// Temps de joc de cada dorsal (ms), total i per quarts. L'acta publica temps de joc: cada quart acabat dura 8:00.
-function playMs(a) {
-  const res = {};
-  let q;
-  const add = (n, ms) => {
-    if (ms <= 0) return;
-    const r = res[n] = res[n] || {total: 0, q: {}};
-    r.total += ms; r.q[q] = (r.q[q] || 0) + ms;
-  };
-  for (q = 1; q <= 4; q++) {
+function rivalStats(r) {
+  if (r.acta) return r.acta;
+  const pen = (r.goalTypes && r.goalTypes.penalty) || 0, epen = (r.exclusionTypes && r.exclusionTypes.penalty) || 0;
+  return {G: (r.gols || 0) - pen, GP: pen, EX: (r.exclusions || 0) - epen, P: epen};
+}
+
+/* Format editable d'una acta (el que es corregeix des de l'app i es desa a matches/edit_<id>):
+   N = {acts: [{q, team:'cnt'|'rival', num, k}],                 q = 1..4, o 0 si no se sap el quart
+        quarters: {1: {len, start: [dorsals], changes: [{t, num, dir:'in'|'out'}]}, ...}}   t = ms de joc del quart */
+function normalize(a) {
+  const tot = {cnt: new Map(toArr(a.jugadors).map(j => [+j.numero, ourStats(j)])),
+               rival: new Map(toArr(a.rivalStats).map(r => [+r.num, rivalStats(r)]))};
+  const acts = [], seen = {};
+  for (const c of toArr(a.chronologicalActions)) {
+    const team = c.team === 'rival' ? 'rival' : 'cnt', num = +c.playerNum;
+    const q = Math.min(Math.max(+String(c.quarter || 'q1').slice(1) || 1, 1), 4);
+    let k;
+    if (c.type === 'goal') k = c.goalType === 'penalty' ? 'GP' : 'G';
+    else if (c.type === 'exclusion') {
+      // La cronologia no distingeix falta de penal (P) d'expulsió i penal (EP): es reparteixen segons els totals de l'acta
+      if (c.exclusionType !== 'penalty') k = 'EX';
+      else k = (seen[team + num + 'P'] || 0) < ((tot[team].get(num) || {}).P || 0) ? 'P' : 'EP';
+    } else if (c.type === 'penalty-missed') k = 'PF';
+    else continue;
+    seen[team + num + k] = (seen[team + num + k] || 0) + 1;
+    acts.push({q, team, num, k});
+  }
+  // El que no surt a la cronologia (definitives, targetes, tanda): sense quart
+  for (const team of ['cnt', 'rival']) for (const [num, s] of tot[team]) for (const k of STAT_ORDER)
+    for (let i = seen[team + num + k] || 0; i < (s[k] || 0); i++) acts.push({q: 0, team, num, k});
+  const quarters = {};
+  for (let q = 1; q <= 4; q++) {
     const s = a.quarterStartTimes && a.quarterStartTimes['q' + q], e = a.quarterRealEndTimes && a.quarterRealEndTimes['q' + q];
     if (s == null || e == null) continue;
-    const inW = new Map(toArr(a.lineups && a.lineups['q' + q]).map(n => [n, s]));
-    const ch = toArr(a.playerWaterChanges).filter(c => c.quarter === 'q' + q).sort((x, y) => x.timestamp - y.timestamp);
-    for (const c of ch) {
-      const t = Math.min(Math.max(c.timestamp, s), e);
-      if (c.action === 'in') { if (!inW.has(c.playerNum)) inW.set(c.playerNum, t); }
-      else if (inW.has(c.playerNum)) { add(c.playerNum, t - inW.get(c.playerNum)); inW.delete(c.playerNum); }
+    const len = Math.max(0, e - s);
+    const start = q === 1 && toArr(a.starters).length ? toArr(a.starters) : toArr(a.lineups && a.lineups['q' + q]);
+    const changes = toArr(a.playerWaterChanges).filter(c => c.quarter === 'q' + q)
+      .map(c => ({t: Math.min(Math.max(c.timestamp - s, 0), len), num: +c.playerNum, dir: c.action === 'in' ? 'in' : 'out'}))
+      .sort((x, y) => x.t - y.t);
+    quarters[q] = {len, start: start.map(Number), changes};
+  }
+  return {acts, quarters};
+}
+const quarterOf = (N, q) => N.quarters && N.quarters[q];
+// Comptadors per jugador d'un equip: Map dorsal → {G: 2, EX: 1...}
+function statsOf(N, team) {
+  const m = new Map();
+  for (const x of toArr(N.acts)) if (x.team === team) { const s = m.get(x.num) || {}; s[x.k] = (s[x.k] || 0) + 1; m.set(x.num, s); }
+  return m;
+}
+// Marcador total i per quarts a partir de les accions
+function scoreOf(N) {
+  const sc = {cnt: 0, rival: 0, q: {}};
+  for (const x of toArr(N.acts)) {
+    if (x.k !== 'G' && x.k !== 'GP') continue;
+    sc[x.team]++;
+    if (x.q >= 1 && x.q <= 4) { const v = sc.q[x.q] = sc.q[x.q] || [0, 0]; v[x.team === 'cnt' ? 0 : 1]++; }
+  }
+  return sc;
+}
+// Simula l'aigua d'un quart: minuts de cada dorsal, moments amb ≠7 a l'aigua i canvis que no fan res
+function simQuarter(Q) {
+  const ms = {}, bad = [], noop = new Set();
+  const inW = new Map(toArr(Q.start).map(n => [n, 0]));
+  const order = toArr(Q.changes).map((c, i) => ({...c, i})).sort((x, y) => x.t - y.t || (x.dir === 'out' ? -1 : 1));
+  let last = 0;
+  const check = to => { if (to > last && inW.size !== 7) bad.push({from: last, to, n: inW.size}); };
+  for (const c of order) {
+    const t = Math.min(Math.max(c.t, 0), Q.len);
+    if (t > last) { check(t); last = t; }
+    if (c.dir === 'in') { if (inW.has(c.num)) noop.add(c.i); else inW.set(c.num, t); }
+    else if (inW.has(c.num)) { ms[c.num] = (ms[c.num] || 0) + t - inW.get(c.num); inW.delete(c.num); }
+    else noop.add(c.i);
+  }
+  check(Q.len);
+  for (const [n, t] of inW) ms[n] = (ms[n] || 0) + Q.len - t;
+  return {ms, bad, noop};
+}
+function inWaterAt(Q, t) {
+  const inW = new Set(toArr(Q.start));
+  for (const c of [...toArr(Q.changes)].sort((x, y) => x.t - y.t)) { if (c.t > t) break; c.dir === 'in' ? inW.add(c.num) : inW.delete(c.num); }
+  return inW;
+}
+// Temps de joc de cada dorsal (ms), total i per quarts. L'acta publica temps de joc: cada quart acabat dura 8:00.
+function playMs(N) {
+  const res = {};
+  for (let q = 1; q <= 4; q++) {
+    const Q = quarterOf(N, q); if (!Q) continue;
+    for (const [n, ms] of Object.entries(simQuarter(Q).ms)) {
+      if (ms <= 0) continue;
+      const r = res[n] = res[n] || {total: 0, q: {}};
+      r.total += ms; r.q[q] = (r.q[q] || 0) + ms;
     }
-    for (const [n, t] of inW) add(n, e - t);
   }
   return res;
 }
 
-function makeMatch(a, f) {
+// nOver: format editable a mostrar en lloc del de l'acta (previsualització de l'editor)
+function makeMatch(a, f, nOver) {
   // Si el document de la RTDB no hi és, la còpia de l'acta FCN que va guardar la nostra acta
   if (!f && a && a.fcn && a.fcn.players) {
     f = {players: {home: a.fcn.players.cnt, away: a.fcn.players.rival}, periods: [],
@@ -313,44 +448,49 @@ function makeMatch(a, f) {
          score: a.fcn.score ? {home: a.fcn.score.cnt, away: a.fcn.score.rival} : null,
          matchId: a.fcn.matchId, tournamentId: a.fcn.tournamentId};
   }
+  const edit = a && S.edits ? S.edits[a.id] : null;
+  const N = a ? (nOver || (edit && edit.n) || normalize(a)) : null;
   const side = f && isCnt(f.home && f.home.name) ? 'home' : f && isCnt(f.away && f.away.name) ? 'away'
     : (a && a.matchLocation === 'away') ? 'away' : 'home';
   const rs = side === 'home' ? 'away' : 'home';
   const fReady = !!f && fedHasData(f);
   const fScore = f && f.score && f.score.home != null ? {cnt: f.score[side], rival: f.score[rs]} : null;
-  const ours = a ? {cnt: a.scoreCNT || 0, rival: a.scoreRival || 0} : null;
+  const sc = N ? scoreOf(N) : null;
+  const ours = sc ? {cnt: sc.cnt, rival: sc.rival} : null;
   const per = f ? toArr(f.periods) : [];
   const quarters = [1, 2, 3, 4].map(q => {
-    const o = a && a.periodScores && a.periodScores['q' + q];
     const p = per.find(x => x.name === QNAMES[q - 1]);
-    return {q, ours: o ? [o.cnt || 0, o.rival || 0] : null, fcn: p && p.home != null ? [p[side], p[rs]] : null};
+    return {q, ours: sc && (quarterOf(N, q) || sc.q[q]) ? sc.q[q] || [0, 0] : null, fcn: p && p.home != null ? [p[side], p[rs]] : null};
   });
 
-  const ms = a ? playMs(a) : {};
-  const starters = a ? (toArr(a.starters).length ? toArr(a.starters) : toArr(a.lineups && a.lineups.q1)) : [];
+  const ms = N ? playMs(N) : {};
   // Qui era a l'aigua a l'inici de cada quart (només els quarts que s'han començat)
-  const qStarted = q => !!(a && a.quarterStartTimes && a.quarterStartTimes['q' + q] != null);
   const lineups = {};
-  for (let q = 1; q <= 4; q++) lineups[q] = qStarted(q) ? (q === 1 ? starters : toArr(a.lineups && a.lineups['q' + q])) : null;
+  for (let q = 1; q <= 4; q++) lineups[q] = N && quarterOf(N, q) ? toArr(quarterOf(N, q).start) : null;
+  const starters = lineups[1] || [];
   const fl = f && f.players ? toArr(f.players[side]) : [];
   const fBy = new Map(fl.map(p => [+p.num, p]));
   const oBy = new Map((a ? toArr(a.jugadors) : []).map(j => [+j.numero, j]));
-  const nums = [...new Set([...oBy.keys(), ...fBy.keys()])].filter(n => n > 0).sort((x, y) => x - y);
+  const ourBy = N ? statsOf(N, 'cnt') : new Map();
+  const inQ = N ? Object.values(N.quarters || {}).flatMap(Q => [...toArr(Q.start), ...toArr(Q.changes).map(c => c.num)]) : [];
+  const nums = [...new Set([...oBy.keys(), ...fBy.keys(), ...ourBy.keys(), ...inQ])].filter(n => n > 0).sort((x, y) => x - y);
+  const names = new Map(), rnames = new Map(toArr(f && f.players && f.players[rs]).map(p => [+p.num, p.name || '']));
   const players = [];
   for (const num of nums) {
     const o = oBy.get(num), fp = fBy.get(num);
     const ourName = o && o.nom && !/^#\d+$/.test(o.nom) ? o.nom : '';
     const name = (fp && fp.name) || ourName;
-    const os = a ? ourStats(o) : null;
+    names.set(num, name);
+    const os = N ? (ourBy.get(num) || {}) : null;
     const fs = fReady ? ((fp && fp.s) || {}) : null;
-    const t = a ? ((ms[num] && ms[num].total) || 0) : null;
-    const qms = a ? ((ms[num] && ms[num].q) || {}) : null;
-    const qst = a ? [1, 2, 3, 4].filter(q => lineups[q] && lineups[q].includes(num)) : null;
-    const starter = a ? starters.includes(num) : null;
-    const played = a ? (t > 0 || starter || qst.length > 0 || GOALS(os) + EXCL(os) + OUTS(os) > 0) : !!(fs && GOALS(fs) + EXCL(fs) + OUTS(fs));
+    const t = N ? ((ms[num] && ms[num].total) || 0) : null;
+    const qms = N ? ((ms[num] && ms[num].q) || {}) : null;
+    const qst = N ? [1, 2, 3, 4].filter(q => lineups[q] && lineups[q].includes(num)) : null;
+    const starter = N ? starters.includes(num) : null;
+    const played = N ? (t > 0 || starter || qst.length > 0 || GOALS(os) + EXCL(os) + OUTS(os) > 0) : !!(fs && GOALS(fs) + EXCL(fs) + OUTS(fs));
     if (!name && !played && !(fs && GOALS(fs) + EXCL(fs))) continue;   // dorsal buit de la plantilla
     players.push({num, name, key: norm(name) || '#' + num, ours: os, fcn: fs, ms: t, qms, qst, starter, played,
-                  captain: !!(fp && fp.captain), dG: !!fs && a && GOALS(os) !== GOALS(fs), dE: !!fs && a && EXCL(os) !== EXCL(fs)});
+                  captain: !!(fp && fp.captain), dG: !!fs && !!N && GOALS(os) !== GOALS(fs), dE: !!fs && !!N && EXCL(os) !== EXCL(fs)});
   }
 
   const scoreDiff = !!(ours && fScore && (ours.cnt !== fScore.cnt || ours.rival !== fScore.rival));
@@ -358,7 +498,8 @@ function makeMatch(a, f) {
   const pDiffs = players.reduce((n, p) => n + p.dG + p.dE, 0);
   const date = new Date((f && f.datetime) || (a && a.data) || 0).getTime();
   return {
-    id: a ? a.id : 'fed_' + f.matchId, acta: a, fed: f, side, date,
+    id: a ? a.id : 'fed_' + f.matchId, acta: a, fed: f, side, date, N, edit, names, rnames,
+    editStale: !!(edit && a && (a.lastUpdate || 0) > (edit.base || 0)),
     rival: (f && f[rs] && f[rs].name) || (a && a.rivalTeam) || 'Rival',
     home: side === 'home', friendly: !!a && !a.fedMatchId,
     live: a ? a.estat !== 'finished' : !f.finished,
@@ -422,8 +563,9 @@ function matchStatus(m) {
   if (!m.acta) return {cls: 'warn', txt: 'només FCN'};
   if (m.live) return {cls: 'live', txt: 'en joc'};
   if (m.friendly) return {cls: '', txt: 'amistós'};
-  if (!m.fReady) return {cls: '', txt: 'sense acta FCN'};
-  return m.diffs ? {cls: 'bad', txt: `≠ ${m.diffs} dif.`} : {cls: 'ok', txt: '✓ quadra'};
+  const ed = m.edit ? ' · ✏️' : '';
+  if (!m.fReady) return {cls: '', txt: 'sense acta FCN' + ed};
+  return m.diffs ? {cls: 'bad', txt: `≠ ${m.diffs} dif.${ed}`} : {cls: 'ok', txt: '✓ quadra' + ed};
 }
 
 /* ============================================================
@@ -432,11 +574,18 @@ function matchStatus(m) {
 function route() {
   const h = location.hash;
   if (h.startsWith('#/p/')) return {view: 'match', id: decodeURIComponent(h.slice(4))};
+  if (h.startsWith('#/e/')) return {view: 'edit', id: decodeURIComponent(h.slice(4))};
   return {view: h === '#/jugadors' ? 'players' : 'matches'};
 }
 function render() {
   closeSheet();
   const r = route();
+  if (r.view === 'edit') {
+    const m = MATCHES.find(x => x.id === r.id);
+    if (m && m.acta) { if (!EDIT || EDIT.id !== m.id) startEdit(m); return renderEdit(m); }
+    if (!busy && S.at) { location.hash = ''; return; }
+  }
+  document.body.classList.remove('editing');
   if (r.view === 'match') {
     const m = MATCHES.find(x => x.id === r.id);
     if (m) return renderMatch(m);
@@ -610,22 +759,15 @@ function renderMatch(m) {
       <div class="score"><div class="tm">${esc(teamShort(CNT_TEAM))}</div>
         <div><div class="num">${sc.cnt} : ${sc.rival}</div><span class="q">${esc(state)} · ${esc(fmtDay(d0))} ${esc(fmtTime(d0))}</span></div>
         <div class="tm r">${esc(teamShort(m.rival))}</div></div>
-      <span style="width:40px;flex:none"></span></div>
+      ${a ? `<button class="back" data-act="go" data-h="#/e/${esc(encodeURIComponent(m.id))}" aria-label="Corregir l'acta" title="Corregir l'acta">✏️</button>` : '<span style="width:40px;flex:none"></span>'}</div>
     <div class="fedline">${fedPills(m)}</div></div>`;
+  if (m.edit) h += `<div class="notice info">✏️ Acta corregida des de l'app (${esc(fmtDay(new Date(m.edit.updatedAt)))} ${esc(fmtTime(new Date(m.edit.updatedAt)))}).${m.editStale ? " Després s'ha tornat a penjar des del mòbil de l'acta: manen les correccions." : ''} <a href="#/e/${esc(encodeURIComponent(m.id))}">Revisar-les</a></div>`;
 
   if (!a) h += '<div class="notice">D\'aquest partit no tenim acta nostra: només hi ha les dades de la FCN, que no compten als totals.</div>';
   else if (m.friendly) h += '<div class="notice info">Partit amistós: no hi ha acta de la federació per comparar.</div>';
   else if (!m.fReady) h += `<div class="notice info">${f ? 'L\'acta de la FCN encara no té dades de jugadors.' : 'El lector no ha llegit l\'acta de la FCN d\'aquest partit.'} Es mostren només les nostres dades.</div>`;
 
-  // Marcador per quarts
-  if (a || m.quarters.some(x => x.fcn)) {
-    const qc = (o, fq) => !fq ? '<span class="z">·</span>' : !o || (o[0] === fq[0] && o[1] === fq[1]) ? `${fq[0]}-${fq[1]}` : `<span class="d">${fq[0]}-${fq[1]}</span>`;
-    const fT = m.fScore ? [m.fScore.cnt, m.fScore.rival] : null, oT = m.ours ? [m.ours.cnt, m.ours.rival] : null;
-    h += `<section class="card"><h2>Marcador per quarts</h2><table class="cmp q"><thead><tr><th></th>${m.quarters.map(x => `<th>Q${x.q}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
-    if (a) h += `<tr><td class="muted small">Acta</td>${m.quarters.map(x => `<td>${x.ours ? x.ours.join('-') : '<span class="z">·</span>'}</td>`).join('')}<td>${oT.join('-')}</td></tr>`;
-    if (!m.friendly) h += `<tr><td class="muted small">FCN</td>${m.quarters.map(x => `<td>${qc(x.ours, x.fcn)}</td>`).join('')}<td>${qc(oT, fT)}</td></tr>`;
-    h += `</tbody></table>${a && !m.friendly ? '<p class="faint small" style="margin-top:6px">Acta = la nostra; FCN = la de la federació, en vermell quan no coincideix.</p>' : ''}</section>`;
-  }
+  if (a || m.quarters.some(x => x.fcn)) h += quarterTable(m, 'Marcador per quarts');
 
   // Jugadors
   const cmpN = m.pDiffs;
@@ -662,6 +804,17 @@ function renderMatch(m) {
   $('#app').innerHTML = h;
 }
 
+// Marcador per quarts: la nostra acta i la FCN
+function quarterTable(m, h2) {
+  const a = m.acta;
+  const qc = (o, fq) => !fq ? '<span class="z">·</span>' : !o || (o[0] === fq[0] && o[1] === fq[1]) ? `${fq[0]}-${fq[1]}` : `<span class="d">${fq[0]}-${fq[1]}</span>`;
+  const fT = m.fScore ? [m.fScore.cnt, m.fScore.rival] : null, oT = m.ours ? [m.ours.cnt, m.ours.rival] : null;
+  let h = `<section class="card"><h2>${esc(h2)}</h2><table class="cmp q"><thead><tr><th></th>${m.quarters.map(x => `<th>Q${x.q}</th>`).join('')}<th>Total</th></tr></thead><tbody>`;
+  if (a) h += `<tr><td class="muted small">Acta</td>${m.quarters.map(x => `<td>${x.ours ? x.ours.join('-') : '<span class="z">·</span>'}</td>`).join('')}<td>${oT.join('-')}</td></tr>`;
+  if (!m.friendly) h += `<tr><td class="muted small">FCN</td>${m.quarters.map(x => `<td>${qc(x.ours, x.fcn)}</td>`).join('')}<td>${qc(oT, fT)}</td></tr>`;
+  return h + `</tbody></table>${a && !m.friendly ? '<p class="faint small" style="margin-top:6px">Acta = la nostra; FCN = la de la federació, en vermell quan no coincideix.</p>' : ''}</section>`;
+}
+
 // Minuts de cada jugador a cada quart; en blau, qui era a l'aigua a l'inici del quart
 function matchQuarters(m) {
   const qs = [1, 2, 3, 4];
@@ -692,8 +845,280 @@ function fedPills(m) {
   return h;
 }
 
+/* ============================================================
+   Correccions de l'acta (des d'aquesta app) → Firestore matches/edit_<id>
+   Es desa el format editable sencer (accions + quarts) i l'app el fa servir
+   en lloc del de l'acta, també per als totals. El mòbil de l'acta no les veu:
+   si l'acta es torna a penjar, continuen manant les correccions.
+   ============================================================ */
+const DRAFT = 'stats_v1_draft_';
+let EDIT = null;   // {id, n, dirty, tab: 'acts'|'quarts', q}
+let SH = null;     // full obert: {kind: 'act'|'chg'|'newchg', i, x}
+
+// JSON → valors tipats de l'API REST de Firestore (sense SDK)
+function fsVal(v) {
+  if (v === null || v === undefined) return {nullValue: null};
+  if (typeof v === 'boolean') return {booleanValue: v};
+  if (typeof v === 'number') return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  if (typeof v === 'string') return {stringValue: v};
+  if (Array.isArray(v)) return {arrayValue: {values: v.map(fsVal)}};
+  return {mapValue: {fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fsVal(x)]))}};
+}
+
+function startEdit(m) {
+  const draft = LS.get(DRAFT + m.id, null);
+  const q = [1, 2, 3, 4].find(x => quarterOf(m.N, x)) || 1;
+  EDIT = draft && draft.n ? {...draft, recovered: true}
+    : {id: m.id, n: JSON.parse(JSON.stringify(m.N)), dirty: false, tab: 'acts', q};
+}
+function touch() { EDIT.dirty = true; EDIT.recovered = false; LS.set(DRAFT + EDIT.id, EDIT); }
+const editMatch = () => MATCHES.find(x => x.id === EDIT.id);
+const preview = m => makeMatch(m.acta, m.fed, EDIT.n);   // el partit amb les correccions
+const cntNums = P => [...P.names.keys()].sort((x, y) => x - y);
+function rivalNums(P) {
+  const s = new Set([...Array.from({length: 14}, (_, i) => i + 1), ...P.rnames.keys(),
+                     ...EDIT.n.acts.filter(x => x.team === 'rival').map(x => x.num)]);
+  return [...s].sort((x, y) => x - y);
+}
+const who = (P, x) => x.team === 'cnt' ? `#${x.num} ${short(P.names.get(x.num) || '')}`.trim()
+  : `Rival #${x.num}${P.rnames.get(x.num) ? ' ' + short(P.rnames.get(x.num)) : ''}`;
+
+function renderEdit(m) {
+  document.body.classList.add('editing');
+  const P = preview(m);
+  let h = `<div class="mhead"><div class="sb">
+      <button class="back" data-act="eExit" aria-label="Sortir">‹</button>
+      <div class="score"><div class="tm">${esc(teamShort(CNT_TEAM))}</div>
+        <div><div class="num">${P.ours.cnt} : ${P.ours.rival}</div><span class="q">✏️ Corregint l'acta</span></div>
+        <div class="tm r">${esc(teamShort(m.rival))}</div></div>
+      <span style="width:40px;flex:none"></span></div>
+    <div class="tabs">
+      <button class="${EDIT.tab === 'acts' ? 'on' : ''}" data-act="eTab" data-t="acts">Gols i expulsions</button>
+      <button class="${EDIT.tab === 'quarts' ? 'on' : ''}" data-act="eTab" data-t="quarts">Titulars i canvis</button>
+    </div></div>`;
+  if (EDIT.recovered) h += '<div class="notice info">S\'han recuperat unes correccions que no s\'havien desat.</div>';
+  if (m.live) h += '<div class="notice">L\'acta encara surt en joc: si es torna a penjar, manaran aquestes correccions.</div>';
+  h += EDIT.tab === 'quarts' ? editQuarters(P) : editActs(P);
+  h += `<div class="ebar">${m.edit ? '<button class="btn danger" data-act="eRestore">↺ Original</button>' : ''}
+    <button class="btn" data-act="eExit">${EDIT.dirty ? 'Descarta' : 'Tanca'}</button>
+    <button class="btn primary" data-act="eSave" ${EDIT.dirty ? '' : 'disabled'}>💾 Desa</button></div>`;
+  $('#app').innerHTML = h;
+}
+
+/* ---------- pestanya Gols i expulsions ---------- */
+function editActs(P) {
+  let h = quarterTable(P, 'Marcador amb les correccions');
+  const hints = P.players.filter(p => p.dG || p.dE);
+  if (hints.length) {
+    h += `<section class="card"><h2>No quadra amb la FCN</h2><ul class="hint">${hints.map(p => `<li><b>#${p.num} ${esc(short(p.name))}</b>: ${[
+      p.dG ? `gols acta ${GOALS(p.ours)} · FCN ${GOALS(p.fcn)}` : '', p.dE ? `exp. acta ${EXCL(p.ours)} · FCN ${EXCL(p.fcn)}` : '',
+    ].filter(Boolean).join(' · ')}</li>`).join('')}</ul></section>`;
+  } else if (P.fReady) h += '<div class="notice info">✓ Els gols i les expulsions de cada jugador quadren amb la FCN.</div>';
+  const acts = EDIT.n.acts.map((x, i) => ({...x, i}));
+  for (const q of [1, 2, 3, 4, 0]) {
+    const list = acts.filter(x => (x.q || 0) === q);
+    if (!q && !list.length) continue;
+    const s = q ? P.quarters[q - 1] : null;
+    const bad = s && s.ours && s.fcn && s.ours.join() !== s.fcn.join();
+    h += `<section class="card"><h2>${q ? 'Q' + q : 'Sense quart'}${s && s.ours ? ` <span class="pill">Acta ${s.ours.join('-')}</span>` : ''}${s && s.fcn ? ` <span class="pill ${bad ? 'bad' : 'ok'}">FCN ${s.fcn.join('-')}</span>` : ''}</h2>
+      <ul class="alist">${list.map(x => `<li><button data-act="eAct" data-i="${x.i}">${esc(SHORTK[x.k] || x.k)} <span class="${x.team === 'cnt' ? '' : 'muted'}">· ${esc(who(P, x))}</span><span class="go">›</span></button></li>`).join('')
+        || '<li class="muted small" style="padding:8px 2px">Cap acció.</li>'}</ul>
+      ${q ? `<button class="btn ghost wide" data-act="eAdd" data-q="${q}">+ Afegeix al Q${q}</button>` : ''}</section>`;
+  }
+  return h;
+}
+
+/* ---------- pestanya Titulars i canvis ---------- */
+function editQuarters(P) {
+  const qs = [1, 2, 3, 4].filter(q => quarterOf(EDIT.n, q));
+  if (!qs.length) return '<section class="card"><p class="muted">Aquesta acta no té cap quart començat.</p></section>';
+  if (!qs.includes(EDIT.q)) EDIT.q = qs[0];
+  const q = EDIT.q, Q = quarterOf(EDIT.n, q), sim = simQuarter(Q), st = toArr(Q.start);
+  let h = `<div class="chips qsel">${qs.map(x => `<button class="chip ${x === q ? 'on' : ''}" data-act="eQ" data-q="${x}">Q${x}</button>`).join('')}</div>`;
+  h += `<section class="card"><h2>A l'aigua a l'inici del Q${q} <span class="pill ${st.length === 7 ? 'ok' : 'bad'}">${st.length} de 7</span></h2>
+    <p class="muted small">Toca un jugador per posar-lo o treure'l.</p>
+    <div class="chips">${cntNums(P).map(n => `<button class="chip ${st.includes(n) ? 'sel' : ''}" data-act="eStart" data-n="${n}">${n} ${esc(short(P.names.get(n) || ''))}</button>`).join('')}</div></section>`;
+  const order = toArr(Q.changes).map((c, i) => ({...c, i})).sort((x, y) => x.t - y.t);
+  h += `<section class="card"><h2>Canvis del Q${q}</h2>`;
+  // Els segons entre tocar "surt" i "entra" a la piscina no són errors: només trams de 10 s o més
+  const bad = sim.bad.filter(b => b.to - b.from >= 10e3);
+  h += bad.slice(0, 5).map(b => `<div class="notice" style="margin:0 0 8px">⚠️ De ${mmss(b.from)} a ${mmss(b.to)} hi ha ${b.n} a l'aigua (han de ser 7).</div>`).join('');
+  if (bad.length > 5) h += `<div class="notice" style="margin:0 0 8px">⚠️ I ${bad.length - 5} trams més amb ≠7 a l'aigua.</div>`;
+  h += `<ul class="alist">${order.map(c => `<li><button data-act="eChg" data-i="${c.i}"><span class="t">${mmss(c.t)}</span>${c.dir === 'in' ? '💧 Entra' : '⬅️ Surt'} #${c.num} ${esc(short(P.names.get(c.num) || ''))}${sim.noop.has(c.i) ? ' <span class="pill warn">no fa res</span>' : ''}<span class="go">›</span></button></li>`).join('')
+      || '<li class="muted small" style="padding:8px 2px">Cap canvi.</li>'}</ul>
+    <button class="btn ghost wide" data-act="eNewChg">+ Afegeix un canvi</button>
+    <p class="faint small" style="margin-top:8px">Temps de joc des de l'inici del quart (0:00 a ${mmss(Q.len)}).</p></section>`;
+  const rows = Object.entries(sim.ms).map(([n, v]) => [+n, v]).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]);
+  h += `<section class="card"><h2>Minuts del Q${q}</h2>${rows.map(([n, v]) => `<div class="trow"><span class="n">${n}</span>
+    <span class="nm">${esc(short(P.names.get(n) || ''))}${st.includes(n) ? ' <span class="tw">▶</span>' : ''}</span>
+    <span class="qbar"><i style="width:${Math.min(100, v / (Q.len || 1) * 100)}%"></i></span><span class="tt">${mmss(v)}</span></div>`).join('')
+    || '<p class="muted small">Ningú a l\'aigua.</p>'}</section>`;
+  return h;
+}
+
+/* ---------- fulls d'edició ---------- */
+function actSheet(i, q) {
+  SH = {kind: 'act', i, x: i >= 0 ? {...EDIT.n.acts[i]} : {q, team: 'cnt', num: null, k: 'G'}};
+  paintSheet();
+}
+function chgSheet(i) {
+  const Q = quarterOf(EDIT.n, EDIT.q);
+  if (i >= 0) SH = {kind: 'chg', i, x: {...Q.changes[i]}};
+  else {
+    const last = toArr(Q.changes).reduce((t, c) => Math.max(t, c.t), 0);
+    SH = {kind: 'newchg', i: -1, x: {t: last, out: null, in: null}};
+  }
+  paintSheet();
+}
+// Temps de joc (m:ss) → ms; null si no és vàlid
+function parseClock(s, len) {
+  s = String(s || '').trim().replace(/[,'’]/g, ':').replace('.', ':');
+  let m, sec;
+  const mm = s.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (mm) { m = +mm[1]; sec = mm[2].length === 1 ? +mm[2] * 10 : +mm[2]; }
+  else if (/^\d{1,4}$/.test(s)) { const n = s.padStart(3, '0'); m = +n.slice(0, -2); sec = +n.slice(-2); }
+  else return null;
+  if (sec > 59) return null;
+  const t = (m * 60 + sec) * 1000;
+  return t > len ? null : t;
+}
+function paintSheet(keep) {
+  const m = editMatch(); if (!m || !SH) return;
+  const P = preview(m), x = SH.x;
+  const ch = (f, v, l, cls = '') => `<button class="chip ${x[f] === v ? 'sel' : ''} ${cls}" data-act="eSet" data-f="${f}" data-v="${v}">${esc(l)}</button>`;
+  const nameOf = n => `${n} ${short(P.names.get(n) || '')}`.trim();
+  if (SH.kind === 'act') {
+    const nums = x.team === 'cnt' ? cntNums(P) : rivalNums(P);
+    return openSheet(`<button class="x" data-act="close" aria-label="Tancar">✕</button>
+      <h3>${SH.i >= 0 ? 'Corregir acció' : 'Nova acció'}</h3>
+      <div class="lbl">Equip</div><div class="chips">${ch('team', 'cnt', teamShort(CNT_TEAM))}${ch('team', 'rival', teamShort(m.rival))}</div>
+      <div class="lbl">Jugador</div><div class="chips">${nums.map(n => ch('num', n, x.team === 'cnt' ? nameOf(n) : String(n))).join('')}</div>
+      <div class="lbl">Quart</div><div class="chips">${[1, 2, 3, 4].map(q => ch('q', q, 'Q' + q)).join('')}${x.q === 0 ? ch('q', 0, 'Sense quart') : ''}</div>
+      <div class="lbl">Què</div><div class="chips">${STAT_ORDER.map(k => ch('k', k, SHORTK[k])).join('')}</div>
+      <div class="row2">${SH.i >= 0 ? '<button class="btn danger" data-act="eDel">Esborra</button>' : ''}
+        <button class="btn primary" data-act="eOk" ${x.num == null ? 'disabled' : ''}>${SH.i >= 0 ? 'Desa' : 'Afegeix'}</button></div>`, keep);
+  }
+  const Q = quarterOf(EDIT.n, EDIT.q);
+  const inW = inWaterAt({...Q, changes: toArr(Q.changes).filter((c, i) => i !== SH.i)}, x.t);   // a l'aigua just abans
+  const time = `<div class="lbl">Moment (temps de joc del Q${EDIT.q})</div>
+    <div class="tfield"><button class="btn" data-act="eNudge" data-d="-5000">−5 s</button>
+      <input id="etime" inputmode="decimal" value="${mmss(x.t)}" aria-label="Temps de joc (m:ss)">
+      <button class="btn" data-act="eNudge" data-d="5000">+5 s</button></div>
+    <div class="faint small" id="eclock">0:00 = inici del quart · al rellotge del marcador: ${mmss(Q.len - x.t)}</div>`;
+  const wet = n => inW.has(n) ? 'in' : '';
+  if (SH.kind === 'chg') {
+    return openSheet(`<button class="x" data-act="close" aria-label="Tancar">✕</button>
+      <h3>Corregir canvi · Q${EDIT.q}</h3>${time}
+      <div class="lbl">Què</div><div class="chips">${ch('dir', 'in', '💧 Entra')}${ch('dir', 'out', '⬅️ Surt')}</div>
+      <div class="lbl">Jugador <span class="faint">(vora verda: a l'aigua en aquell moment)</span></div>
+      <div class="chips">${cntNums(P).map(n => ch('num', n, nameOf(n), wet(n))).join('')}</div>
+      <div class="row2"><button class="btn danger" data-act="eDel">Esborra</button><button class="btn primary" data-act="eOk">Desa</button></div>`, keep);
+  }
+  return openSheet(`<button class="x" data-act="close" aria-label="Tancar">✕</button>
+    <h3>Nou canvi · Q${EDIT.q}</h3>${time}
+    <div class="lbl">Surt <span class="faint">(vora verda: a l'aigua en aquell moment)</span></div>
+    <div class="chips">${cntNums(P).map(n => ch('out', n, nameOf(n), wet(n))).join('')}</div>
+    <div class="lbl">Entra <span class="faint">(vora verda: ja és a l'aigua)</span></div>
+    <div class="chips">${cntNums(P).map(n => ch('in', n, nameOf(n), wet(n))).join('')}</div>
+    <div class="row2"><button class="btn primary" data-act="eOk" ${x.out == null && x.in == null ? 'disabled' : ''}>Afegeix</button></div>`, keep);
+}
+function sheetSet(f, raw) {
+  const v = ['num', 'q', 'out', 'in'].includes(f) ? +raw : raw;
+  if (f === 'team' && v !== SH.x.team) SH.x.num = null;
+  SH.x[f] = (f === 'out' || f === 'in') && SH.x[f] === v ? null : v;   // al canvi nou, tornar a tocar = treure
+  paintSheet(true);
+}
+// El camp de temps es llegeix aquí: si s'escriu i es toca Desa de seguida, el 'change' encara no ha repintat res
+function readTime() {
+  const inp = $('#etime'); if (!inp) return true;
+  const t = parseClock(inp.value, quarterOf(EDIT.n, EDIT.q).len);
+  if (t == null) { toast('Escriu el temps com 3:45 (entre 0:00 i 8:00)'); inp.value = mmss(SH.x.t); return false; }
+  SH.x.t = t;
+  const c = $('#eclock'); if (c) c.textContent = `0:00 = inici del quart · al rellotge del marcador: ${mmss(quarterOf(EDIT.n, EDIT.q).len - t)}`;
+  return true;
+}
+function sheetOk() {
+  if (!readTime()) return;
+  const x = SH.x;
+  if (SH.kind === 'act') {
+    if (x.num == null) return;
+    if (SH.i >= 0) EDIT.n.acts[SH.i] = x; else EDIT.n.acts.push(x);
+  } else {
+    const Q = quarterOf(EDIT.n, EDIT.q);
+    Q.changes = toArr(Q.changes);
+    if (SH.kind === 'chg') Q.changes[SH.i] = {t: x.t, num: x.num, dir: x.dir};
+    else {
+      if (x.out != null) Q.changes.push({t: x.t, num: x.out, dir: 'out'});
+      if (x.in != null) Q.changes.push({t: x.t, num: x.in, dir: 'in'});
+    }
+    Q.changes.sort((a, b) => a.t - b.t);
+  }
+  touch(); SH = null; closeSheet(); renderEdit(editMatch());
+}
+function sheetDel() {
+  if (SH.kind === 'act') EDIT.n.acts.splice(SH.i, 1);
+  else quarterOf(EDIT.n, EDIT.q).changes.splice(SH.i, 1);
+  touch(); SH = null; closeSheet(); renderEdit(editMatch());
+}
+function setTime(t) {
+  const len = quarterOf(EDIT.n, EDIT.q).len;
+  SH.x.t = Math.min(Math.max(Math.round(t / 1000) * 1000, 0), len);
+  paintSheet(true);
+}
+
+/* ---------- desar / descartar ---------- */
+function leaveEdit(id) {
+  LS.del(DRAFT + id); EDIT = null; SH = null;
+  location.hash = '#/p/' + encodeURIComponent(id);
+}
+async function saveEdits(btn) {
+  const m = editMatch(); if (!m) return;
+  btn.disabled = true; btn.textContent = 'Desant…';
+  const body = {source: 'acta_edit', matchId: m.id, base: m.acta.lastUpdate || 0, updatedAt: Date.now(), n: EDIT.n};
+  try {
+    const r = await fetch(editDoc(m.id), {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({fields: fsVal(body).mapValue.fields}),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    S.edits = {...S.edits, [m.id]: body}; LS.set(CACHE, S); build();
+    toast('✓ Correccions desades');
+    leaveEdit(m.id);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = '💾 Desa';
+    toast(navigator.onLine === false ? 'Sense connexió: torna-ho a provar (no es perd res)' : 'No s\'ha pogut desar: ' + e.message);
+  }
+}
+async function restoreOriginal() {
+  const m = editMatch(); if (!m) return;
+  if (!confirm('Treure totes les correccions i tornar a l\'acta tal com es va penjar?')) return;
+  try {
+    const r = await fetch(editDoc(m.id), {method: 'DELETE'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const edits = {...S.edits}; delete edits[m.id];
+    S.edits = edits; LS.set(CACHE, S); build();
+    toast('Correccions tretes: es mostra l\'acta original');
+    leaveEdit(m.id);
+  } catch (e) { toast('No s\'ha pogut fer: ' + e.message); }
+}
+function exitEdit() {
+  if (EDIT.dirty && !confirm('Hi ha correccions sense desar. Les descartes?')) return;
+  leaveEdit(EDIT.id);
+}
+
+let toastT = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
 /* ---------- full inferior ---------- */
-function openSheet(html) { $('#sheet').innerHTML = html; $('#sheet').classList.add('show'); $('#shade').classList.add('show'); }
+// keep: es repinta el mateix full sense tornar a dalt
+function openSheet(html, keep) {
+  const sh = $('#sheet'), top = sh.scrollTop;
+  sh.innerHTML = html; sh.classList.add('show'); $('#shade').classList.add('show');
+  sh.scrollTop = keep ? top : 0;
+}
 function closeSheet() { $('#sheet').classList.remove('show'); $('#shade').classList.remove('show'); }
 
 /* ============================================================
@@ -721,8 +1146,28 @@ document.addEventListener('click', e => {
     case 'pview': pview = el.dataset.v; LS.set(PVIEW, pview); render(); break;
     case 'row': { const k = el.dataset.k; openRows.has(k) ? openRows.delete(k) : openRows.add(k); render(); break; }
     case 'close': closeSheet(); break;
+    // editor de l'acta
+    case 'eTab': EDIT.tab = el.dataset.t; renderEdit(editMatch()); window.scrollTo(0, 0); break;
+    case 'eQ': EDIT.q = +el.dataset.q; renderEdit(editMatch()); break;
+    case 'eStart': {
+      const Q = quarterOf(EDIT.n, EDIT.q), n = +el.dataset.n, st = toArr(Q.start);
+      Q.start = st.includes(n) ? st.filter(x => x !== n) : [...st, n].sort((a, b) => a - b);
+      touch(); renderEdit(editMatch()); break;
+    }
+    case 'eAct': actSheet(+el.dataset.i); break;
+    case 'eAdd': actSheet(-1, +el.dataset.q); break;
+    case 'eChg': chgSheet(+el.dataset.i); break;
+    case 'eNewChg': chgSheet(-1); break;
+    case 'eSet': if (readTime()) sheetSet(el.dataset.f, el.dataset.v); break;
+    case 'eNudge': if (readTime()) setTime(SH.x.t + +el.dataset.d); break;
+    case 'eOk': sheetOk(); break;
+    case 'eDel': sheetDel(); break;
+    case 'eSave': saveEdits(el); break;
+    case 'eRestore': restoreOriginal(); break;
+    case 'eExit': exitEdit(); break;
   }
 });
+document.addEventListener('change', e => { if (e.target.id === 'etime' && SH) readTime(); });
 window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
 // En tornar a l'app (o cada minut amb un partit en joc), dades noves
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - S.at > 60e3) refresh(); });
@@ -733,7 +1178,7 @@ setInterval(() => {
 
 /* ---------- inici: primer el que hi ha al mòbil, després la xarxa ---------- */
 const cached = LS.get(CACHE, null);
-if (cached && Array.isArray(cached.actas)) { S = cached; build(); }
+if (cached && Array.isArray(cached.actas)) { S = {edits: {}, ...cached}; build(); }
 render();
 refresh();
 

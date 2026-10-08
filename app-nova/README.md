@@ -102,6 +102,20 @@ titulars només surten de la nostra acta (`lineups` + `playerWaterChanges`). Els
 totals agrupen per nom (el dorsal pot canviar). Els partits que el lector ha
 llegit però sense acta nostra surten com a "només FCN" i no compten als totals.
 
+**Corregir una acta ja penjada** (botó ✏️ al detall del partit, des de
+qualsevol mòbil): pestanyes *Gols i expulsions* (canviar jugador, quart o
+tipus d'una acció, esborrar-ne, afegir-ne; amb les diferències amb la FCN com a
+pista) i *Titulars i canvis* (els 7 de l'inici de cada quart i els canvis amb
+el seu temps de joc; avisa dels trams de ≥10 s amb ≠7 a l'aigua). L'app passa
+l'acta a un format editable (`normalize`: accions `{q, team, num, k}` i, per
+quart, `{len, start, changes:[{t, num, dir}]}`) i en calcula tot (marcador,
+parcials, minuts, titulars). Les correccions es desen senceres a Firestore
+`matches/edit_<id de l'acta>` amb `source:'acta_edit'` i **sense `teamId`**
+(les regles només deixen escriure a `matches`; sense `teamId` cap altra app
+les llista) i l'app les fa servir en lloc de l'acta, també als totals. El
+mòbil de l'acta no les veu; si l'acta es torna a penjar, manen les
+correccions (l'app ho avisa). "↺ Original" les esborra.
+
 La pestanya **🆚 Acta FCN** compara amb la federació (l'ACTAWP és Leverade):
 - **Equip** (marcador, parcials, quarts acabats): API pública
   `api.leverade.com` directament des del mòbil, cada 30 s durant el partit.
