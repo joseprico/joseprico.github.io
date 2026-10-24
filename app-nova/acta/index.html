@@ -109,6 +109,7 @@ footer a{color:var(--muted)}
 .pc-h .nm{flex:1;min-width:0;font-size:.72rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .pc.in .pc-h .nm{color:#115e59}
 .pc-h .dots{font-size:.55rem;letter-spacing:1px;color:var(--excl)}
+.pc-h .exc{font-size:.72rem;font-weight:800;color:#fff;background:var(--excl);border-radius:6px;padding:1px 5px;font-variant-numeric:tabular-nums}
 .pc-h .mo{font-size:1rem;color:var(--faint);padding:0 2px}
 .pc-b{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 5px 5px}
 .b{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:9px;min-height:44px;font-size:1rem;color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
@@ -235,6 +236,9 @@ const MAIN_KEYS = ['G', 'GP', 'EX', 'P'];
 const GOAL_KEYS = ['G', 'GP'];
 const FOUL_KEYS = ['EX', 'P', 'EP'];
 const OUT_KEYS = ['ED', 'EB', 'EN'];
+// Exclusions de 20 s: el jugador es queda a l'aigua (si no el canvien, torna sol)
+const EXCL_KEYS = ['EX', 'EP'];
+const EXCL_MS = 20 * 1000, EXCL_GRACE = 10 * 1000;   // marge per si el canvi s'anota tard
 
 const IDX = 'acta_v1_index';
 const MK = id => 'acta_v1_m_' + id;
@@ -297,20 +301,22 @@ function derive(m) {
     q: 0, running: false, qEnded: false, finished: false, segs: {}, ended: new Set(),
     inWater: new Set(), starters: null, stats: {cnt: {}, rival: {}},
     score: {cnt: 0, rival: 0}, shoot: {cnt: 0, rival: 0}, qScore: {}, ivs: {},
+    excl: {},   // exclusions de 20 s del quart en joc: dorsal → {id, t, q, at: temps de quart en què va començar}
   };
   const closeSeg = t => { const s = st.segs[st.q]; if (s && s.length && s[s.length - 1][1] == null) s[s.length - 1][1] = t; };
   for (const a of m.acts) {
     switch (a.k) {
       case 'QSTART':
         closeSeg(a.t);
+        st.excl = {};
         st.q = a.q; st.running = a.q !== 5; st.qEnded = false;
         if (a.q !== 5) (st.segs[a.q] = st.segs[a.q] || []).push([a.t, null]);
         if (a.q === 1 && !st.starters) st.starters = [...st.inWater];
         break;
       case 'PAUSE': closeSeg(a.t); st.running = false; break;
       case 'RESUME': (st.segs[st.q] = st.segs[st.q] || []).push([a.t, null]); st.running = true; break;
-      case 'QEND': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); break;
-      case 'FINAL': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); st.finished = true; break;
+      case 'QEND': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); st.excl = {}; break;
+      case 'FINAL': closeSeg(a.t); st.running = false; st.qEnded = true; st.ended.add(st.q); st.finished = true; st.excl = {}; break;
       case 'IN':
         if (!st.inWater.has(a.num)) { st.inWater.add(a.num); (st.ivs[a.num] = st.ivs[a.num] || []).push([a.t, null]); }
         break;
@@ -325,6 +331,10 @@ function derive(m) {
           const qs = st.qScore[a.q] = st.qScore[a.q] || {cnt: 0, rival: 0};
           qs[a.team]++;
         } else if (a.k === 'G5P') st.shoot[a.team]++;
+        if (a.team === 'cnt' && EXCL_KEYS.includes(a.k) && st.q >= 1 && st.q <= 4 && !st.qEnded) {
+          const at = (st.segs[st.q] || []).reduce((s, [x, y]) => s + Math.max(0, Math.min(a.t, y == null ? a.t : y) - x), 0);
+          st.excl[a.num] = {id: a.id, t: a.t, q: st.q, at, done: !!a.back};
+        }
       }
     }
   }
@@ -352,6 +362,50 @@ function playTimes(now) {
   return res;
 }
 function quarterElapsed(now) { return (D.segs[D.q] || []).reduce((s, [a, b]) => s + ((b == null ? now : b) - a), 0); }
+// Exclusions (rellotge del quart: el temps mort les atura): temps que falta, i moment real en què s'acaben
+function exclLeft(num, now) {
+  const e = D.excl[num];
+  return e && e.q === D.q ? Math.max(0, EXCL_MS - (quarterElapsed(now) - e.at)) : 0;
+}
+function exclEndT(e, now) {
+  let need = e.at + EXCL_MS;
+  for (const [a, b0] of D.segs[e.q] || []) {
+    const b = b0 == null ? now : b0;
+    if (b - a >= need) return a + need;
+    need -= b - a;
+  }
+  return null;
+}
+// Si es treu un exclòs i ningú no entra per ell, torna sol a l'aigua en acabar l'exclusió.
+// Es decideix un sol cop per exclusió (si es desfà la tornada, no torna a entrar).
+function autoReturn(now) {
+  for (const [n, e] of Object.entries(D.excl)) {
+    if (e.done) continue;
+    const end = exclEndT(e, now);
+    if (end == null || now < end + EXCL_GRACE) continue;
+    const ex = M.acts.find(a => a.id === e.id);
+    e.done = true;
+    if (!ex) continue;
+    ex.back = true;
+    const num = +n, at = derive({acts: M.acts.filter(a => a.t <= end + EXCL_GRACE)});
+    const tookOut = M.acts.some(a => a.k === 'OUT' && a.num === num && a.t > e.t && a.t <= end);
+    if (!tookOut || at.inWater.has(num) || at.inWater.size >= 7 || isOut(at.stats.cnt[num])) { saveMatch(); continue; }
+    const act = {id: uid(), t: end, q: e.q, team: 'cnt', num, k: 'IN', auto: true};
+    const i = M.acts.findIndex(a => a.t > end);
+    M.acts.splice(i < 0 ? M.acts.length : i, 0, act);
+    commit();
+    toast(actText(act), [{label: '↶ Desfer', fn: () => removeAct(act.id)}], 5000);
+  }
+}
+function paintExcl(now) {
+  let ended = false;
+  document.querySelectorAll('[data-exc]').forEach(el => {
+    const left = exclLeft(+el.dataset.exc, now);
+    if (left > 0) el.textContent = '⏱' + Math.ceil(left / 1000);
+    else ended = true;
+  });
+  if (ended && tab === 'anotar') renderBody();
+}
 function isOut(s) { s = s || {}; return FOUL_KEYS.reduce((n, k) => n + (s[k] || 0), 0) >= 3 || OUT_KEYS.some(k => s[k]); }
 
 /* ============================================================
@@ -806,10 +860,11 @@ function playerCard(team, p) {
       <button class="b x" data-act="add" data-team="rival" data-n="${p.num}" data-k="EX" aria-label="Exclusió rival ${p.num}">EX<b>${fouls || ''}</b></button></div></div>`;
   }
   const inW = D.inWater.has(p.num);
+  const left = exclLeft(p.num, Date.now());
   return `<div class="pc ${inW ? 'in' : ''} ${out ? 'out' : ''}">
     <div class="pc-h"><button style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;text-align:left" data-act="toggle" data-n="${p.num}" aria-label="${inW ? 'Treure' : 'Entrar'} ${p.num}">
       <span class="n">${p.num}</span><span class="nm">${esc(short(p.name))}</span></button>
-      <span class="dots">${dots}</span><button class="mo" data-act="more" data-team="cnt" data-n="${p.num}" aria-label="Més ${p.num}">⋯</button></div>
+      ${left ? `<span class="exc" data-exc="${p.num}" title="Exclòs: torna sol">⏱${Math.ceil(left / 1000)}</span>` : `<span class="dots">${dots}</span>`}<button class="mo" data-act="more" data-team="cnt" data-n="${p.num}" aria-label="Més ${p.num}">⋯</button></div>
     <div class="pc-b"><button class="b g" data-act="add" data-team="cnt" data-n="${p.num}" data-k="G" aria-label="Gol ${p.num}">⚽<b>${goals || ''}</b></button>
     <button class="b x" data-act="add" data-team="cnt" data-n="${p.num}" data-k="EX" aria-label="Exclusió ${p.num}">EX<b>${fouls || ''}</b></button></div></div>`;
 }
@@ -822,7 +877,7 @@ function actText(a) {
     case 'PAUSE': return '⏸ Temps mort';
     case 'RESUME': return '▶ Continua';
     case 'FINAL': return '🏁 Final del partit';
-    case 'IN': return `💧 Entra ${who}`;
+    case 'IN': return a.auto ? `💧 Torna ${who} (fi de l'exclusió)` : `💧 Entra ${who}`;
     case 'OUT': return `⬅️ Surt ${who}`;
     case 'G': return `⚽ Gol ${who}`;
     case 'GP': return `🎯 Gol de penal ${who}`;
@@ -839,7 +894,7 @@ function renderAnotar() {
     const n = D.inWater.size;
     h += `<div class="notice ${n === 7 ? 'info' : ''}">Toca el nom dels <b>7 titulars</b> per posar-los a l'aigua (${n}/7). Després, <b>▶ Inicia Q1</b>.</div>`;
   } else if (!D.finished && D.q !== 5 && D.inWater.size !== 7) {
-    h += `<div class="notice">Hi ha ${D.inWater.size} jugadors del CNT a l'aigua. Revisa els canvis (han de ser 7, o menys si n'hi ha d'exclosos).</div>`;
+    h += `<div class="notice">Hi ha ${D.inWater.size} jugadors del CNT a l'aigua. Revisa els canvis (han de ser 7: un exclòs de 20 s compta com a dins).</div>`;
   }
   h += `<div class="sect"><h3>${esc(M.cntName)}</h3><span class="muted small">toca el nom = dins/fora</span></div>
     <div class="grid">${M.roster.cnt.map(p => playerCard('cnt', p)).join('')}
@@ -981,7 +1036,7 @@ function renderTemps() {
   const rows = M.roster.cnt.map(p => ({...p, t: pt[p.num] || {total: 0, q: {}}})).sort((a, b) => b.t.total - a.t.total || a.num - b.num);
   const qEnded = q => D.ended.has(q);
   return `<section class="card"><h2>Temps a l'aigua (estimat)</h2>
-    <p class="muted small" style="margin-bottom:8px">Els quarts acabats s'escalen a 8:00; el quart en joc mostra temps real. ⏸ Temps mort atura el comptador.</p>
+    <p class="muted small" style="margin-bottom:8px">Els quarts acabats s'escalen a 8:00; el quart en joc mostra temps real. ⏸ Temps mort atura el comptador. Un exclòs de 20 s compta com a dins.</p>
     ${rows.map(r => `<div class="trow"><span class="n">${r.num}</span><span class="nm">${D.inWater.has(r.num) ? '💧 ' : ''}${esc(r.name) || '—'}</span>${D.starters && D.starters.includes(r.num) ? '<span class="pill" title="Titular">T</span>' : ''}
       <span class="qbar">${[1, 2, 3, 4].map(q => `<span title="Q${q}"><i style="width:${Math.min(100, (r.t.q[q] || 0) / (qEnded(q) ? QUARTER_MS : Math.max(quarterSpan(q, now), 1)) * 100)}%"></i></span>`).join('')}</span>
       <span class="tt">${mmss(r.t.total)}</span></div>`).join('')}</section>`;
@@ -1008,7 +1063,8 @@ function refineToast(a) {
     for (const [k, l] of [['EX', '20 s'], ['P', 'Falta de penal'], ['EP', 'Excl. + penal'], ['EB', 'Brutalitat'], ['ED', 'Definitiva']])
       if (k !== a.k) chips.push([k, l]);
   }
-  toast(actText(a) + (a.q && a.q < 5 ? ' · Q' + a.q : ''), [
+  const stays = a.team === 'cnt' && EXCL_KEYS.includes(a.k) && D.inWater.has(a.num) && exclLeft(a.num, Date.now()) > 0;
+  toast(actText(a) + (a.q && a.q < 5 ? ' · Q' + a.q : '') + (stays ? ' · no cal treure\'l: torna sol als 20 s' : ''), [
     ...chips.map(([k, l]) => ({label: l, fn: () => { refine(a.id, a.k === 'GP' && k === 'GP' ? 'G' : k); }})),
     {label: '↶ Desfer', fn: () => { removeAct(a.id); toast('Desfet'); }},
   ], 6000);
@@ -1035,9 +1091,11 @@ function toggleWater(num) {
   if (D.finished) return toast('El partit està tancat.');
   const inW = D.inWater.has(num);
   if (!inW && isOut(D.stats.cnt[num]) && !confirm(`El #${num} ja té 3 faltes o expulsió definitiva. Entrar-lo igualment?`)) return;
+  const excluded = inW && exclLeft(num, Date.now()) > 0;
   const a = push({q: D.q, team: 'cnt', num, k: inW ? 'OUT' : 'IN'});
   buzz(); commit();
-  toast(actText(a), [{label: '↶ Desfer', fn: () => removeAct(a.id)}], 2500);
+  toast(actText(a) + (excluded ? ' · si ningú no entra per ell, torna sol en acabar l\'exclusió' : ''),
+    [{label: '↶ Desfer', fn: () => removeAct(a.id)}], excluded ? 5000 : 2500);
 }
 
 function quarter(k, q) {
@@ -1211,6 +1269,7 @@ function startLive() {
       const q = $('#qlabel'); if (q) q.textContent = 'Q' + D.q + ' · ' + mmss(quarterElapsed(now));
       if (tab === 'temps' && now % 5000 < 1000) renderBody();
     }
+    if (Object.keys(D.excl).length) { autoReturn(now); paintExcl(now); }
     const aa = $('#actaAgo'); if (aa && FED.doc && FED.doc.statsAt) aa.textContent = 'acta ' + ago(FED.doc.statsAt);
   }, 1000);
   if (!M.fed) return;
