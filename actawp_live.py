@@ -42,6 +42,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -70,8 +71,16 @@ MAX_AFTER = timedelta(minutes=150)   # deixa de vigilar si l'acta no es tanca ma
 JOB_BUDGET = 345                     # min per feina de GitHub (el límit és 360): després, relleu
 RELAY_LEAD = timedelta(minutes=60)   # el relleu es demana 1 h abans de connectar-se (marge per a la cua)
 READ_EVERY_LIVE = 10                 # s entre lectures del minut a minut amb el partit en joc (~0,5 s cadascuna)
+READ_EVERY_SLOW = 30                 # s entre lectures en joc durant SLOW_FOR després d'un bloqueig o d'un 429
+SLOW_FOR = timedelta(minutes=20)
 READ_EVERY_PRE = 300                 # s entre lectures abans de començar
 READ_EVERY_SOON = 60                 # s entre lectures la darrera mitja hora (la FCN hi posa la convocatòria)
+LOAD_WAIT = 120                      # s que s'espera que la pàgina passi la comprovació anti-bot
+# 08/11/2026: la feina de GitHub que seguia el partit va quedar bloquejada per l'anti-bot tot el
+# partit, i la següent feina (una altra màquina i IP) hi va entrar a la primera. Per això, si el
+# bloqueig dura BLOCK_RELAY, es demana una feina nova (com el relleu per temps), com a molt MAX_BLOCK_RELAYS.
+BLOCK_RELAY = timedelta(minutes=4)
+MAX_BLOCK_RELAYS = 6
 STATS_EVERY = 60                     # s màxim entre lectures per jugador (abans si el minut a minut canvia)
 API_EVERY = 45                       # s entre lectures de l'API pública
 AFTER_FINISH_READS = (180, 600)      # lectures extra després d'acabar (correccions de l'acta)
@@ -325,9 +334,11 @@ class ActaBrowser:
     Carrega la pàgina de l'acta un cop (passa la comprovació anti-bot) i després només fa
     les peticions AJAX de les pestanyes: molt més lleuger que obrir un Chrome per lectura."""
 
-    def __init__(self, url, tag):
+    def __init__(self, url, tag, fresh=False):
         self.url = url
         self.profile = os.path.join(tempfile.gettempdir(), f"actawp_live_{tag}")
+        if fresh:  # després d'un bloqueig: galetes i estat de la comprovació nous
+            shutil.rmtree(self.profile, ignore_errors=True)
         self.proc = self.ws = None
         self.seq = 0
 
@@ -375,7 +386,7 @@ class ActaBrowser:
 
     def load(self):
         self.call("Page.navigate", url=self.url)
-        for _ in range(60):
+        for _ in range(LOAD_WAIT):
             time.sleep(1)
             try:
                 if self.evaluate("!!document.querySelector('input[name=csrf_token]') && "
@@ -383,7 +394,16 @@ class ActaBrowser:
                     return
             except RuntimeError:  # la pàgina de comprovació redirigeix: context destruït
                 pass
-        raise RuntimeError(f"No s'ha pogut carregar {self.url} (comprovació anti-bot?)")
+        # Què mostra la pàgina (es desa a lectorLog de la RTDB per saber per què ha fallat)
+        info = {}
+        try:
+            info = self.evaluate("(() => { const n = performance.getEntriesByType('navigation')[0];"
+                                 " return {status: n ? n.responseStatus : null, title: document.title,"
+                                 " text: (document.body ? document.body.innerText : '').replace(/\\s+/g, ' ').slice(0, 160)}; })()") or {}
+        except RuntimeError:
+            pass
+        raise RuntimeError(f"No s'ha pogut carregar l'acta (comprovació anti-bot?) · HTTP {info.get('status')}"
+                           f" · {info.get('title', '')!r} · {info.get('text', '')!r}")
 
     def tab(self, name):
         """Contingut HTML d'una pestanya: 'statistics' o 'minute_by_minute'."""
@@ -469,7 +489,7 @@ def match_meta(m):
 
 
 class Tracker:
-    def __init__(self, match, sink, host):
+    def __init__(self, match, sink, host, slow=False):
         self.m, self.sink, self.host = match, sink, host
         self.next_api = self.next_read = self.next_stats = utc_now()
         self.finished_at = None
@@ -478,6 +498,10 @@ class Tracker:
         self.last_state = self.last_players = self.last_events = None
         self.last_status = (None, None, 0.0)
         self.browser = None
+        self.fresh_next = False      # la propera vegada, Chrome amb perfil net
+        self.blocked_since = None    # des de quan no es pot llegir l'acta
+        # Feina engegada per un bloqueig: comença llegint a poc a poc
+        self.slow_until = utc_now() + SLOW_FOR if slow else utc_now()
         self.done = False
         m = match
         self.url = acta_url(m)
@@ -488,10 +512,15 @@ class Tracker:
 
     def status(self, st, msg=""):
         # Cada lectura "ok" no cal escriure-la: només canvis o, com a molt, un cop per minut
-        if (st, msg) == self.last_status[:2] and time.time() - self.last_status[2] < 60:
+        changed = (st, msg) != self.last_status[:2]
+        if not changed and time.time() - self.last_status[2] < 60:
             return
         self.last_status = (st, msg, time.time())
-        self.sink.update(self.m["matchId"], {"checkedAt": ms(), "lector": {"host": self.host, "status": st, "msg": msg, "at": ms()}})
+        now = ms()
+        data = {"checkedAt": now, "lector": {"host": self.host, "status": st, "msg": msg, "at": now}}
+        if changed:  # historial dels canvis d'estat, per saber després què ha passat durant el partit
+            data[f"lectorLog/{now}"] = {"host": self.host, "status": st, "msg": msg}
+        self.sink.update(self.m["matchId"], data)
 
     def close(self):
         if self.browser:
@@ -501,7 +530,8 @@ class Tracker:
     def read(self, now):
         mid = self.m["matchId"]
         if not self.browser:
-            self.browser = ActaBrowser(self.url, mid)
+            self.browser = ActaBrowser(self.url, mid, fresh=self.fresh_next)
+            self.fresh_next = False
             self.browser.start()
         events = parse_events(self.browser.tab("minute_by_minute"), self.m)
         fresh = events != self.last_events
@@ -546,13 +576,19 @@ class Tracker:
             try:
                 self.read(now)
                 self.backoff = 0
+                self.blocked_since = None
                 self.status("ok")
             except Exception as e:
                 limited = isinstance(e, RateLimited)
                 self.backoff = min(max(self.backoff * 2, 60 if limited else 20), 300)
                 blocked = "comprovació" in str(e).lower() or "No s'ha pogut carregar" in str(e)
                 log(f"⚠️ acta {mid}: {e} (espero {self.backoff}s)")
-                self.status("blocked" if blocked else "error", str(e)[:200])
+                self.status("blocked" if blocked else "error", str(e)[:300])
+                if blocked or limited:  # una estona llegint a poc a poc
+                    self.slow_until = now + SLOW_FOR
+                    self.blocked_since = self.blocked_since or now
+                if blocked:  # potser les galetes de la sessió estan marcades: perfil net
+                    self.fresh_next = True
                 if not limited:  # sessió trencada: la propera lectura torna a obrir Chrome
                     self.close()
 
@@ -565,7 +601,8 @@ class Tracker:
                     return
             else:
                 to_start = self.m["start"] - now
-                gap = (READ_EVERY_LIVE if to_start <= timedelta(minutes=3) else
+                live = READ_EVERY_SLOW if now < self.slow_until else READ_EVERY_LIVE
+                gap = (live if to_start <= timedelta(minutes=3) else
                        READ_EVERY_SOON if to_start <= timedelta(minutes=30) else READ_EVERY_PRE)
                 self.next_read = now + timedelta(seconds=max(gap, self.backoff))
 
@@ -653,6 +690,8 @@ def follow(args, sink, host, only, trackers):
     job_end = None if args.watch else started + timedelta(minutes=args.max_minutes)
     next_discover = started
     upcoming, done = {}, set()  # partits que encara no és hora de seguir / ja seguits en aquesta feina
+    # Relleus per bloqueig ja fets en aquesta cadena de feines (el workflow el passa d'una a l'altra)
+    block_relays = int(os.environ.get("BLOCK_RELAYS") or 0)
     while True:
         now = utc_now()
         if now >= next_discover:
@@ -675,7 +714,7 @@ def follow(args, sink, host, only, trackers):
             if only or (now >= m["start"] - PRE_START and fits):
                 upcoming.pop(mid)
                 log(f"👀 Segueixo {m['home']['name']} – {m['away']['name']} ({m['category']}, {m['start']:%d/%m %H:%M} UTC)")
-                trackers[mid] = Tracker(m, sink, host)
+                trackers[mid] = Tracker(m, sink, host, slow=block_relays > 0)
                 if only and m["finished"]:  # partit ja jugat: una lectura i prou
                     trackers[mid].after_reads = []
                     trackers[mid].finished_at = now
@@ -690,7 +729,15 @@ def follow(args, sink, host, only, trackers):
             return
         if job_end and relay_due(now, job_end, trackers, upcoming):
             log("🔁 Aquesta feina no arriba al final del partit: en demano una altra (relleu).")
-            gh_output(relay="true")
+            gh_output(relay="true", block_relays=block_relays)
+            return
+        # GitHub: si l'anti-bot no ens deixa entrar en una bona estona, una màquina nova (sol ser una altra IP)
+        stuck = [t for t in trackers.values() if t.blocked_since and now - t.blocked_since >= BLOCK_RELAY]
+        if job_end and stuck and block_relays < MAX_BLOCK_RELAYS:
+            log(f"🔁 Bloquejat des de les {stuck[0].blocked_since:%H:%M} UTC: demano una màquina nova "
+                f"({block_relays + 1}/{MAX_BLOCK_RELAYS}).")
+            stuck[0].status("relay", f"bloquejat: es demana una màquina nova de GitHub ({block_relays + 1}/{MAX_BLOCK_RELAYS})")
+            gh_output(relay="true", block_relays=block_relays + 1)
             return
         time.sleep(5 if trackers else 30)
 

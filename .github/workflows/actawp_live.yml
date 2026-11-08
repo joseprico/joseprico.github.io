@@ -7,7 +7,8 @@ name: Acta ACTAWP en directe
 # 3-9 h. Per això cada execució mira si hi ha un partit del CNT en les 12 h
 # següents (uns segons, sense dependències): si n'hi ha, s'hi queda esperant,
 # es connecta a l'acta 2 h abans i el segueix fins que acaba. Si el partit no hi
-# cap abans del límit de 6 h de GitHub, engega una altra execució (relleu).
+# cap abans del límit de 6 h de GitHub, engega una altra execució (relleu). També
+# si l'anti-bot la bloqueja més de 4 min: la feina nova sol anar en una màquina amb una altra IP.
 # Reserva: el mateix script al PC (`python actawp_live.py --watch`).
 
 on:
@@ -21,6 +22,9 @@ on:
         required: false
       tournament:
         description: "Id del torneig del partit (obligatori si poses partit)"
+        required: false
+      block_relays:
+        description: "Ús intern: relleus ja fets perquè l'anti-bot bloquejava la feina anterior"
         required: false
 
 # Mai dos lectors alhora: si un partit s'està seguint, les execucions noves esperen
@@ -70,6 +74,7 @@ jobs:
           ACTAWP_BROWSER: /usr/bin/google-chrome
           MATCH_ID: ${{ inputs.match }}
           TOURNAMENT_ID: ${{ inputs.tournament }}
+          BLOCK_RELAYS: ${{ inputs.block_relays }}
         run: |
           if [ -n "$MATCH_ID" ]; then
             python actawp_live.py --match "$MATCH_ID" --tournament "$TOURNAMENT_ID"
@@ -77,8 +82,10 @@ jobs:
             python actawp_live.py
           fi
 
-      - name: Relleu (el partit no hi cap en aquesta execució)
+      - name: Relleu (el partit no hi cap o l'anti-bot bloqueja aquesta màquina)
         if: ${{ steps.follow.outputs.relay == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run actawp_live.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"
+        run: >
+          gh workflow run actawp_live.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"
+          -f block_relays="${{ steps.follow.outputs.block_relays || '0' }}"
