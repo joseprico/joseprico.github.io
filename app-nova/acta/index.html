@@ -185,6 +185,8 @@ table.q td{font-weight:700}
 .step span{min-width:22px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 14px}
 .chips .chip.sel{background:var(--text);color:#fff;border-color:transparent}
+.chips .chip.sug{border-color:var(--water);box-shadow:inset 0 0 0 1px var(--water)}
+.notice .btn{margin-top:8px;width:100%;min-height:40px}
 .field{display:flex;flex-direction:column;gap:4px;margin:8px 0 12px;font-size:.8rem;color:var(--muted);font-weight:650}
 .field input{padding:10px 12px;border:1px solid var(--border);border-radius:10px;color:var(--text);font-weight:600;text-transform:uppercase}
 .mlist button{display:block;width:100%;text-align:left;padding:13px 4px;border-top:1px solid var(--border);font-weight:650}
@@ -722,6 +724,7 @@ function openMatch(id) {
   M = m; D = derive(M); tab = 'anotar'; openRows.clear();
   cat = M.cat; document.body.className = 'cat-' + cat;
   FED = {doc: null, team: null, teamAt: 0, teamErr: null, src: null};
+  evSeen = null;
   $('#app').innerHTML = `<div class="mhead" id="mhead"></div><div id="mbody"></div>`;
   renderMatch();
   startLive();
@@ -759,21 +762,70 @@ async function prevLineup(m) {
   }
   return null;
 }
+// Titulars del darrer partit jugat abans d'aquest, de les nostres actes: les penjades (amb les correccions
+// de l'app d'estadístiques, si n'hi ha) i les d'aquest mòbil
+const FS_ROOT = FS_DOCS.replace(/\/matches\/$/, '');
+function fromFs(v) {
+  if (!v || typeof v !== 'object') return null;
+  if ('mapValue' in v) return Object.fromEntries(Object.entries(v.mapValue.fields || {}).map(([k, x]) => [k, fromFs(x)]));
+  if ('arrayValue' in v) return (v.arrayValue.values || []).map(fromFs);
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue' in v) return Number(v.doubleValue);
+  return 'nullValue' in v ? null : (v.booleanValue ?? v.stringValue ?? v.timestampValue ?? null);
+}
+async function prevStarters(m) {
+  const before = msOf(m.fed ? m.fed.datetime : m.created), cands = [];
+  const items = fedList.items.length ? fedList.items : ((LS.get('acta_v1_fed_' + m.cat, null) || {}).items || []);
+  try {
+    const r = await fetch(FS_ROOT + ':runQuery', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({structuredQuery: {from: [{collectionId: 'matches'}], where: {fieldFilter: {field: {fieldPath: 'source'}, op: 'IN',
+        value: {arrayValue: {values: [{stringValue: 'acta'}, {stringValue: 'acta_edit'}]}}}}}})});
+    const docs = r.ok ? toArr(await r.json()).filter(x => x.document).map(x => fromFs({mapValue: {fields: x.document.fields}})) : [];
+    const edits = new Map(docs.filter(d => d.source === 'acta_edit').map(d => [d.matchId, d]));
+    for (const d of docs.filter(d => d.source === 'acta' && d.teamId === m.cat && d.actaId !== m.id)) {
+      const f = items.find(x => x.matchId === String(d.fedMatchId));
+      const date = msOf(f ? f.datetime : d.data);
+      if (date >= before) continue;
+      const e = edits.get(d.id), eq = e && e.n && e.n.quarters && e.n.quarters['1'];
+      const st = toArr(eq ? eq.start : toArr(d.starters).length ? d.starters : d.lineups && d.lineups.q1).map(Number);
+      if (st.length >= 5) cands.push({date, starters: st, rival: d.rivalTeam});
+    }
+  } catch (e) {}
+  for (const x of LS.get(IDX, []).filter(x => x.cat === m.cat && x.id !== m.id && msOf(x.date) < before)) {
+    const pm = LS.get(MK(x.id), null), st = pm ? derive(pm).starters || [] : [];
+    if (st.length >= 5) cands.push({date: msOf(x.date), starters: st, rival: x.rival});
+  }
+  return cands.sort((a, b) => b.date - a.date)[0] || null;   // a igual data, la penjada (pot dur correccions)
+}
 async function fillFromPrev() {
   const m = M;
-  if (!m || D.finished || !m.roster.cnt.some(p => !p.name)) return;
-  const prev = await prevLineup(m);
-  if (!prev || M !== m) return;
-  let n = 0;
-  for (const pp of prev.players) {
-    let p = m.roster.cnt.find(x => x.num === pp.num);
-    if (!p) { p = {num: pp.num, name: ''}; m.roster.cnt.push(p); }
-    if (!p.name) { p.name = pp.name; p.auto = 'prev'; n++; }
+  if (!m || D.finished) return;
+  // Noms dels dorsals buits
+  if (m.roster.cnt.some(p => !p.name)) {
+    const prev = await prevLineup(m);
+    if (M !== m) return;
+    let n = 0;
+    for (const pp of prev ? prev.players : []) {
+      let p = m.roster.cnt.find(x => x.num === pp.num);
+      if (!p) { p = {num: pp.num, name: ''}; m.roster.cnt.push(p); }
+      if (!p.name) { p.name = pp.name; p.auto = 'prev'; n++; }
+    }
+    if (n) {
+      m.roster.cnt.sort((a, b) => a.num - b.num);
+      m.prevFrom = {date: prev.date, rival: prev.rival};
+      saveMatch(); renderMatch();
+    }
   }
-  if (!n) return;
-  m.roster.cnt.sort((a, b) => a.num - b.num);
-  m.prevFrom = {date: prev.date, rival: prev.rival};
-  saveMatch(); renderMatch();
+  // Titulars a l'aigua: només abans de començar, amb l'acta buida, i un sol cop per partit
+  if (D.q === 0 && !m.acts.length && !m.startersFrom) {
+    const ps = await prevStarters(m);
+    if (!ps || M !== m || m.acts.length) return;
+    const nums = ps.starters.filter(n => m.roster.cnt.some(p => p.num === n)).slice(0, 7);
+    if (!nums.length) return;
+    nums.forEach(num => push({q: 0, team: 'cnt', num, k: 'IN'}));
+    m.startersFrom = {date: ps.date, rival: ps.rival};
+    commit();
+  }
 }
 
 function sideOf(team) { if (!M.fed) return null; const cs = M.fed.cntSide; return team === 'cnt' ? cs : (cs === 'home' ? 'away' : 'home'); }
@@ -837,6 +889,7 @@ function renderHead() {
     </div>
     <div class="fedline" id="fedline">${fedLine()}</div>
     <div class="ctrl">${quarterButtons()}
+      ${hasGkPair() && !D.finished ? `<button class="btn icon" data-act="gk" aria-label="Canvi de porter ${GOALKEEPERS.join('↔')}" title="Canvi de porter ${GOALKEEPERS.join('↔')}">🧤</button>` : ''}
       <button class="btn icon" data-act="swap" aria-label="Canvi">🔄</button>
       <button class="btn icon" data-act="undo" aria-label="Desfer" ${M.acts.length ? '' : 'disabled'}>↶</button>
     </div>
@@ -851,7 +904,8 @@ function quarterButtons() {
   if (D.finished) return `<button class="btn" data-act="reopen">🏁 Acabat · Reobrir</button>`;
   if (D.q === 0) return `<button class="btn primary" data-act="qstart" data-q="1">▶ Inicia Q1</button>`;
   if (D.q === 5) return `<button class="btn primary" data-act="final">🏁 Final</button>`;
-  if (D.running) return `<button class="btn" data-act="pause">⏸ Temps mort</button><button class="btn primary" data-act="qend">⏹ Fi Q${D.q}</button>`;
+  // Sense botó de temps mort (08/11/2026): amb cada quart escalat a 8:00, aturar el rellotge gairebé no canvia els minuts
+  if (D.running) return `<button class="btn primary" data-act="qend">⏹ Fi Q${D.q}</button>`;
   if (!D.qEnded) return `<button class="btn primary" data-act="resume">▶ Continua</button><button class="btn" data-act="qend">⏹ Fi Q${D.q}</button>`;
   if (D.q < 4) return `<button class="btn primary" data-act="qstart" data-q="${D.q + 1}">▶ Inicia Q${D.q + 1}</button>`;
   return `<button class="btn" data-act="qstart" data-q="5">🎯 Penals</button><button class="btn primary" data-act="final">🏁 Final</button>`;
@@ -940,10 +994,12 @@ function actText(a) {
 function nameOf(team, num) { const p = M.roster[team].find(x => x.num === num); return p ? p.name : ''; }
 
 function renderAnotar() {
-  let h = '';
+  let h = quarterAlertHtml();
   if (D.q === 0) {
-    const n = D.inWater.size;
-    h += `<div class="notice ${n === 7 ? 'info' : ''}">Toca el nom dels <b>7 titulars</b> per posar-los a l'aigua (${n}/7). Després, <b>▶ Inicia Q1</b>.</div>`;
+    const n = D.inWater.size, sf = M.startersFrom;
+    h += sf && n
+      ? `<div class="notice ${n === 7 ? 'info' : ''}">💧 A l'aigua hi ha els titulars del partit anterior (${esc(fmtDay(new Date(msOf(sf.date))))}${sf.rival ? ' contra ' + esc(teamShort(sf.rival)) : ''}). Toca un nom per treure'l o posar-lo (${n}/7). Després, <b>▶ Inicia Q1</b> (o anota el primer gol o exclusió i es posa en marxa sol).</div>`
+      : `<div class="notice ${n === 7 ? 'info' : ''}">Toca el nom dels <b>7 titulars</b> per posar-los a l'aigua (${n}/7). Després, <b>▶ Inicia Q1</b>.</div>`;
   } else if (!D.finished && D.q !== 5 && D.inWater.size !== 7) {
     h += `<div class="notice">Hi ha ${D.inWater.size} jugadors del CNT a l'aigua. Revisa els canvis (han de ser 7: un exclòs de 20 s compta com a dins).</div>`;
   }
@@ -1104,13 +1160,23 @@ function push(a) { const act = {id: uid(), t: Date.now(), ...a}; M.acts.push(act
 
 function addStat(team, num, k) {
   if (D.finished) return toast('El partit està tancat. Reobre\'l per anotar.');
+  // Un gol o una exclusió vol dir que es juga: si el quart no està en marxa, es posa en marxa ara
+  // (mateix grup que l'acció: "Desfer" treu les dues coses)
+  let grp, note = '';
+  if (D.q === 0 || (D.qEnded && D.q < 4)) {
+    const nq = D.q === 0 ? 1 : D.q + 1;
+    grp = uid(); push({q: nq, k: 'QSTART', grp}); D = derive(M); keepAwake();
+    note = `▶ Q${nq} començat · `;
+  } else if (!D.running && !D.qEnded && D.q >= 1 && D.q <= 4) {   // aturat (actes antigues amb temps mort)
+    push({q: D.q, k: 'RESUME'}); D = derive(M);
+  }
   const q = D.q || 1;
   if (k === 'G' && D.q === 5) k = 'G5P';
-  const a = push({q, team, num, k});
-  buzz(); commit(); refineToast(a);
+  const a = push({q, team, num, k, ...(grp ? {grp} : {})});
+  buzz(); commit(); refineToast(a, note);
 }
 
-function refineToast(a) {
+function refineToast(a, note = '') {
   const chips = [];
   if (a.k === 'G' || a.k === 'GP') chips.push(['GP', a.k === 'GP' ? '⚽ Era de jugada' : '🎯 Era penal']);
   if (['EX', 'P', 'EP', 'EB', 'ED'].includes(a.k)) {
@@ -1118,7 +1184,7 @@ function refineToast(a) {
       if (k !== a.k) chips.push([k, l]);
   }
   const stays = a.team === 'cnt' && EXCL_KEYS.includes(a.k) && D.inWater.has(a.num) && exclLeft(a.num, Date.now()) > 0;
-  toast(actText(a) + (a.q && a.q < 5 ? ' · Q' + a.q : '') + (stays ? ' · no cal treure\'l: torna sol als 20 s' : ''), [
+  toast(note + actText(a) + (a.q && a.q < 5 ? ' · Q' + a.q : '') + (stays ? ' · no cal treure\'l: torna sol als 20 s' : ''), [
     ...chips.map(([k, l]) => ({label: l, fn: () => { refine(a.id, a.k === 'GP' && k === 'GP' ? 'G' : k); }})),
     {label: '↶ Desfer', fn: () => { removeAct(a.id); toast('Desfet'); }},
   ], 6000);
@@ -1153,8 +1219,8 @@ function toggleWater(num) {
 }
 
 function quarter(k, q) {
-  if (k === 'qstart' && q === 1 && D.inWater.size !== 7 &&
-      !confirm(`Hi ha ${D.inWater.size} jugadors del CNT a l'aigua (han de ser 7 titulars). Començar igualment?`)) return;
+  if (k === 'qstart' && q <= 4 && D.inWater.size !== 7 &&
+      !confirm(`Hi ha ${D.inWater.size} jugadors del CNT a l'aigua (han de ser 7${q === 1 ? ' titulars' : ''}). Començar el Q${q} igualment?`)) return;
   const map = {qstart: 'QSTART', qend: 'QEND', pause: 'PAUSE', resume: 'RESUME', final: 'FINAL'};
   const a = push({q: k === 'qstart' ? q : D.q, k: map[k]});
   commit(); keepAwake();
@@ -1204,28 +1270,62 @@ function stepStat(team, num, k, inc) {
 }
 
 let swapSel = {out: null, in: null};
+// Parelles habituals "surt → entra" d'aquest partit i de l'anterior d'aquest mòbil (canvi guiat, o tocs
+// separats de menys de 30 s): en triar qui surt, primer qui sol entrar per ell (i al revés)
+function swapPairs() {
+  const pairs = {};
+  const prev = LS.get(IDX, []).filter(x => x.cat === M.cat && x.id !== M.id && msOf(x.date) < msOf(M.fed ? M.fed.datetime : M.created))
+    .sort((a, b) => msOf(b.date) - msOf(a.date))[0];
+  const pm = prev ? LS.get(MK(prev.id), null) : null;
+  for (const [acts, w] of [[M.acts, 2], [pm ? pm.acts : [], 1]]) {
+    const ch = acts.filter(a => (a.k === 'IN' || a.k === 'OUT') && !a.auto);
+    ch.forEach((a, i) => {
+      if (a.k !== 'OUT') return;
+      const b = ch.slice(i + 1).find(x => x.k === 'IN');
+      if (b && (a.grp ? b.grp === a.grp : b.t - a.t < 30e3)) pairs[a.num + '>' + b.num] = (pairs[a.num + '>' + b.num] || 0) + w;
+    });
+  }
+  return pairs;
+}
 function swapSheet() {
-  const outs = M.roster.cnt.filter(p => D.inWater.has(p.num));
-  const ins = M.roster.cnt.filter(p => !D.inWater.has(p.num) && !isOut(D.stats.cnt[p.num]));
-  const chip = (p, side) => `<button class="chip ${swapSel[side] === p.num ? 'sel' : ''}" data-act="swapPick" data-side="${side}" data-n="${p.num}">${p.num} ${esc(short(p.name))}</button>`;
+  const pairs = swapPairs();
+  const score = (side, num) => side === 'in' ? (swapSel.out != null ? pairs[swapSel.out + '>' + num] || 0 : 0)
+                                            : (swapSel.in != null ? pairs[num + '>' + swapSel.in] || 0 : 0);
+  const order = (list, side) => [...list].sort((a, b) => score(side, b.num) - score(side, a.num) || a.num - b.num);
+  const outs = order(M.roster.cnt.filter(p => D.inWater.has(p.num)), 'out');
+  const ins = order(M.roster.cnt.filter(p => !D.inWater.has(p.num) && !isOut(D.stats.cnt[p.num])), 'in');
+  const best = side => { const l = side === 'in' ? ins : outs; return l.length && score(side, l[0].num) ? l[0].num : null; };
+  const chip = (p, side) => `<button class="chip ${swapSel[side] === p.num ? 'sel' : ''} ${best(side) === p.num ? 'sug' : ''}" data-act="swapPick" data-side="${side}" data-n="${p.num}">${best(side) === p.num ? '⭐ ' : ''}${p.num} ${esc(short(p.name))}</button>`;
   openSheet(`<h3>🔄 Canvi</h3>
     <div class="muted small">Surt (a l'aigua)</div><div class="chips">${outs.map(p => chip(p, 'out')).join('') || '<span class="faint small">Ningú a l\'aigua</span>'}</div>
-    <div class="muted small">Entra (banqueta)</div><div class="chips">${ins.map(p => chip(p, 'in')).join('') || '<span class="faint small">Ningú a la banqueta</span>'}</div>
+    <div class="muted small">Entra (banqueta)${swapSel.out != null && best('in') != null ? ' · ⭐ el que sol entrar per ell' : ''}</div><div class="chips">${ins.map(p => chip(p, 'in')).join('') || '<span class="faint small">Ningú a la banqueta</span>'}</div>
     <button class="btn wide" data-act="closeSheet">Tancar</button>`);
 }
 function swapPick(side, num) {
   swapSel[side] = swapSel[side] === num ? null : num;
   if (swapSel.out != null && swapSel.in != null) {
-    const grp = uid(), o = swapSel.out, i = swapSel.in;
-    push({q: D.q, team: 'cnt', num: o, k: 'OUT', grp});
-    push({q: D.q, team: 'cnt', num: i, k: 'IN', grp});
+    const o = swapSel.out, i = swapSel.in;
     swapSel = {out: null, in: null};
-    buzz(); commit(); closeSheet();
-    toast(`🔄 Surt #${o} · entra #${i}`, [{label: '↶ Desfer', fn: () => { const a = M.acts.find(x => x.grp === grp); if (a) removeAct(a.id); }}], 4000);
+    closeSheet(); doSwap(o, i);
     return;
   }
   swapSheet();
 }
+function doSwap(o, i) {
+  if (D.finished) return toast('El partit està tancat.');
+  const grp = uid();
+  push({q: D.q, team: 'cnt', num: o, k: 'OUT', grp});
+  push({q: D.q, team: 'cnt', num: i, k: 'IN', grp});
+  buzz(); commit();
+  toast(`🔄 Surt #${o} · entra #${i}`, [{label: '↶ Desfer', fn: () => { const a = M.acts.find(x => x.grp === grp); if (a) removeAct(a.id); }}], 4000);
+}
+// Canvi de porter d'un toc: surt el que és a l'aigua i entra l'altre
+function gkSwap() {
+  const [a, b] = GOALKEEPERS, inA = D.inWater.has(a), inB = D.inWater.has(b);
+  if (inA === inB) return toast(inA ? 'Els dos porters són a l\'aigua: treu-ne un tocant el nom' : 'Cap porter a l\'aigua: toca el nom del que entra');
+  doSwap(inA ? a : b, inA ? b : a);
+}
+const hasGkPair = () => GOALKEEPERS.every(n => M.roster.cnt.some(p => p.num === n));
 
 function menuSheet() {
   const url = M.fed ? `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats` : '';
@@ -1280,6 +1380,7 @@ async function pollTeam() {
     const d = await api(`groups/${M.fed.groupId}?include=rounds.matches.results,rounds.matches.periods.results`);
     if (!M || !M.fed) return;
     FED.team = parseTeamState(d, M.fed.matchId); FED.teamAt = Date.now(); FED.teamErr = null;
+    checkQuarterAlert();
   } catch (e) { FED.teamErr = navigator.onLine === false ? 'sense connexió' : e.message; }
   paintFed();
 }
@@ -1307,7 +1408,81 @@ function onFedDoc() {
     }
   }
   if (changed) saveMatch();
+  checkFedEvents();
+  checkQuarterAlert();
   paintFed(changed);
+}
+
+/* ---------- Avisos a partir de l'acta de la FCN ---------- */
+const ROMAN = ['I', 'II', 'III', 'IV'];
+const IN_WATER_KEYS = ['G', 'GP', 'EX', 'P', 'EP', 'ED', 'EB', 'EN', 'PF'];   // accions que només fa qui és a l'aigua
+let evSeen = null;   // accions FCN ja vistes (les que ja hi eren en obrir l'acta no avisen)
+const evKey = e => [e.q, e.t, e.side, e.num, e.k].join('|');
+// Hi és ara o hi era fa poc? (el minut a minut de la FCN arriba amb 10-60 s de retard)
+function inWaterLately(num, now) {
+  return D.inWater.has(num) || (D.ivs[num] || []).some(([, b]) => b == null || b >= now - 120e3);
+}
+// Canvi oblidat: la FCN diu que un dels nostres ha fet gol, exclusió... i aquí és fora de l'aigua
+function checkFedEvents() {
+  const ev = fedEvents();
+  if (!evSeen) { evSeen = new Set(ev.map(evKey)); return; }
+  const fresh = ev.filter(e => !evSeen.has(evKey(e)));
+  fresh.forEach(e => evSeen.add(evKey(e)));
+  if (!M.fed || D.finished || D.q < 1 || D.q > 4) return;
+  const now = Date.now();
+  const miss = fresh.find(e => e.side === M.fed.cntSide && typeof e.num === 'number' && IN_WATER_KEYS.includes(e.k) && !inWaterLately(e.num, now));
+  if (!miss) return;
+  buzz(); setTimeout(buzz, 250);
+  toast(`⚠️ FCN: ${miss.txt} del #${miss.num} ${short(nameOf('cnt', miss.num) || miss.name)}, però aquí és fora de l'aigua`,
+    [{label: D.inWater.size >= 7 ? `🔄 Entra #${miss.num} (tria qui surt)` : `💧 Entra #${miss.num}`, fn: () => fixMissingIn(miss.num)},
+     {label: 'Ignora', fn: () => {}}], 12000);
+}
+function fixMissingIn(num) {
+  if (!M.roster.cnt.some(p => p.num === num)) { M.roster.cnt.push({num, name: ''}); M.roster.cnt.sort((a, b) => a.num - b.num); }
+  if (D.inWater.has(num)) return;
+  if (D.inWater.size >= 7) { swapSel = {out: null, in: num}; swapSheet(); }
+  else toggleWater(num);
+}
+// Quart oblidat: la FCN ja ha tancat el que aquí corre (API de Leverade, o ja té accions del següent),
+// o ja té accions d'un quart que aquí no s'ha començat
+function fedQuarterAlert() {
+  if (!M || !M.fed || !D || D.finished) return null;
+  const ev = fedEvents(), per = FED.team ? toArr(FED.team.periods) : [];
+  const closed = q => !!((per.find(p => p.name === ROMAN[q - 1]) || {}).finished || ev.some(e => e.q > q && e.q <= 5) || (FED.team && FED.team.finished));
+  if (D.running && D.q >= 1 && D.q <= 4 && closed(D.q)) {
+    FED.closedSeen = FED.closedSeen || {};
+    FED.closedSeen[D.q] = FED.closedSeen[D.q] || Date.now();
+    return {kind: 'end', q: D.q, at: FED.closedSeen[D.q]};
+  }
+  const nq = D.q === 0 ? 1 : D.qEnded && D.q < 4 ? D.q + 1 : 0;
+  return nq && ev.some(e => e.q === nq) ? {kind: 'start', q: nq} : null;
+}
+function checkQuarterAlert() {
+  const al = fedQuarterAlert(), key = al ? al.kind + al.q : '';
+  if (key === (FED.alertKey || '')) return;
+  FED.alertKey = key;
+  if (al) {
+    buzz(); setTimeout(buzz, 250);
+    if (al.kind === 'end') toast(`⚠️ La FCN ja ha tancat el Q${al.q} i aquí encara corre`, [{label: `⏹ Tanca el Q${al.q}`, fn: closeForgottenQuarter}], 12000);
+    else toast(`⚠️ La FCN ja té accions del Q${al.q} i aquí no està començat`, [{label: `▶ Inicia el Q${al.q}`, fn: () => quarter('qstart', al.q)}], 12000);
+  }
+  if (tab === 'anotar') renderBody();
+}
+function quarterAlertHtml() {
+  const al = fedQuarterAlert(); if (!al) return '';
+  return al.kind === 'end'
+    ? `<div class="notice">⚠️ La FCN ja ha tancat el Q${al.q} i aquí encara corre.<button class="btn primary" data-act="closeQ">⏹ Tanca el Q${al.q}</button></div>`
+    : `<div class="notice">⚠️ La FCN ja té accions del Q${al.q} i aquí no està començat.<button class="btn primary" data-act="startQ" data-q="${al.q}">▶ Inicia el Q${al.q}</button></div>`;
+}
+// Es tanca quan la FCN el va tancar (com a molt, ara), però mai abans de l'última acció del quart
+function closeForgottenQuarter() {
+  const al = fedQuarterAlert(); if (!al || al.kind !== 'end') return;
+  const from = M.acts.map(a => a.k).lastIndexOf('QSTART');
+  const lastT = M.acts.slice(Math.max(from, 0)).reduce((t, a) => Math.max(t, a.t), 0);
+  const a = {id: uid(), t: Math.min(Date.now(), Math.max(al.at, lastT)), q: D.q, k: 'QEND'};
+  M.acts.push(a);
+  commit(); schedulePublish(true);
+  toast(`⏹ Q${a.q} tancat a les ${fmtTime(new Date(a.t))}`, [{label: '↶ Desfer', fn: () => removeAct(a.id)}], 5000);
 }
 
 function paintFed(full) {
@@ -1403,6 +1578,10 @@ document.addEventListener('click', e => {
     case 'reopen': { const a = [...M.acts].reverse().find(x => x.k === 'FINAL'); if (a) removeAct(a.id); break; }
     case 'swap': swapSel = {out: null, in: null}; swapSheet(); break;
     case 'swapPick': swapPick(el.dataset.side, n); break;
+    case 'gk': gkSwap(); break;
+    case 'fixIn': fixMissingIn(n); break;
+    case 'closeQ': closeForgottenQuarter(); break;
+    case 'startQ': quarter('qstart', +el.dataset.q); break;
     case 'addnum': {
       const v = parseInt(prompt('Dorsal:'), 10); if (!v || v < 1 || v > 99) return;
       if (M.roster[team].some(p => p.num === v)) return toast('Aquest dorsal ja hi és');

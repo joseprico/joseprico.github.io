@@ -80,7 +80,18 @@ deriven marcador, parcials, titulars i temps. Agafa la plantilla de l'entrada
 sense nom amb la plantilla oficial (FCN) del darrer partit jugat o, si no n'hi
 ha, amb la nostra acta anterior (`auto:'prev'`, en cursiva). La convocatòria
 oficial del dia els substitueix sola (`auto:'fcn'`); els noms escrits a mà no
-es toquen mai.
+es toquen mai. També posa a l'aigua els titulars del darrer partit (de les actes
+penjades, amb les correccions de l'app, o d'aquest mòbil).
+
+Ajudes perquè qui anota hagi de fer el mínim (08/11/2026): sense botó de temps
+mort; anotar un gol o una exclusió amb el quart sense començar el comença sol
+(un sol "Desfer" ho treu tot); avís de ≠7 a l'aigua en començar qualsevol
+quart; 🧤 canvi de porter (1↔13) d'un toc; al canvi guiat, ⭐ qui sol entrar
+per qui (parelles d'aquest partit i de l'anterior); i avisos amb la FCN: si un
+dels nostres fa gol/exclusió i aquí és fora de l'aigua (botó per entrar-lo), si
+la FCN ja ha tancat el quart que aquí corre (botó per tancar-lo a l'hora que es
+va detectar) o si ja té accions d'un quart que aquí no està començat. Els gols i
+les exclusions **no** s'agafen de la FCN (massa retard i depèn del lector).
 
 **Només Juvenil, equip `C.N. TERRASSA A`** (el B i les altres categories estan
 fora; per tornar-les a afegir: `CATS`/`CNT_TEAM` a l'acta i
