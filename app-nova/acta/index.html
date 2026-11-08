@@ -108,6 +108,7 @@ footer a{color:var(--muted)}
 .pc-h .n{font-weight:850;font-size:1.02rem;min-width:18px;font-variant-numeric:tabular-nums}
 .pc-h .nm{flex:1;min-width:0;font-size:.72rem;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .pc.in .pc-h .nm{color:#115e59}
+.pc-h .nm.prev{font-style:italic}
 .pc-h .dots{font-size:.55rem;letter-spacing:1px;color:var(--excl)}
 .pc-h .exc{font-size:.72rem;font-weight:800;color:#fff;background:var(--excl);border-radius:6px;padding:1px 5px;font-variant-numeric:tabular-nums}
 .pc-h .mo{font-size:1rem;color:var(--faint);padding:0 2px}
@@ -725,7 +726,54 @@ function openMatch(id) {
   renderMatch();
   startLive();
   if (M.sync && M.sync.pending) schedulePublish(true);
+  fillFromPrev();
   window.scrollTo(0, 0);
+}
+
+/* ---------- Plantilla del partit anterior ----------
+   Si el lector no pot llegir la convocatòria (anti-bot), almenys els noms no s'han d'escriure tots:
+   els dorsals sense nom s'omplen amb el darrer partit jugat (auto:'prev'). Quan arriba la convocatòria
+   oficial, onFedDoc els substitueix (auto:'fcn'); els noms escrits a mà no es toquen mai. */
+const msOf = d => typeof d === 'number' ? d : Date.parse(d) || 0;
+async function prevLineup(m) {
+  const before = msOf(m.fed ? m.fed.datetime : m.created);
+  // 1) L'acta oficial (FCN) del darrer partit jugat: noms complets per dorsal
+  const items = fedList.items.length ? fedList.items : ((LS.get('acta_v1_fed_' + m.cat, null) || {}).items || []);
+  const prev = items.filter(f => (!m.fed || f.matchId !== m.fed.matchId) && msOf(f.datetime) < before && (f.finished || f.score))
+    .sort((a, b) => msOf(a.datetime) - msOf(b.datetime)).pop();
+  if (prev) {
+    try {
+      const r = await fetch(`${RTDB}/federacio/${prev.matchId}/players.json`);
+      const pl = r.ok ? await r.json() : null;
+      const ours = isCnt(prev.home.name) ? 'home' : 'away';
+      const list = toArr(pl && pl[ours]).filter(p => p.num && p.name).map(p => ({num: +p.num, name: p.name}));
+      if (list.length >= 7) return {players: list, date: prev.datetime, rival: prev[ours === 'home' ? 'away' : 'home'].name};
+    } catch (e) {}
+  }
+  // 2) La nostra acta anterior en aquest mòbil
+  const idx = LS.get(IDX, []).filter(x => x.cat === m.cat && x.id !== m.id && msOf(x.date) < before).sort((a, b) => msOf(b.date) - msOf(a.date));
+  for (const x of idx) {
+    const pm = LS.get(MK(x.id), null);
+    const named = pm ? pm.roster.cnt.filter(p => p.name) : [];
+    if (named.length >= 7) return {players: named.map(p => ({num: p.num, name: p.name})), date: x.date, rival: x.rival};
+  }
+  return null;
+}
+async function fillFromPrev() {
+  const m = M;
+  if (!m || D.finished || !m.roster.cnt.some(p => !p.name)) return;
+  const prev = await prevLineup(m);
+  if (!prev || M !== m) return;
+  let n = 0;
+  for (const pp of prev.players) {
+    let p = m.roster.cnt.find(x => x.num === pp.num);
+    if (!p) { p = {num: pp.num, name: ''}; m.roster.cnt.push(p); }
+    if (!p.name) { p.name = pp.name; p.auto = 'prev'; n++; }
+  }
+  if (!n) return;
+  m.roster.cnt.sort((a, b) => a.num - b.num);
+  m.prevFrom = {date: prev.date, rival: prev.rival};
+  saveMatch(); renderMatch();
 }
 
 function sideOf(team) { if (!M.fed) return null; const cs = M.fed.cntSide; return team === 'cnt' ? cs : (cs === 'home' ? 'away' : 'home'); }
@@ -823,7 +871,7 @@ function fedLine() {
   const ev = fedEvents(), le = ev[ev.length - 1];
   if (le) h += `<span class="pill" title="Última acció de l'acta FCN">${EV_ICON[le.k] || '•'} ${esc(evWho(le))} · ${le.q >= 1 && le.q <= 4 ? 'Q' + le.q : 'P'} ${esc(le.t)}</span>`;
   const doc = FED.doc;
-  if (doc && doc.statsAt) h += `<span class="pill" id="actaAgo">acta ${esc(ago(doc.statsAt))}</span>`;
+  if (doc && doc.statsAt) h += `<span class="pill ${lectorBlocked() ? 'warn' : ''}" id="actaAgo">${esc(actaAgoText())}</span>`;
   else { const li = lectorInfo(); if (li.short) h += `<span class="pill warn">${esc(li.short)}</span>`; }
   return h + syncPill();
 }
@@ -831,9 +879,12 @@ function fedLine() {
 // Hora oficial: la del lector (calendari d'avui) mana sobre la desada en crear l'acta (partits ajornats)
 function fedStart() { return new Date((FED.doc && FED.doc.datetime) || M.fed.datetime).getTime(); }
 // Estat del lector de l'acta (actawp_live.py) mentre encara no ha llegit res
+// L'anti-bot de l'ACTAWP no deixa entrar el lector (ho torna a provar sol; si dura, amb una màquina nova)
+const lectorBlocked = () => { const st = FED.doc && FED.doc.lector && FED.doc.lector.status; return st === 'blocked' || st === 'relay'; };
+const actaAgoText = () => (lectorBlocked() ? 'bloquejada · dades ' : 'acta ') + ago(FED.doc.statsAt);
 function lectorInfo() {
   const l = (FED.doc && FED.doc.lector) || {}, start = fedStart(), now = Date.now();
-  if (l.status === 'blocked') return {warn: true, short: 'acta bloquejada', long: 'El lector no pot entrar a l\'acta (anti-bot).'};
+  if (lectorBlocked()) return {warn: true, short: 'acta bloquejada', long: "L'anti-bot de l'ACTAWP no deixa entrar el lector. Ho torna a provar sol" + (l.status === 'relay' ? ' amb una màquina nova de GitHub.' : '; si dura, amb una màquina nova.')};
   // Es connecta 2 h abans: si 1 h 40 min abans encara no ha llegit res, alguna cosa falla
   if (now > start - 100 * 60e3 && now < start + 3 * 3600e3)
     return {warn: true, short: '⚠️ lector sense connectar', long: '⚠️ El lector encara no s\'ha connectat a l\'acta (ho fa 2 h abans del partit). Engega\'l a mà: GitHub → Actions → «Acta ACTAWP en directe» → Run workflow, o al PC.'};
@@ -863,7 +914,7 @@ function playerCard(team, p) {
   const left = exclLeft(p.num, Date.now());
   return `<div class="pc ${inW ? 'in' : ''} ${out ? 'out' : ''}">
     <div class="pc-h"><button style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;text-align:left" data-act="toggle" data-n="${p.num}" aria-label="${inW ? 'Treure' : 'Entrar'} ${p.num}">
-      <span class="n">${p.num}</span><span class="nm">${esc(short(p.name))}</span></button>
+      <span class="n">${p.num}</span><span class="nm ${p.auto === 'prev' ? 'prev' : ''}">${esc(short(p.name))}</span></button>
       ${left ? `<span class="exc" data-exc="${p.num}" title="Exclòs: torna sol">⏱${Math.ceil(left / 1000)}</span>` : `<span class="dots">${dots}</span>`}<button class="mo" data-act="more" data-team="cnt" data-n="${p.num}" aria-label="Més ${p.num}">⋯</button></div>
     <div class="pc-b"><button class="b g" data-act="add" data-team="cnt" data-n="${p.num}" data-k="G" aria-label="Gol ${p.num}">⚽<b>${goals || ''}</b></button>
     <button class="b x" data-act="add" data-team="cnt" data-n="${p.num}" data-k="EX" aria-label="Exclusió ${p.num}">EX<b>${fouls || ''}</b></button></div></div>`;
@@ -895,6 +946,9 @@ function renderAnotar() {
     h += `<div class="notice ${n === 7 ? 'info' : ''}">Toca el nom dels <b>7 titulars</b> per posar-los a l'aigua (${n}/7). Després, <b>▶ Inicia Q1</b>.</div>`;
   } else if (!D.finished && D.q !== 5 && D.inWater.size !== 7) {
     h += `<div class="notice">Hi ha ${D.inWater.size} jugadors del CNT a l'aigua. Revisa els canvis (han de ser 7: un exclòs de 20 s compta com a dins).</div>`;
+  }
+  if (M.prevFrom && M.roster.cnt.some(p => p.auto === 'prev')) {
+    h += `<div class="notice info">📋 Noms posats del partit anterior (${esc(fmtDay(new Date(msOf(M.prevFrom.date))))} contra ${esc(teamShort(M.prevFrom.rival) || 'el rival')}), en cursiva. Si algun no hi és, toca <b>⋯</b> i canvia'n el nom. Quan el lector llegeixi la convocatòria, es posaran els oficials sols.</div>`;
   }
   h += `<div class="sect"><h3>${esc(M.cntName)}</h3><span class="muted small">toca el nom = dins/fora</span></div>
     <div class="grid">${M.roster.cnt.map(p => playerCard('cnt', p)).join('')}
@@ -1135,6 +1189,7 @@ function moreSheet(team, num) {
     let pl = r.find(x => x.num === num);
     if (!pl) { pl = {num, name: ''}; r.push(pl); r.sort((a, b) => a.num - b.num); }
     pl.name = inp.value.trim().toUpperCase();
+    delete pl.auto;   // escrit a mà: ja no el canvien ni el partit anterior ni la convocatòria
     saveMatch(); renderMatch();
   });
 }
@@ -1240,14 +1295,15 @@ function applyPath(root, path, data) {
 }
 
 function onFedDoc() {
-  // Omple noms buits de la plantilla amb els oficials de l'acta (mai trepitja noms posats a mà)
+  // Omple noms de la plantilla amb els oficials de l'acta (mai trepitja noms posats a mà)
   let changed = false;
   for (const team of ['cnt', 'rival']) {
     for (const fp of fedPlayers(team) || []) {
       if (!fp || !fp.num) continue;
       let p = M.roster[team].find(x => x.num === fp.num);
       if (!p) { p = {num: fp.num, name: ''}; M.roster[team].push(p); M.roster[team].sort((a, b) => a.num - b.num); changed = true; }
-      if (!p.name && fp.name) { p.name = fp.name; changed = true; }
+      // Buits o posats del partit anterior → l'oficial; els escrits a mà, mai
+      if ((!p.name || p.auto === 'prev') && fp.name && (p.name !== fp.name || p.auto)) { p.name = fp.name; p.auto = 'fcn'; changed = true; }
     }
   }
   if (changed) saveMatch();
@@ -1270,7 +1326,7 @@ function startLive() {
       if (tab === 'temps' && now % 5000 < 1000) renderBody();
     }
     if (Object.keys(D.excl).length) { autoReturn(now); paintExcl(now); }
-    const aa = $('#actaAgo'); if (aa && FED.doc && FED.doc.statsAt) aa.textContent = 'acta ' + ago(FED.doc.statsAt);
+    const aa = $('#actaAgo'); if (aa && FED.doc && FED.doc.statsAt) aa.textContent = actaAgoText();
   }, 1000);
   if (!M.fed) return;
   pollTeam();

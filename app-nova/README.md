@@ -76,7 +76,11 @@ per precisar el tipus com a l'acta (penal, falta de penal, excl.+penal,
 brutalitat, definitiva); tocar el nom = dins/fora (temps de joc) i 🔄 canvi guiat.
 Tot és un registre d'accions (`acts`) a `localStorage` (`acta_v1_*`), d'on es
 deriven marcador, parcials, titulars i temps. Agafa la plantilla de l'entrada
-(`cntv2_roster_juvenil`).
+(`cntv2_roster_juvenil`) i, en obrir un partit no acabat, omple els dorsals
+sense nom amb la plantilla oficial (FCN) del darrer partit jugat o, si no n'hi
+ha, amb la nostra acta anterior (`auto:'prev'`, en cursiva). La convocatòria
+oficial del dia els substitueix sola (`auto:'fcn'`); els noms escrits a mà no
+es toquen mai.
 
 **Només Juvenil, equip `C.N. TERRASSA A`** (el B i les altres categories estan
 fora; per tornar-les a afegir: `CATS`/`CNT_TEAM` a l'acta i
@@ -134,7 +138,13 @@ On corre el lector:
    l'acta **2 h abans** i el segueix fins que acaba; si no hi cap abans del
    límit de 6 h d'una feina, n'engega una altra (relleu amb
    `gh workflow run`). L'acta avisa "⚠️ lector sense connectar" si 1 h 40 min
-   abans encara no ha llegit res. Necessita el secret
+   abans encara no ha llegit res. **Anti-bot (08/11/2026):** la feina que
+   seguia el partit va quedar bloquejada tot el partit i la següent feina (una
+   altra màquina) hi va entrar a la primera. Ara, en bloquejar-se: reintent amb
+   perfil de Chrome net, lectures cada 30 s durant 20 min, i si dura ≥4 min
+   demana una feina nova de GitHub (com a molt 6, comptador `block_relays`).
+   Els canvis d'estat queden a la RTDB `federacio/{id}/lectorLog/{ms}` (amb el
+   que mostrava la pàgina) per saber després què ha passat. Necessita el secret
    `FIREBASE_SERVICE_ACCOUNT` (JSON del compte de servei de Firebase).
 2. **PC (reserva)** si l'anti-bot bloqueja GitHub:
    `python actawp_live.py --watch --key C:\ruta\clau.json`
