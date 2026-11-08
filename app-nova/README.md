@@ -86,7 +86,7 @@ penjades, amb les correccions de l'app, o d'aquest mòbil).
 Ajudes perquè qui anota hagi de fer el mínim (08/11/2026): sense botó de temps
 mort; anotar un gol o una exclusió amb el quart sense començar el comença sol
 (un sol "Desfer" ho treu tot); avís de ≠7 a l'aigua en començar qualsevol
-quart; 🧤 canvi de porter (1↔13) d'un toc; al canvi guiat, ⭐ qui sol entrar
+quart; 🧤 canvi de porter (1↔13) d'un toc; 👥 canvi de línia (surten tots els de camp, el porter es queda; si la banqueta no quadra, es trien en un full); al canvi guiat, ⭐ qui sol entrar
 per qui (parelles d'aquest partit i de l'anterior); i avisos amb la FCN: si un
 dels nostres fa gol/exclusió i aquí és fora de l'aigua (botó per entrar-lo), si
 la FCN ja ha tancat el quart que aquí corre (botó per tancar-lo a l'hora que es

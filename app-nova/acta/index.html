@@ -889,6 +889,7 @@ function renderHead() {
     </div>
     <div class="fedline" id="fedline">${fedLine()}</div>
     <div class="ctrl">${quarterButtons()}
+      ${!D.finished ? '<button class="btn icon" data-act="line" aria-label="Canvi de línia: tots menys el porter" title="Canvi de línia: tots menys el porter">👥</button>' : ''}
       ${hasGkPair() && !D.finished ? `<button class="btn icon" data-act="gk" aria-label="Canvi de porter ${GOALKEEPERS.join('↔')}" title="Canvi de porter ${GOALKEEPERS.join('↔')}">🧤</button>` : ''}
       <button class="btn icon" data-act="swap" aria-label="Canvi">🔄</button>
       <button class="btn icon" data-act="undo" aria-label="Desfer" ${M.acts.length ? '' : 'disabled'}>↶</button>
@@ -1278,7 +1279,7 @@ function swapPairs() {
     .sort((a, b) => msOf(b.date) - msOf(a.date))[0];
   const pm = prev ? LS.get(MK(prev.id), null) : null;
   for (const [acts, w] of [[M.acts, 2], [pm ? pm.acts : [], 1]]) {
-    const ch = acts.filter(a => (a.k === 'IN' || a.k === 'OUT') && !a.auto);
+    const ch = acts.filter(a => (a.k === 'IN' || a.k === 'OUT') && !a.auto && !a.line);   // els canvis de línia no diuen qui entra per qui
     ch.forEach((a, i) => {
       if (a.k !== 'OUT') return;
       const b = ch.slice(i + 1).find(x => x.k === 'IN');
@@ -1326,6 +1327,40 @@ function gkSwap() {
   doSwap(inA ? a : b, inA ? b : a);
 }
 const hasGkPair = () => GOALKEEPERS.every(n => M.roster.cnt.some(p => p.num === n));
+
+// Canvi de línia: surten tots els de camp que són a l'aigua (el porter es queda) i entren els de camp de
+// la banqueta. Si a la banqueta n'hi ha més o menys que els que surten, es trien en un full.
+const isField = n => !GOALKEEPERS.includes(n);
+const fieldInWater = () => [...D.inWater].filter(isField).sort((a, b) => a - b);
+const fieldBench = () => M.roster.cnt.map(p => p.num).filter(n => isField(n) && !D.inWater.has(n) && !isOut(D.stats.cnt[n]));
+let lineSel = [];
+function lineSwap() {
+  if (D.finished) return toast('El partit està tancat.');
+  const outs = fieldInWater(), bench = fieldBench();
+  if (!outs.length) return toast('No hi ha cap jugador de camp a l\'aigua');
+  if (bench.length === outs.length) return doLineSwap(outs, bench);
+  // Preseleccionats: els que van sortir més recentment (la línia d'abans)
+  const lastOut = n => M.acts.reduce((t, a) => a.k === 'OUT' && a.num === n ? a.t : t, 0);
+  lineSel = [...bench].sort((a, b) => lastOut(b) - lastOut(a) || a - b).slice(0, outs.length);
+  lineSheet();
+}
+function lineSheet() {
+  const outs = fieldInWater(), bench = fieldBench();
+  openSheet(`<h3>👥 Canvi de línia</h3>
+    <div class="muted small">Surten (${outs.length}): ${outs.map(n => `#${n} ${esc(short(nameOf('cnt', n)))}`).join(', ')}. El porter es queda.</div>
+    <div class="muted small" style="margin-top:10px">Entren (${lineSel.length} de ${outs.length})</div>
+    <div class="chips">${bench.map(n => `<button class="chip ${lineSel.includes(n) ? 'sel' : ''}" data-act="linePick" data-n="${n}">${n} ${esc(short(nameOf('cnt', n)))}</button>`).join('')}</div>
+    <button class="btn primary wide" data-act="lineGo" ${lineSel.length ? '' : 'disabled'}>👥 Fes el canvi</button>
+    <button class="btn wide" data-act="closeSheet">Tancar</button>`);
+}
+function doLineSwap(outs, ins) {
+  const grp = uid();
+  outs.forEach(num => push({q: D.q, team: 'cnt', num, k: 'OUT', grp, line: true}));
+  ins.forEach(num => push({q: D.q, team: 'cnt', num, k: 'IN', grp, line: true}));
+  buzz(); commit(); closeSheet();
+  toast(`👥 Surten ${outs.join(', ')} · entren ${ins.join(', ')}`,
+    [{label: '↶ Desfer', fn: () => { const a = M.acts.find(x => x.grp === grp); if (a) removeAct(a.id); }}], 5000);
+}
 
 function menuSheet() {
   const url = M.fed ? `${ACTAWP}/tournament/${M.fed.tournamentId}/match/${M.fed.matchId}/stats` : '';
@@ -1579,6 +1614,9 @@ document.addEventListener('click', e => {
     case 'swap': swapSel = {out: null, in: null}; swapSheet(); break;
     case 'swapPick': swapPick(el.dataset.side, n); break;
     case 'gk': gkSwap(); break;
+    case 'line': lineSwap(); break;
+    case 'linePick': { const i = lineSel.indexOf(n); i < 0 ? lineSel.push(n) : lineSel.splice(i, 1); lineSheet(); break; }
+    case 'lineGo': if (lineSel.length) doLineSwap(fieldInWater(), [...lineSel]); break;
     case 'fixIn': fixMissingIn(n); break;
     case 'closeQ': closeForgottenQuarter(); break;
     case 'startQ': quarter('qstart', +el.dataset.q); break;
